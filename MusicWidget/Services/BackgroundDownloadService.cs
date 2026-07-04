@@ -18,6 +18,7 @@ public sealed class BackgroundDownloadCompletedEventArgs : EventArgs
 {
     public required string PlaylistName { get; init; }
     public required bool Success { get; init; }
+    public bool Cancelled { get; init; }
     public string? Error { get; init; }
     public int DownloadedCount { get; init; }
 }
@@ -35,6 +36,22 @@ public sealed class BackgroundDownloadService
 
     public event EventHandler<BackgroundDownloadProgressEventArgs>? ProgressChanged;
     public event EventHandler<BackgroundDownloadCompletedEventArgs>? Completed;
+
+    public void Cancel()
+    {
+        if (!IsRunning)
+        {
+            return;
+        }
+
+        try
+        {
+            _cts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+    }
 
     public bool TryStart(Playlist playlist, string url, out string? errorMessage)
     {
@@ -76,6 +93,7 @@ public sealed class BackgroundDownloadService
             RaiseProgress(playlist.Name, p));
 
         var success = false;
+        var cancelled = false;
         string? error = null;
         var downloadedCount = 0;
 
@@ -119,6 +137,7 @@ public sealed class BackgroundDownloadService
         }
         catch (OperationCanceledException)
         {
+            cancelled = true;
             error = "Download cancelled.";
             Report(playlist.Name, new DownloadProgressUpdate(-1, error));
         }
@@ -139,6 +158,7 @@ public sealed class BackgroundDownloadService
                 {
                     PlaylistName = playlist.Name,
                     Success = success,
+                    Cancelled = cancelled,
                     Error = error,
                     DownloadedCount = downloadedCount,
                 });

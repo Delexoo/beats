@@ -1160,6 +1160,18 @@ public partial class SettingsPanel : UserControl
         }
     }
 
+    private void BackgroundDownloadCancel_Click(object sender, RoutedEventArgs e)
+    {
+        if (!App.BackgroundDownloads.IsRunning)
+        {
+            return;
+        }
+
+        BackgroundDownloadCancelButton.IsEnabled = false;
+        BackgroundDownloadDetail.Text = "Cancelling...";
+        App.BackgroundDownloads.Cancel();
+    }
+
     private void OnBackgroundDownloadProgress(object? sender, BackgroundDownloadProgressEventArgs e)
     {
         if (!_isPanelActive)
@@ -1169,6 +1181,10 @@ public partial class SettingsPanel : UserControl
 
         BackgroundDownloadBanner.Visibility = Visibility.Visible;
         BackgroundDownloadTitle.Text = $"Downloading to \"{e.PlaylistName}\"";
+        BackgroundDownloadCancelButton.IsEnabled = App.BackgroundDownloads.IsRunning;
+        BackgroundDownloadCancelButton.Visibility = App.BackgroundDownloads.IsRunning
+            ? Visibility.Visible
+            : Visibility.Collapsed;
 
         var update = e.Update;
         if (update.Percent >= 0)
@@ -1210,6 +1226,12 @@ public partial class SettingsPanel : UserControl
             {
                 RefreshAfterDownload(playlist);
             }
+        }
+        else if (e.Cancelled)
+        {
+            BackgroundDownloadTitle.Text = "Download cancelled";
+            BackgroundDownloadDetail.Text = "The download was stopped.";
+            BackgroundDownloadPercent.Text = string.Empty;
         }
         else
         {

@@ -507,12 +507,23 @@
                            Background="{StaticResource Brush.SurfaceHigh}"
                            BorderThickness="0"/>
             </StackPanel>
-            <TextBlock Grid.Column="1"
-                       x:Name="BackgroundDownloadPercent"
-                       VerticalAlignment="Center"
-                       Margin="12,0,0,0"
-                       FontSize="10.5"
-                       Foreground="{StaticResource Brush.TextDim}"/>
+            <StackPanel Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Margin="12,0,0,0">
+              <TextBlock x:Name="BackgroundDownloadPercent"
+                         HorizontalAlignment="Right"
+                         FontSize="10.5"
+                         Foreground="{StaticResource Brush.TextDim}"/>
+              <Button x:Name="BackgroundDownloadCancelButton"
+                      Style="{StaticResource FlatButton}"
+                      Content="Cancel"
+                      Padding="8,3"
+                      Margin="0,6,0,0"
+                      FontSize="10"
+                      HorizontalAlignment="Right"
+                      ToolTip="Stop this download"
+                      Click="BackgroundDownloadCancel_Click"/>
+            </StackPanel>
           </Grid>
         </Border>
 
