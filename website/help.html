@@ -6,9 +6,10 @@
   <title>Help — Beats</title>
   <meta name="description" content="User manual for Beats — the floating desktop music player for Windows." />
   <meta name="beats-repo" content="Delexoo/beats" />
+  <link rel="icon" href="assets/app-icon.png" type="image/png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #ffffff;
@@ -44,7 +45,6 @@
     a { color: var(--blue); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* ----- Header ----- */
     .site-header {
       position: sticky;
       top: 0;
@@ -60,9 +60,10 @@
     }
 
     .brand {
-      font-weight: 700;
-      font-size: 1rem;
-      letter-spacing: -0.03em;
+      font-family: "Anton", sans-serif;
+      font-weight: 400;
+      font-size: 1.125rem;
+      letter-spacing: 0.02em;
       color: var(--text);
       text-decoration: none;
     }
@@ -82,6 +83,11 @@
     }
 
     .header-links a:hover { color: var(--text); text-decoration: none; }
+
+    .header-links a[aria-current="page"] {
+      color: var(--text);
+      font-weight: 500;
+    }
 
     .btn {
       display: inline-flex;
@@ -106,7 +112,6 @@
       text-decoration: none;
     }
 
-    /* ----- Layout ----- */
     .page-wrap {
       max-width: var(--max-w);
       margin: 0 auto;
@@ -125,7 +130,6 @@
       }
     }
 
-    /* ----- Sidebar ----- */
     .sidebar {
       position: sticky;
       top: calc(var(--header-h) + 24px);
@@ -195,9 +199,8 @@
       }
     }
 
-    /* ----- Main content ----- */
     .hero {
-      margin-bottom: 48px;
+      margin-bottom: 40px;
       padding-bottom: 32px;
       border-bottom: 1px solid var(--border);
     }
@@ -214,6 +217,54 @@
       color: var(--text-muted);
       max-width: 52ch;
       font-size: 1rem;
+    }
+
+    .hero-meta {
+      margin-top: 14px;
+      font-size: 0.8125rem;
+      color: var(--text-faint);
+    }
+
+    .quick-nav {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 48px;
+      max-width: 68ch;
+    }
+
+    @media (max-width: 560px) {
+      .quick-nav { grid-template-columns: 1fr; }
+    }
+
+    .quick-nav a {
+      display: block;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-alt);
+      text-decoration: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .quick-nav a:hover {
+      border-color: #d1d5db;
+      background: var(--surface);
+      text-decoration: none;
+    }
+
+    .quick-nav strong {
+      display: block;
+      color: var(--text);
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .quick-nav span {
+      color: var(--text-muted);
+      font-size: 0.8125rem;
+      line-height: 1.45;
     }
 
     section {
@@ -254,7 +305,6 @@
     li { margin-bottom: 6px; color: var(--text-muted); }
     li strong { color: var(--text); font-weight: 600; }
 
-    /* Steps */
     .steps {
       list-style: none;
       padding: 0;
@@ -300,7 +350,6 @@
       line-height: 1.6;
     }
 
-    /* Keycaps */
     .shortcut-table {
       width: 100%;
       max-width: 68ch;
@@ -326,7 +375,7 @@
       background: var(--surface-alt);
     }
 
-    .shortcut-table td:first-child { width: 42%; }
+    .shortcut-table td:first-child { width: 42%; white-space: nowrap; }
     .shortcut-table td:last-child { color: var(--text-muted); }
 
     kbd, .kbd {
@@ -343,7 +392,6 @@
       margin: 0 1px;
     }
 
-    /* Callout */
     .callout {
       max-width: 68ch;
       padding: 14px 16px;
@@ -364,7 +412,6 @@
 
     .callout-tip strong { color: #1d4ed8; }
 
-    /* Code / paths */
     code {
       font-family: ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
       font-size: 0.8125rem;
@@ -393,7 +440,6 @@
       padding: 0;
     }
 
-    /* FAQ details */
     .faq {
       max-width: 68ch;
       display: flex;
@@ -453,14 +499,34 @@
       margin: 16px 0 20px;
     }
 
-    .platform-badges img {
+    .platform-badge {
       width: 30px;
       height: 30px;
       border-radius: 7px;
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
     }
 
-    /* Footer */
+    .platform-badge img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+
+    .platform-badge.spotify { background: #1db954; }
+    .platform-badge.tiktok { background: #010101; }
+    .platform-badge.soundcloud { background: #ff5500; }
+
+    .platform-badge svg {
+      width: 16px;
+      height: 16px;
+      fill: #fff;
+    }
+
     .site-footer {
       border-top: 1px solid var(--border);
       padding: 24px;
@@ -479,9 +545,10 @@
 <body>
 
   <header class="site-header">
-    <a class="brand" href="index.html">Beats</a>
+    <a class="brand" href="index.html">Beats.</a>
     <nav class="header-links" aria-label="Site">
       <a href="index.html">Home</a>
+      <a href="help.html" aria-current="page">Help</a>
       <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a>
       <a class="btn btn-primary" id="download-link" href="downloads/Beats-Setup-x64.exe">Download</a>
     </nav>
@@ -496,6 +563,7 @@
         <li><a href="#dashboard">Dashboard</a></li>
         <li><a href="#playlists">Playlists</a></li>
         <li><a href="#downloads">Downloads</a></li>
+        <li><a href="#playback">Playback</a></li>
         <li><a href="#shortcuts">Shortcuts</a></li>
         <li><a href="#youtube-cookies">YouTube cookies</a></li>
         <li><a href="#files">Files &amp; folders</a></li>
@@ -507,15 +575,34 @@
     <main>
       <div class="hero">
         <h1>Help &amp; manual</h1>
-        <p>Everything you need to install Beats, build playlists, download music, and control the floating widget on Windows.</p>
+        <p>Install Beats, build playlists, download music, and control the floating widget on Windows — no account required.</p>
+        <p class="hero-meta">Windows 10 / 11 · 64-bit · Local playback only</p>
       </div>
 
-      <!-- Getting started -->
+      <nav class="quick-nav" aria-label="Popular topics">
+        <a href="#getting-started">
+          <strong>Quick start</strong>
+          <span>Install and play your first song in five steps.</span>
+        </a>
+        <a href="#downloads">
+          <strong>Download from web</strong>
+          <span>Paste a YouTube, Spotify, or TikTok link.</span>
+        </a>
+        <a href="#shortcuts">
+          <strong>Shortcuts</strong>
+          <span>Hide the widget, open the dashboard, reset layout.</span>
+        </a>
+        <a href="#youtube-cookies">
+          <strong>YouTube cookies</strong>
+          <span>Fix sign-in or bot-check download errors.</span>
+        </a>
+      </nav>
+
       <section id="getting-started">
         <h2>Getting started</h2>
         <p class="lead">Install once, create a playlist, add music, and press play.</p>
 
-        <ol class="steps">
+        <ul class="steps">
           <li>
             <span class="step-num" aria-hidden="true">1</span>
             <div class="step-body">
@@ -527,7 +614,7 @@
             <span class="step-num" aria-hidden="true">2</span>
             <div class="step-body">
               <strong>Open the dashboard</strong>
-              <span>Click the settings gear on the widget pill, or press <kbd>Ctrl</kbd> + <kbd>\</kbd>.</span>
+              <span>Press <kbd>Ctrl</kbd> + <kbd>\</kbd>, or hover the widget and click the gear button.</span>
             </div>
           </li>
           <li>
@@ -551,14 +638,13 @@
               <span>Double-click a song in the list, or use the play/pause button on the widget.</span>
             </div>
           </li>
-        </ol>
+        </ul>
 
         <div class="callout callout-tip">
-          <strong>First download?</strong> Beats automatically downloads <code>yt-dlp</code>, <code>ffmpeg</code>, and (for Spotify) <code>spotDL</code> on first use — about 130 MB total, one time only.
+          <strong>First download?</strong> Beats automatically downloads <code>yt-dlp</code>, <code>ffmpeg</code>, and (for Spotify) <code>spotDL</code> on first use — about 130&nbsp;MB total, one time only.
         </div>
       </section>
 
-      <!-- Widget -->
       <section id="widget">
         <h2>The widget</h2>
         <p class="lead">A small floating pill that stays on top of every app.</p>
@@ -569,24 +655,23 @@
         <p>Drag the <strong>album art</strong> to reposition the pill anywhere on screen.</p>
 
         <h3>Hide and show</h3>
-        <p>Press <kbd>Alt</kbd> + <kbd>\</kbd> to slide the widget off the nearest screen edge. Press the same shortcut again to bring it back. You can also click the small chevron tab at the top center of your primary monitor.</p>
+        <p>Press <kbd>Alt</kbd> + <kbd>\</kbd> to slide the widget off the nearest screen edge. Press the same shortcut again to bring it back. You can also click the small chevron tab at the top center of your screen.</p>
 
         <h3>Expanded controls</h3>
-        <p>Hover the widget to reveal loop and settings buttons. Enable <strong>Extended widget</strong> in the dashboard header to keep those controls visible at all times.</p>
+        <p>Hover the widget to reveal loop and gear buttons. Turn on <strong>Extended widget</strong> in the dashboard header to keep those controls visible at all times.</p>
 
         <h3>Minimize</h3>
-        <p>Click the minimize button in the dashboard to hide the widget completely. Use the top chevron or <kbd>Alt</kbd> + <kbd>\</kbd> to show it again.</p>
+        <p>Click the minimize button in the dashboard header to hide the widget completely. Use the top chevron or <kbd>Alt</kbd> + <kbd>\</kbd> to show it again.</p>
       </section>
 
-      <!-- Dashboard -->
       <section id="dashboard">
         <h2>Dashboard</h2>
-        <p class="lead">Your control center for playlists, tracks, and settings.</p>
+        <p class="lead">Your control center for playlists, tracks, and playback.</p>
 
-        <p>Open the dashboard with <kbd>Ctrl</kbd> + <kbd>\</kbd> or by clicking the settings gear on the widget. It includes:</p>
+        <p>Open the dashboard with <kbd>Ctrl</kbd> + <kbd>\</kbd> or by clicking the gear button on the widget. It includes:</p>
         <ul>
           <li><strong>Playlists sidebar</strong> — create, rename, delete, and pin playlists</li>
-          <li><strong>Track list</strong> — browse, play, reorder, and remove songs</li>
+          <li><strong>Track list</strong> — browse, play, drag to reorder, and remove songs</li>
           <li><strong>Now playing footer</strong> — seek bar, volume, like/save, shuffle, and loop</li>
           <li><strong>Header controls</strong> — extended widget toggle, layout reset, help, donate, minimize, and exit</li>
         </ul>
@@ -601,12 +686,11 @@
         <p>Use the heart and bookmark icons in the footer to add tracks to <strong>Liked Songs</strong> or <strong>Saves</strong>. These collections appear at the bottom of the playlist sidebar.</p>
       </section>
 
-      <!-- Playlists -->
       <section id="playlists">
         <h2>Playlists</h2>
         <p class="lead">Simple folder-based libraries you own completely.</p>
 
-        <p>Every playlist is a folder. By default they live in <code>My Music\Beats</code>. You can change the root folder in settings.</p>
+        <p>Every playlist is a folder. By default they live in <code>%USERPROFILE%\Music\Beats</code> (shown as <code>My Music\Beats</code> in File Explorer).</p>
 
         <h3>Create &amp; manage</h3>
         <ul>
@@ -632,7 +716,6 @@
         </div>
       </section>
 
-      <!-- Downloads -->
       <section id="downloads">
         <h2>Downloads</h2>
         <p class="lead">Paste a link and save audio straight into a playlist.</p>
@@ -641,7 +724,18 @@
 
         <h3>Supported platforms</h3>
         <div class="platform-badges" aria-label="Supported platforms">
-          <img src="assets/youtube.png" width="30" height="30" alt="YouTube" />
+          <span class="platform-badge" title="YouTube">
+            <img src="assets/youtube.png" width="30" height="30" alt="YouTube" />
+          </span>
+          <span class="platform-badge spotify" title="Spotify" aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+          </span>
+          <span class="platform-badge tiktok" title="TikTok" aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.5a8.16 8.16 0 0 0 4.77 1.52V6.6a4.85 4.85 0 0 1-1-.09z"/></svg>
+          </span>
+          <span class="platform-badge soundcloud" title="SoundCloud" aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.175 13.5c-.64 0-1.175.533-1.175 1.175v2.65c0 .642.535 1.175 1.175 1.175S2.35 17.967 2.35 17.325v-2.65c0-.642-.523-1.175-1.175-1.175zm2.65 1.325c-.642 0-1.175.535-1.175 1.175v1.325c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-1.325c0-.64-.533-1.175-1.175-1.175zm2.65-1.325c-.642 0-1.175.533-1.175 1.175v2.65c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-2.65c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v3.3c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-3.3c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v3.95c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-3.95c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v4.6c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-4.6c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v5.25c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-5.25c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v5.9c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-5.9c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v6.55c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-6.55c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v7.2c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-7.2c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v7.85c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-7.85c0-.642-.533-1.175-1.175-1.175z"/></svg>
+          </span>
         </div>
         <ul>
           <li><strong>YouTube</strong> — videos, playlists, and channels</li>
@@ -656,7 +750,22 @@
         <p>When downloading a playlist or album, Beats shows progress for each track. Large batches may take several minutes depending on your connection.</p>
       </section>
 
-      <!-- Shortcuts -->
+      <section id="playback">
+        <h2>Playback</h2>
+        <p class="lead">Control music from the widget or the dashboard footer.</p>
+
+        <p>Both the floating widget and the dashboard footer offer play/pause, previous, and next. The dashboard footer also includes:</p>
+        <ul>
+          <li><strong>Seek bar</strong> — click or drag to jump within the current track</li>
+          <li><strong>Volume</strong> — adjust output level (saved between sessions)</li>
+          <li><strong>Shuffle</strong> — randomize the queue order</li>
+          <li><strong>Loop</strong> — repeat the current song (toggle on the widget or in the footer)</li>
+          <li><strong>Like &amp; Save</strong> — add the current track to Liked Songs or Saves</li>
+        </ul>
+
+        <p>Double-click any song in the track list to start playback. Drag songs to reorder them within a playlist.</p>
+      </section>
+
       <section id="shortcuts">
         <h2>Shortcuts</h2>
         <p class="lead">Control Beats without touching the mouse.</p>
@@ -701,7 +810,6 @@
         </div>
       </section>
 
-      <!-- YouTube cookies -->
       <section id="youtube-cookies">
         <h2>YouTube cookies</h2>
         <p class="lead">Optional setup when YouTube blocks downloads or asks you to sign in.</p>
@@ -729,7 +837,6 @@
         </div>
       </section>
 
-      <!-- Files -->
       <section id="files">
         <h2>Files &amp; folders</h2>
         <p class="lead">Where Beats stores settings, tools, and your music.</p>
@@ -753,10 +860,9 @@
 └── Another Playlist\
     └── ...</code></pre>
 
-        <p>The music root folder can be changed in Beats settings. Your playlists remain ordinary folders — back them up, sync them, or move them like any other files.</p>
+        <p>To use a different music folder, close Beats and edit the <code>PlaylistsRoot</code> value in <code>settings.json</code>, then restart. Your playlists remain ordinary folders — back them up, sync them, or move them like any other files.</p>
       </section>
 
-      <!-- Troubleshooting -->
       <section id="troubleshooting">
         <h2>Troubleshooting</h2>
         <p class="lead">Common issues and how to fix them.</p>
@@ -780,7 +886,6 @@
         <p>Open an issue on <a href="https://github.com/Delexoo/beats/issues" target="_blank" rel="noopener">GitHub</a> or visit <a href="https://delexo.store" target="_blank" rel="noopener">delexo.store</a>.</p>
       </section>
 
-      <!-- FAQ -->
       <section id="faq">
         <h2>FAQ</h2>
         <p class="lead">Quick answers to common questions.</p>
@@ -824,7 +929,14 @@
           <details>
             <summary>Can I move my playlists to another computer?</summary>
             <div class="faq-body">
-              <p>Yes. Copy your playlist folders (and optionally <code>%APPDATA%\Beats\settings.json</code>) to the new machine. Point Beats at the same music root folder in settings.</p>
+              <p>Yes. Copy your playlist folders (and optionally <code>%APPDATA%\Beats\settings.json</code>) to the new machine. If the path changed, update <code>PlaylistsRoot</code> in <code>settings.json</code> before restarting Beats.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Does Beats collect my data?</summary>
+            <div class="faq-body">
+              <p>No. Beats runs locally on your PC. Playlists, settings, and downloads stay on your machine. Beats does not require an account and does not send telemetry.</p>
             </div>
           </details>
         </div>
@@ -855,6 +967,7 @@
       });
 
       function updateToc() {
+        if (!sections.length) return;
         var scrollY = window.scrollY + 100;
         var current = sections[0];
         for (var i = 0; i < sections.length; i++) {
