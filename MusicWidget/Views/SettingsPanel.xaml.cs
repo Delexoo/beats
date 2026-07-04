@@ -642,6 +642,11 @@ public partial class SettingsPanel : UserControl
 
     private void OpenHelp_Click(object sender, RoutedEventArgs e)
     {
+        if (Window.GetWindow(this) is WidgetWindow widget)
+        {
+            widget.MinimizeWidget();
+        }
+
         try
         {
             Process.Start(new ProcessStartInfo
@@ -649,11 +654,6 @@ public partial class SettingsPanel : UserControl
                 FileName = HelpPageUrl,
                 UseShellExecute = true,
             });
-
-            if (Window.GetWindow(this) is WidgetWindow widget)
-            {
-                widget.MinimizeWidget();
-            }
         }
         catch (Exception ex)
         {

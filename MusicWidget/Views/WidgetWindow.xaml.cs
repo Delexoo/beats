@@ -568,8 +568,14 @@ public partial class WidgetWindow : Window
     /// </summary>
     public void MinimizeWidget()
     {
-        if (!IsLogicallyVisible || _animatingVisibility)
+        if (!IsLogicallyVisible)
         {
+            return;
+        }
+
+        if (_animatingVisibility)
+        {
+            Dispatcher.BeginInvoke(MinimizeWidget, DispatcherPriority.ApplicationIdle);
             return;
         }
 
