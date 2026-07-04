@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Beats — Desktop player for Windows</title>
+  <title>Beats - Desktop player for Windows</title>
   <meta name="description" content="Beats is a floating desktop player for Windows. Play local playlists, download from YouTube, Spotify, TikTok, and more, all from a minimal widget on your screen." />
   <meta name="beats-repo" content="Delexoo/beats" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -883,7 +883,7 @@
                     <a id="download-btn" class="btn btn-primary" href="downloads/Beats-Setup-x64.exe" download="Beats-Setup-x64.exe">Download for Windows</a>
                     <a id="github-btn-secondary" class="btn btn-secondary" href="#" target="_blank" rel="noopener">View on GitHub</a>
                   </div>
-                  <p class="meta" id="version-meta-home">Windows 10 / 11 · 64-bit</p>
+                  <p class="meta" id="version-meta-home">Windows 10 / 11 | 64-bit</p>
                 </div>
 
                 <div class="hero-stage" id="stage-features" data-stage-name="features">
@@ -992,7 +992,7 @@
                       <a id="download-btn-section" class="btn btn-primary" href="downloads/Beats-Setup-x64.exe" download="Beats-Setup-x64.exe">Download for Windows</a>
                       <a id="github-btn-section" class="btn btn-secondary" href="#" target="_blank" rel="noopener">View on GitHub</a>
                     </div>
-                    <p class="meta" id="version-meta-section">Windows 10 / 11 · 64-bit</p>
+                    <p class="meta" id="version-meta-section">Windows 10 / 11 | 64-bit</p>
                   </section>
                 </div>
               </div>
@@ -1043,14 +1043,14 @@
                 <img class="desktop-taskbar" src="assets/taskbar.png" alt="" draggable="false" />
               </div>
             </div>
-            <p class="widget-hint">Drag album art to move · <kbd>Alt</kbd>+\ to hide · Hover to expand</p>
+            <p class="widget-hint">Drag album art to move | <kbd>Alt</kbd>+\ to hide | Hover to expand</p>
           </div>
           </div>
         </div>
       </div>
     </div>
     <footer class="panel-footer">
-      <p>© Delexo · <a href="help.html">Help</a> · <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a> · <a href="https://delexo.store">delexo.store</a></p>
+      <p>© Delexo | <a href="help.html">Help</a> | <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a> | <a href="https://delexo.store">delexo.store</a></p>
     </footer>
   </main>
 
@@ -1146,8 +1146,8 @@
         if (!data || !data.tag_name) return null;
         var v = data.tag_name.replace(/^v/i, "");
         var asset = (data.assets || []).find(function (a) { return a.name === ASSET; });
-        var size = asset && asset.size ? " · " + Math.round(asset.size / (1024 * 1024)) + " MB" : "";
-        return "v" + v + size + " · Windows 10 / 11 · 64-bit";
+        var size = asset && asset.size ? " | " + Math.round(asset.size / (1024 * 1024)) + " MB" : "";
+        return "v" + v + size + " | Windows 10 / 11 | 64-bit";
       }
 
       if (repo) {
@@ -1203,7 +1203,7 @@
       function updateAria() {
         if (!beatsPill) return;
         var t = tracks[currentIndex];
-        beatsPill.setAttribute("aria-label", "Beats player — " + t.title + " by " + t.artist);
+        beatsPill.setAttribute("aria-label", "Beats player - " + t.title + " by " + t.artist);
       }
 
       function cycleTrack() {
