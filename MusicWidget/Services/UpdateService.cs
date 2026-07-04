@@ -35,7 +35,7 @@ public sealed class UpdateService
     }
 
     /// <summary>
-    /// Checks GitHub Releases on startup and silently downloads/installs when a newer build exists.
+    /// Checks GitHub Releases on startup and hands off to a detached updater when a newer build exists.
     /// </summary>
     public async Task<bool> TryAutoUpdateOnStartupAsync(CancellationToken ct = default)
     {
@@ -52,11 +52,7 @@ public sealed class UpdateService
                 return false;
             }
 
-            var installerPath = await DownloadInstallerAsync(result.DownloadUrl, null, ct)
-                .ConfigureAwait(false);
-            LaunchInstaller(installerPath, silent: true);
-            UiDispatcher.BeginInvokeSafe(ShutdownApplicationForUpdate);
-            return true;
+            return BeginDetachedUpdateAndShutdown(result);
         }
         catch (Exception ex)
         {
@@ -96,12 +92,18 @@ public sealed class UpdateService
             return false;
         }
 
+        if (silentInstall)
+        {
+            return BeginDetachedUpdateAndShutdown(update);
+        }
+
         await _gate.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             var installerPath = await DownloadInstallerAsync(update.DownloadUrl, progress, ct)
                 .ConfigureAwait(false);
-            LaunchInstaller(installerPath, silentInstall);
+            LaunchInstaller(installerPath, silent: false);
+            ShutdownApplicationForUpdate();
             return true;
         }
         finally
@@ -109,6 +111,81 @@ public sealed class UpdateService
             _gate.Release();
         }
     }
+
+    /// <summary>
+    /// Spawns a background updater, closes Beats immediately, then installs and relaunches.
+    /// </summary>
+    public bool BeginDetachedUpdateAndShutdown(UpdateCheckResult update)
+    {
+        if (!update.IsUpdateAvailable || string.IsNullOrWhiteSpace(update.DownloadUrl))
+        {
+            return false;
+        }
+
+        try
+        {
+            var scriptPath = WriteDetachedUpdateScript(update.DownloadUrl);
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments =
+                    $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{scriptPath}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            });
+
+            ShutdownApplicationForUpdate();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "UpdateService.BeginDetachedUpdateAndShutdown");
+            return false;
+        }
+    }
+
+    private static string WriteDetachedUpdateScript(string downloadUrl)
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "Beats-updates");
+        Directory.CreateDirectory(dir);
+        var scriptPath = Path.Combine(dir, "apply-update.ps1");
+        var installerPath = Path.Combine(dir, InstallerAssetName);
+        var logPath = Path.Combine(dir, "apply-update.log");
+
+        var script = $$"""
+            $ErrorActionPreference = 'Stop'
+            $url = '{{EscapeForPowerShellSingleQuoted(downloadUrl)}}'
+            $out = '{{EscapeForPowerShellSingleQuoted(installerPath)}}'
+            $log = '{{EscapeForPowerShellSingleQuoted(logPath)}}'
+
+            function Write-Log([string]$Message) {
+                Add-Content -Path $log -Value ("[{0}] {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Message)
+            }
+
+            try {
+                New-Item -ItemType Directory -Force -Path (Split-Path $out) | Out-Null
+                Write-Log 'Downloading update...'
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing -Headers @{ 'User-Agent' = 'Beats-Updater' }
+                Write-Log 'Launching installer...'
+                $proc = Start-Process -FilePath $out -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS' -PassThru -Wait
+                if ($proc.ExitCode -ne 0) {
+                    throw "Installer exited with code $($proc.ExitCode)."
+                }
+                Write-Log 'Update finished.'
+            }
+            catch {
+                Write-Log $_.Exception.Message
+                exit 1
+            }
+            """;
+
+        File.WriteAllText(scriptPath, script);
+        return scriptPath;
+    }
+
+    private static string EscapeForPowerShellSingleQuoted(string value) =>
+        value.Replace("'", "''");
 
     private async Task<UpdateCheckResult?> FetchLatestReleaseAsync(CancellationToken ct)
     {
@@ -175,7 +252,7 @@ public sealed class UpdateService
     public static void LaunchInstaller(string installerPath, bool silent = false)
     {
         var args = silent
-            ? "/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS"
+            ? "/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS"
             : string.Empty;
 
         Process.Start(new ProcessStartInfo

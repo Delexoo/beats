@@ -96,13 +96,7 @@ public partial class App : Application
                 args.Handled = true;
             };
 
-            var widget = new WidgetWindow();
-            var toggle = new HideToggleWindow(widget);
-
-            widget.Show();
-            toggle.Show();
-
-            _ = Updates.TryAutoUpdateOnStartupAsync();
+            _ = StartApplicationAsync();
         }
         catch (Exception ex)
         {
@@ -121,6 +115,29 @@ public partial class App : Application
                 AppBranding.DisplayName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
+            Shutdown(1);
+        }
+    }
+
+    private async Task StartApplicationAsync()
+    {
+        try
+        {
+            if (await Updates.TryAutoUpdateOnStartupAsync().ConfigureAwait(true))
+            {
+                return;
+            }
+
+            var widget = new WidgetWindow();
+            var toggle = new HideToggleWindow(widget);
+
+            widget.Show();
+            toggle.Show();
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "App.StartApplicationAsync");
+            ModernMessageBox.ShowError($"Could not start {AppBranding.DisplayName}: {ex.Message}");
             Shutdown(1);
         }
     }

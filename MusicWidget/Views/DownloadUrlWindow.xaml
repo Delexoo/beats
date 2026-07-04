@@ -19,10 +19,12 @@
 
   <Window.Resources>
     <Style x:Key="PlatformBadge" TargetType="Border">
-      <Setter Property="Width" Value="30"/>
-      <Setter Property="Height" Value="30"/>
-      <Setter Property="CornerRadius" Value="7"/>
+      <Setter Property="Width" Value="32"/>
+      <Setter Property="Height" Value="32"/>
+      <Setter Property="CornerRadius" Value="8"/>
       <Setter Property="Margin" Value="0,0,7,0"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="ClipToBounds" Value="True"/>
       <Setter Property="SnapsToDevicePixels" Value="True"/>
       <Setter Property="UseLayoutRounding" Value="True"/>
     </Style>
@@ -66,41 +68,29 @@
       </Grid>
 
       <WrapPanel Margin="0,0,0,8">
-        <Border Style="{StaticResource PlatformBadge}"
-                Background="#FF0000"
-                ToolTip="YouTube">
-          <Viewbox Margin="4">
-            <Image Source="pack://application:,,,/Assets/youtube.png"
-                   Stretch="Uniform"
-                   RenderOptions.BitmapScalingMode="HighQuality"/>
-          </Viewbox>
+        <Border Style="{StaticResource PlatformBadge}" ToolTip="YouTube">
+          <Image Source="/Assets/youtube.png"
+                 Stretch="Uniform"
+                 Margin="1"
+                 RenderOptions.BitmapScalingMode="HighQuality"/>
         </Border>
-        <Border Style="{StaticResource PlatformBadge}"
-                Background="Transparent"
-                ToolTip="Spotify">
-          <Viewbox Margin="2">
-            <Image Source="pack://application:,,,/Assets/Spotify.png"
-                   Stretch="Uniform"
-                   RenderOptions.BitmapScalingMode="HighQuality"/>
-          </Viewbox>
+        <Border Style="{StaticResource PlatformBadge}" ToolTip="Spotify">
+          <Image Source="/Assets/Spotify.png"
+                 Stretch="Uniform"
+                 Margin="1"
+                 RenderOptions.BitmapScalingMode="HighQuality"/>
         </Border>
-        <Border Style="{StaticResource PlatformBadge}"
-                Background="Transparent"
-                ToolTip="Instagram">
-          <Viewbox Margin="2">
-            <Image Source="pack://application:,,,/Assets/instagram.jpg"
-                   Stretch="Uniform"
-                   RenderOptions.BitmapScalingMode="HighQuality"/>
-          </Viewbox>
+        <Border Style="{StaticResource PlatformBadge}" ToolTip="Instagram">
+          <Image Source="/Assets/instagram.jpg"
+                 Stretch="Uniform"
+                 Margin="1"
+                 RenderOptions.BitmapScalingMode="HighQuality"/>
         </Border>
-        <Border Style="{StaticResource PlatformBadge}"
-                Background="Transparent"
-                ToolTip="TikTok">
-          <Viewbox Margin="2">
-            <Image Source="pack://application:,,,/Assets/tiktok.png"
-                   Stretch="Uniform"
-                   RenderOptions.BitmapScalingMode="HighQuality"/>
-          </Viewbox>
+        <Border Style="{StaticResource PlatformBadge}" ToolTip="TikTok">
+          <Image Source="/Assets/tiktok.png"
+                 Stretch="Uniform"
+                 Margin="1"
+                 RenderOptions.BitmapScalingMode="HighQuality"/>
         </Border>
         <Border Style="{StaticResource PlatformBadge}"
                 Background="{StaticResource Brush.SurfaceHigh}"

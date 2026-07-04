@@ -82,7 +82,6 @@ public partial class SettingsPanel : UserControl
     private DispatcherTimer? _backgroundDownloadHideTimer;
     private UpdateCheckResult? _pendingUpdate;
     private bool _updateCheckInFlight;
-    private bool _updateInstallInFlight;
 
     public SettingsPanel()
     {
@@ -650,6 +649,11 @@ public partial class SettingsPanel : UserControl
                 FileName = HelpPageUrl,
                 UseShellExecute = true,
             });
+
+            if (Window.GetWindow(this) is WidgetWindow widget)
+            {
+                widget.MinimizeWidget();
+            }
         }
         catch (Exception ex)
         {
@@ -2007,7 +2011,7 @@ public partial class SettingsPanel : UserControl
 
     private async Task CheckForUpdatesAsync(bool showUpToDateMessage)
     {
-        if (_updateCheckInFlight || _updateInstallInFlight || !_isPanelActive
+        if (_updateCheckInFlight || !_isPanelActive
             || App.Updates.IsAutoUpdateRunning)
         {
             return;
@@ -2072,10 +2076,17 @@ public partial class SettingsPanel : UserControl
 
         UpdateButton.Visibility = Visibility.Visible;
         UpdateButton.IsEnabled = false;
+        UpdateButton.Padding = new Thickness(9, 5, 9, 5);
         UpdateButton.Style = (Style)FindResource("FlatButton");
         UpdateButton.ToolTip = "Checking for updates...";
+        if (UpdateButtonLabel is not null)
+        {
+            UpdateButtonLabel.Visibility = Visibility.Collapsed;
+        }
+
         if (UpdateButtonIcon is not null)
         {
+            UpdateButtonIcon.Margin = new Thickness(0);
             UpdateButtonIcon.Fill = (Brush)FindResource("Brush.TextDim");
         }
     }
@@ -2088,44 +2099,54 @@ public partial class SettingsPanel : UserControl
         }
 
         UpdateButton.Visibility = Visibility.Visible;
-        UpdateButton.IsEnabled = !_updateInstallInFlight;
+        UpdateButton.IsEnabled = true;
 
         if (result?.IsUpdateAvailable == true)
         {
+            UpdateButton.Padding = new Thickness(9, 5, 9, 5);
             UpdateButton.Style = (Style)FindResource("PrimaryButton");
             UpdateButton.ToolTip = $"Version {result.LatestVersion} is available. Click to download and install.";
+            if (UpdateButtonLabel is not null)
+            {
+                UpdateButtonLabel.Visibility = Visibility.Visible;
+            }
+
             if (UpdateButtonIcon is not null)
             {
+                UpdateButtonIcon.Margin = new Thickness(0, 0, 5, 0);
                 UpdateButtonIcon.Fill = Brushes.White;
             }
+
             return;
         }
 
+        UpdateButton.Padding = new Thickness(9, 5, 9, 5);
         UpdateButton.Style = (Style)FindResource("FlatButton");
         UpdateButton.ToolTip = $"You are on the latest version (v{App.Updates.CurrentVersion}). Click to check again.";
+        if (UpdateButtonLabel is not null)
+        {
+            UpdateButtonLabel.Visibility = Visibility.Collapsed;
+        }
+
         if (UpdateButtonIcon is not null)
         {
+            UpdateButtonIcon.Margin = new Thickness(0);
             UpdateButtonIcon.Fill = (Brush)FindResource("Brush.TextDim");
         }
     }
 
     private async void UpdateButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_updateInstallInFlight)
-        {
-            return;
-        }
-
         if (_pendingUpdate?.IsUpdateAvailable == true)
         {
-            await InstallPendingUpdateAsync().ConfigureAwait(true);
+            InstallPendingUpdateAsync();
             return;
         }
 
         await CheckForUpdatesAsync(showUpToDateMessage: true).ConfigureAwait(true);
     }
 
-    private async Task InstallPendingUpdateAsync()
+    private void InstallPendingUpdateAsync()
     {
         var update = _pendingUpdate;
         if (update is null || !update.IsUpdateAvailable)
@@ -2152,7 +2173,7 @@ public partial class SettingsPanel : UserControl
         }
 
         var confirmed = ModernMessageBox.ConfirmYesNo(
-            $"Download and install Beats {update.LatestVersion}?\n\nBeats will close so the installer can update.",
+            $"Install Beats {update.LatestVersion}?\n\nBeats will close now, install the update, and reopen automatically.",
             "Install update",
             ModernMessageBox.Severity.Question);
         if (!confirmed)
@@ -2160,35 +2181,9 @@ public partial class SettingsPanel : UserControl
             return;
         }
 
-        _updateInstallInFlight = true;
-        UpdateButton.IsEnabled = false;
-        UpdateButton.ToolTip = "Downloading update...";
-
-        try
+        if (!App.Updates.BeginDetachedUpdateAndShutdown(update))
         {
-            var progress = new Progress<double>(percent =>
-            {
-                UiDispatcher.BeginInvokeSafe(() =>
-                {
-                    UpdateButton.ToolTip = $"Downloading update... {percent * 100:0}%";
-                });
-            });
-
-            if (!await App.Updates
-                    .DownloadAndInstallAsync(update, progress, silentInstall: false)
-                    .ConfigureAwait(true))
-            {
-                ModernMessageBox.ShowWarning("Could not download the update.");
-                return;
-            }
-
-            ExitApp_Click(this, new RoutedEventArgs());
-        }
-        catch (Exception ex)
-        {
-            _updateInstallInFlight = false;
-            ApplyUpdateButtonState(_pendingUpdate);
-            ModernMessageBox.ShowWarning("Could not download update: " + ex.Message);
+            ModernMessageBox.ShowWarning("Could not start the update.");
         }
     }
 
