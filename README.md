@@ -87,7 +87,7 @@ The project site is hosted on **GitHub Pages** at **[delexoo.github.io/beats](ht
 | **Home** | [delexoo.github.io/beats](https://delexoo.github.io/beats/) | Download, features, how it works, interactive widget preview |
 | **Help** | [delexoo.github.io/beats/help.html](https://delexoo.github.io/beats/help.html) | Full user manual — setup, shortcuts, downloads, troubleshooting |
 
-The site lives in the [`website/`](website/) folder and deploys automatically when you push to `master` (see [Deploy the website](#deploy-the-website-github-pages) below).
+The site lives in the [`website/`](website/) folder and deploys automatically when you push to `main` (see [Deploy the website](#deploy-the-website-github-pages) below).
 
 ---
 
@@ -464,9 +464,9 @@ Each release uploads `Beats-Setup-x64.exe` under a stable filename so the websit
 
 <br />
 
-The landing page in `/website` deploys automatically on push to `master`.
+The landing page in `/website` deploys automatically on push to `main`.
 
-Manual setup (one-time): **Settings → Pages → Source:** Deploy from branch `master`, folder `/website`.
+Manual setup (one-time): **Settings → Pages → Source:** Deploy from branch `main`, folder `/website`.
 
 Live URL: **[delexoo.github.io/beats](https://delexoo.github.io/beats/)**
 
