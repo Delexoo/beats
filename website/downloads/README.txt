@@ -1,0 +1,15 @@
+Place the built installer here so the download button works when previewing locally:
+
+  Beats-Setup-x64.exe
+
+Copy from:
+
+  ..\Installer\Output\Beats-Setup-x64.exe
+
+after running Installer\Build-Installer.ps1 (the script copies it here automatically).
+
+When the site is live on GitHub, the Download button uses the latest release:
+
+  https://github.com/Delexoo/beats/releases/latest/download/Beats-Setup-x64.exe
+
+Update the beats-repo meta tag in website/index.html once your repo is created.

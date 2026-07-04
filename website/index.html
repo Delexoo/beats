@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Beats — Desktop player for Windows</title>
+  <meta name="description" content="Beats is a minimal, always-on-top music player for Windows. Play local playlists, download tracks from the web, and control everything from a floating pill." />
+  <!-- Set this to your GitHub repo (owner/name) so the Download button always serves the latest release. -->
+  <meta name="beats-repo" content="Delexoo/beats" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #0a0a0a;
+      --text-muted: #525252;
+      --border: #e5e5e5;
+      --surface: #f5f5f5;
+      --surface-hover: #ebebeb;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 72px 32px 96px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 32px;
+    }
+
+    .badge svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: clamp(2.25rem, 5vw, 3.25rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+      margin-bottom: 20px;
+      max-width: 14ch;
+    }
+
+    .lead {
+      font-size: 1.0625rem;
+      color: var(--text-muted);
+      max-width: 42ch;
+      margin-bottom: 36px;
+      line-height: 1.65;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 56px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 999px;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .btn-primary {
+      background: var(--text);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #262626;
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text-muted);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .meta {
+      font-size: 0.8125rem;
+      color: #a3a3a3;
+      margin-top: -40px;
+      margin-bottom: 64px;
+    }
+
+    .section {
+      border-top: 1px solid var(--border);
+      padding-top: 40px;
+      margin-bottom: 40px;
+    }
+
+    .section h2 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #a3a3a3;
+      margin-bottom: 20px;
+    }
+
+    .features {
+      list-style: none;
+      display: grid;
+      gap: 16px;
+    }
+
+    .features li {
+      font-size: 0.9375rem;
+      color: var(--text-muted);
+      padding-left: 16px;
+      border-left: 2px solid var(--border);
+    }
+
+    .features strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding-top: 32px;
+      font-size: 0.8125rem;
+      color: #a3a3a3;
+    }
+
+    footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="badge" aria-hidden="true">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="2" width="5" height="5" rx="1"/>
+        <rect x="9" y="2" width="5" height="5" rx="1"/>
+        <rect x="2" y="9" width="5" height="5" rx="1"/>
+        <rect x="9" y="9" width="5" height="5" rx="1"/>
+      </svg>
+      Windows app
+    </div>
+
+    <h1>Your music, always within reach.</h1>
+    <p class="lead">
+      Beats is a floating desktop player for Windows. Play local playlists, download tracks from YouTube, Spotify, TikTok, and more — all from a minimal pill on your screen.
+    </p>
+
+    <div class="actions">
+      <a id="download-btn" class="btn btn-primary" href="downloads/Beats-Setup-x64.exe">
+        Download
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 4l4 4-4 4"/>
+        </svg>
+      </a>
+      <a id="github-btn" class="btn btn-secondary" href="#" target="_blank" rel="noopener">
+        View on GitHub
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 4l4 4-4 4"/>
+        </svg>
+      </a>
+    </div>
+    <p class="meta" id="version-meta">Windows 10 / 11 · 64-bit · Published by Delexo</p>
+
+    <section class="section">
+      <h2>Features</h2>
+      <ul class="features">
+        <li><strong>Floating pill</strong> — compact controls that stay on top of other apps.</li>
+        <li><strong>Folder playlists</strong> — your library stays portable on disk.</li>
+        <li><strong>Download from web</strong> — paste a link; MP3s save into your playlist.</li>
+        <li><strong>Hide &amp; show</strong> — slide off-screen with Ctrl+\ or the top chevron.</li>
+      </ul>
+    </section>
+
+    <footer>
+      <p>© Delexo · <a href="https://delexo.store">delexo.store</a></p>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const ASSET = "Beats-Setup-x64.exe";
+      const repoMeta = document.querySelector('meta[name="beats-repo"]');
+      const repo = repoMeta && repoMeta.content && !repoMeta.content.includes("YOUR_USERNAME")
+        ? repoMeta.content.trim()
+        : null;
+
+      const downloadBtn = document.getElementById("download-btn");
+      const githubBtn = document.getElementById("github-btn");
+      const versionMeta = document.getElementById("version-meta");
+
+      if (repo) {
+        downloadBtn.href = "https://github.com/" + repo + "/releases/latest/download/" + ASSET;
+        githubBtn.href = "https://github.com/" + repo;
+
+        fetch("https://api.github.com/repos/" + repo + "/releases/latest")
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (data && data.tag_name) {
+              var v = data.tag_name.replace(/^v/i, "");
+              versionMeta.textContent = "Version " + v + " · Windows 10 / 11 · 64-bit · Published by Delexo";
+            }
+          })
+          .catch(function () {});
+      } else {
+        githubBtn.style.display = "none";
+      }
+    })();
+  </script>
+</body>
+</html>

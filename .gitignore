@@ -1,0 +1,22 @@
+# Build output
+**/bin/
+**/obj/
+**/_verify*/
+**/_verify_*/
+
+# User / IDE
+.vs/
+*.user
+*.suo
+*.cache
+
+# Installer artifact (rebuild with Installer\Build-Installer.ps1)
+Installer/Output/*.exe
+
+# Large download binary (copy locally after build; see website/downloads/README.txt)
+website/downloads/*.exe
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store

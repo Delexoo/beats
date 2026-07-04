@@ -1,0 +1,185 @@
+<Window x:Class="MusicWidget.Views.DownloadUrlWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Paste audio link"
+        Icon="pack://application:,,,/Assets/AppIcon.ico"
+        Width="400"
+        SizeToContent="Height"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Topmost="True"
+        ShowInTaskbar="False"
+        FontFamily="{StaticResource Font.Body}"
+        FontSize="12"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType">
+
+  <Window.Resources>
+    <Style x:Key="PlatformBadge" TargetType="Border">
+      <Setter Property="Width" Value="30"/>
+      <Setter Property="Height" Value="30"/>
+      <Setter Property="CornerRadius" Value="7"/>
+      <Setter Property="Margin" Value="0,0,7,0"/>
+      <Setter Property="SnapsToDevicePixels" Value="True"/>
+      <Setter Property="UseLayoutRounding" Value="True"/>
+    </Style>
+  </Window.Resources>
+
+  <Border Background="{StaticResource Brush.Surface}"
+          BorderBrush="{StaticResource Brush.Border}"
+          BorderThickness="1"
+          CornerRadius="12"
+          Padding="14">
+    <Border.Effect>
+      <DropShadowEffect Color="Black" Opacity="0.45" BlurRadius="20" ShadowDepth="4"/>
+    </Border.Effect>
+    <StackPanel>
+      <Grid Margin="0,0,0,4">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0">
+          <TextBlock Text="Paste audio link"
+                     Foreground="{StaticResource Brush.Text}"
+                     FontFamily="{StaticResource Font.Display}"
+                     FontWeight="SemiBold"
+                     FontSize="13"/>
+          <TextBlock x:Name="TargetPlaylistText"
+                     Foreground="{StaticResource Brush.TextDim}"
+                     FontSize="10.5"
+                     Margin="0,2,0,0"
+                     TextWrapping="Wrap"/>
+        </StackPanel>
+        <Button Grid.Column="1"
+                Style="{StaticResource IconGhostButton}"
+                ToolTip="Close"
+                Click="Close_Click">
+          <Path Data="{StaticResource Icon.Close}"
+                Fill="{StaticResource Brush.TextDim}"
+                Stretch="Uniform"
+                Width="14" Height="14"/>
+        </Button>
+      </Grid>
+
+      <WrapPanel Margin="0,0,0,8">
+        <Border Style="{StaticResource PlatformBadge}"
+                Background="{StaticResource Brush.Brand.YouTube}"
+                ToolTip="YouTube">
+          <Viewbox Margin="7">
+            <Path Data="{StaticResource Icon.Brand.YouTube}" Fill="White"/>
+          </Viewbox>
+        </Border>
+        <Border Style="{StaticResource PlatformBadge}"
+                Background="{StaticResource Brush.Brand.Spotify}"
+                ToolTip="Spotify">
+          <Viewbox Margin="5">
+            <Path Data="{StaticResource Icon.Brand.Spotify}"
+                  Stroke="White"
+                  StrokeThickness="1.65"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
+                  Fill="Transparent"/>
+          </Viewbox>
+        </Border>
+        <Border Style="{StaticResource PlatformBadge}"
+                Background="{StaticResource Brush.Brand.Instagram}"
+                ToolTip="Instagram">
+          <Viewbox Margin="6">
+            <Path Data="{StaticResource Icon.Brand.Instagram}"
+                  Stroke="White"
+                  StrokeThickness="1.45"
+                  Fill="Transparent"/>
+          </Viewbox>
+        </Border>
+        <Border Style="{StaticResource PlatformBadge}"
+                Background="{StaticResource Brush.Brand.TikTok}"
+                BorderBrush="#FF2F2F2F"
+                BorderThickness="1"
+                ToolTip="TikTok">
+          <Viewbox Margin="6">
+            <Path Data="{StaticResource Icon.Brand.TikTok}" Fill="White"/>
+          </Viewbox>
+        </Border>
+        <Border Style="{StaticResource PlatformBadge}"
+                Background="{StaticResource Brush.Brand.SoundCloud}"
+                ToolTip="SoundCloud">
+          <Viewbox Margin="5">
+            <Path Data="{StaticResource Icon.Brand.SoundCloud}" Fill="White"/>
+          </Viewbox>
+        </Border>
+        <Border Style="{StaticResource PlatformBadge}"
+                Background="{StaticResource Brush.SurfaceHigh}"
+                BorderBrush="{StaticResource Brush.Border}"
+                BorderThickness="1"
+                ToolTip="Twitter / X, Facebook, Reddit, and more">
+          <Viewbox Margin="7">
+            <Path Data="{StaticResource Icon.Apps}"
+                  Fill="{StaticResource Brush.TextDim}"/>
+          </Viewbox>
+        </Border>
+      </WrapPanel>
+
+      <TextBlock Text="For playlists, ensure they are unlisted or public. Downloads work without browser cookies."
+                 Foreground="{StaticResource Brush.TextDim}"
+                 FontSize="10"
+                 TextWrapping="Wrap"
+                 Margin="0,0,0,10"/>
+
+      <TextBox x:Name="UrlBox"
+               Style="{StaticResource DarkTextBox}"
+               Margin="0,0,0,10"
+               ToolTip="Paste a link (Ctrl+V)"/>
+
+      <Button x:Name="DownloadButton"
+              HorizontalAlignment="Stretch"
+              Style="{StaticResource PrimaryButton}"
+              Padding="12,8"
+              FontWeight="SemiBold"
+              Content="Download"
+              Click="Download_Click"/>
+
+      <ProgressBar x:Name="DownloadProgress"
+                   Height="5"
+                   Minimum="0"
+                   Maximum="100"
+                   Value="0"
+                   Foreground="{StaticResource Brush.Blue}"
+                   Background="{StaticResource Brush.SurfaceHigh}"
+                   BorderThickness="0"
+                   Margin="0,10,0,4"
+                   Visibility="Collapsed"/>
+
+      <Grid x:Name="ProgressDetailRow"
+            Margin="0,0,0,2"
+            Visibility="Collapsed">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock x:Name="DownloadCountText"
+                   Grid.Column="0"
+                   Foreground="{StaticResource Brush.TextDim}"
+                   FontSize="10.5"
+                   VerticalAlignment="Center"/>
+        <TextBlock x:Name="DownloadSongText"
+                   Grid.Column="1"
+                   Foreground="{StaticResource Brush.Text}"
+                   FontSize="10.5"
+                   HorizontalAlignment="Right"
+                   TextAlignment="Right"
+                   TextTrimming="CharacterEllipsis"
+                   VerticalAlignment="Center"
+                   Margin="8,0,0,0"/>
+      </Grid>
+
+      <TextBlock x:Name="DownloadStatus"
+                 Foreground="{StaticResource Brush.TextDim}"
+                 FontSize="10.5"
+                 TextWrapping="Wrap"/>
+    </StackPanel>
+  </Border>
+</Window>
