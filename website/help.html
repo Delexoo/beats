@@ -14,38 +14,41 @@
     :root {
       --bg: #ffffff;
       --text: #111111;
-      --text-muted: #6b7280;
-      --text-faint: #9ca3af;
+      --muted: #6b7280;
+      --faint: #9ca3af;
       --border: #e5e7eb;
-      --surface: #f3f4f6;
-      --surface-alt: #f9fafb;
-      --blue: #2563eb;
-      --blue-soft: #eff6ff;
-      --max-w: 1120px;
-      --sidebar-w: 220px;
-      --header-h: 56px;
+      --surface: #f9fafb;
+      --surface-2: #f3f4f6;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --dark: #161a22;
+      --radius: 12px;
+      --header-h: 60px;
+      --sidebar-w: 240px;
+      --content-max: 720px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     html {
       scroll-behavior: smooth;
-      scroll-padding-top: calc(var(--header-h) + 24px);
+      scroll-padding-top: calc(var(--header-h) + 20px);
     }
 
     body {
-      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      font-family: "Inter", system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
       font-size: 15px;
-      line-height: 1.65;
+      line-height: 1.6;
       -webkit-font-smoothing: antialiased;
     }
 
-    a { color: var(--blue); text-decoration: none; }
+    a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    .site-header {
+    /* Header */
+    .header {
       position: sticky;
       top: 0;
       z-index: 100;
@@ -54,15 +57,14 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 24px;
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
     }
 
     .brand {
       font-family: "Anton", sans-serif;
-      font-weight: 400;
-      font-size: 1.125rem;
+      font-size: 1.25rem;
       letter-spacing: 0.02em;
       color: var(--text);
       text-decoration: none;
@@ -70,81 +72,71 @@
 
     .brand:hover { text-decoration: none; }
 
-    .header-links {
+    .nav {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
       font-size: 0.875rem;
     }
 
-    .header-links a {
-      color: var(--text-muted);
+    .nav a {
+      color: var(--muted);
       text-decoration: none;
     }
 
-    .header-links a:hover { color: var(--text); text-decoration: none; }
+    .nav a:hover { color: var(--text); text-decoration: none; }
+    .nav a.active { color: var(--text); font-weight: 500; }
 
-    .header-links a[aria-current="page"] {
-      color: var(--text);
-      font-weight: 500;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 7px 14px;
+    .btn-dl {
+      padding: 8px 16px;
       border-radius: 8px;
+      background: var(--text);
+      color: #fff;
       font-size: 0.8125rem;
       font-weight: 500;
       text-decoration: none;
-      border: 1px solid transparent;
-      transition: background 0.15s;
     }
 
-    .btn-primary {
-      background: var(--text);
-      color: #fff;
-    }
-
-    .btn-primary:hover {
+    .btn-dl:hover {
       background: #1f2937;
       text-decoration: none;
     }
 
-    .page-wrap {
-      max-width: var(--max-w);
+    /* Layout */
+    .layout {
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 40px 24px 80px;
+      padding: 48px 24px 80px;
       display: grid;
       grid-template-columns: var(--sidebar-w) 1fr;
-      gap: 48px;
+      gap: 56px;
       align-items: start;
     }
 
-    @media (max-width: 860px) {
-      .page-wrap {
+    @media (max-width: 900px) {
+      .layout {
         grid-template-columns: 1fr;
         gap: 32px;
-        padding-top: 28px;
+        padding-top: 32px;
       }
     }
 
+    /* Sidebar */
     .sidebar {
       position: sticky;
       top: calc(var(--header-h) + 24px);
     }
 
-    @media (max-width: 860px) {
+    @media (max-width: 900px) {
       .sidebar { position: static; }
     }
 
-    .sidebar-label {
+    .sidebar-title {
       font-size: 0.6875rem;
       font-weight: 600;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--text-faint);
+      color: var(--faint);
       margin-bottom: 12px;
     }
 
@@ -157,103 +149,138 @@
 
     .toc a {
       display: block;
-      padding: 6px 10px;
-      border-radius: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
       font-size: 0.8125rem;
-      color: var(--text-muted);
+      color: var(--muted);
       text-decoration: none;
-      border-left: 2px solid transparent;
-      margin-left: -2px;
+      transition: background 0.15s, color 0.15s;
     }
 
     .toc a:hover {
-      color: var(--text);
       background: var(--surface);
+      color: var(--text);
       text-decoration: none;
     }
 
-    .toc a.is-active {
+    .toc a.active {
+      background: var(--surface-2);
       color: var(--text);
       font-weight: 500;
-      border-left-color: var(--text);
-      background: var(--surface);
     }
 
-    @media (max-width: 860px) {
+    @media (max-width: 900px) {
       .toc {
         flex-direction: row;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 8px;
       }
 
       .toc a {
         border: 1px solid var(--border);
-        border-left: 1px solid var(--border);
-        padding: 5px 10px;
+        padding: 6px 12px;
       }
 
-      .toc a.is-active {
-        border-color: var(--text);
+      .toc a.active {
         background: var(--text);
         color: #fff;
+        border-color: var(--text);
       }
     }
 
-    .hero {
+    /* Main content */
+    .content { min-width: 0; max-width: var(--content-max); }
+
+    .page-hero {
       margin-bottom: 40px;
-      padding-bottom: 32px;
-      border-bottom: 1px solid var(--border);
     }
 
-    .hero h1 {
-      font-size: clamp(2rem, 4vw, 2.5rem);
+    .page-hero h1 {
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
       font-weight: 700;
-      letter-spacing: -0.04em;
-      line-height: 1.1;
-      margin-bottom: 10px;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 12px;
     }
 
-    .hero p {
-      color: var(--text-muted);
-      max-width: 52ch;
+    .page-hero p {
+      color: var(--muted);
       font-size: 1rem;
+      max-width: 48ch;
     }
 
-    .hero-meta {
-      margin-top: 14px;
-      font-size: 0.8125rem;
-      color: var(--text-faint);
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
     }
 
-    .quick-nav {
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    /* Quick links grid */
+    .quick-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
       margin-bottom: 48px;
-      max-width: 68ch;
     }
 
     @media (max-width: 560px) {
-      .quick-nav { grid-template-columns: 1fr; }
+      .quick-grid { grid-template-columns: 1fr; }
     }
 
-    .quick-nav a {
-      display: block;
-      padding: 14px 16px;
+    .quick-card {
+      display: flex;
+      gap: 14px;
+      padding: 16px;
       border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--surface-alt);
-      text-decoration: none;
-      transition: border-color 0.15s, background 0.15s;
-    }
-
-    .quick-nav a:hover {
-      border-color: #d1d5db;
+      border-radius: var(--radius);
       background: var(--surface);
       text-decoration: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    .quick-nav strong {
+    .quick-card:hover {
+      border-color: #d1d5db;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      text-decoration: none;
+    }
+
+    .quick-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: #fff;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--text);
+    }
+
+    .quick-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .quick-text strong {
       display: block;
       color: var(--text);
       font-size: 0.875rem;
@@ -261,79 +288,132 @@
       margin-bottom: 2px;
     }
 
-    .quick-nav span {
-      color: var(--text-muted);
+    .quick-text span {
+      color: var(--muted);
       font-size: 0.8125rem;
       line-height: 1.45;
     }
 
+    /* Sections */
     section {
-      margin-bottom: 48px;
-      scroll-margin-top: calc(var(--header-h) + 24px);
+      margin-bottom: 56px;
+      scroll-margin-top: calc(var(--header-h) + 20px);
     }
 
-    section h2 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      letter-spacing: -0.03em;
-      margin-bottom: 8px;
-      padding-top: 8px;
-    }
-
-    section > .lead {
-      color: var(--text-muted);
-      font-size: 0.9375rem;
-      margin-bottom: 20px;
-      max-width: 60ch;
-    }
-
-    h3 {
-      font-size: 0.9375rem;
-      font-weight: 600;
-      margin: 24px 0 8px;
-    }
-
-    p { margin-bottom: 12px; max-width: 68ch; }
-    p:last-child { margin-bottom: 0; }
-
-    ul, ol {
-      margin: 0 0 16px 0;
-      padding-left: 1.25rem;
-      max-width: 68ch;
-    }
-
-    li { margin-bottom: 6px; color: var(--text-muted); }
-    li strong { color: var(--text); font-weight: 600; }
-
-    .steps {
-      list-style: none;
-      padding: 0;
+    .section-head {
       display: flex;
-      flex-direction: column;
-      gap: 20px;
-      max-width: 68ch;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
     }
 
-    .steps li {
-      display: grid;
-      grid-template-columns: 32px 1fr;
-      gap: 14px;
-      align-items: start;
-      margin: 0;
-    }
-
-    .step-num {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--text);
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--dark);
       color: #fff;
-      font-size: 0.8125rem;
-      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+    }
+
+    .section-icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    section h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .lead {
+      color: var(--muted);
+      font-size: 0.9375rem;
+      margin-bottom: 20px;
+    }
+
+    h3 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin: 24px 0 10px;
+      color: var(--text);
+    }
+
+    p { margin-bottom: 12px; color: var(--muted); }
+    p:last-child { margin-bottom: 0; }
+
+    /* Icon bullet list */
+    .list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 0 0 16px;
+    }
+
+    .list li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      color: var(--muted);
+      font-size: 0.9375rem;
+    }
+
+    .list li::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-top: 8px;
+      flex-shrink: 0;
+    }
+
+    .list li strong { color: var(--text); font-weight: 600; }
+
+    /* Numbered steps */
+    .steps {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .steps li {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .steps li:last-child { border-bottom: none; }
+
+    .step-num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--faint);
+      border-right: 1px solid var(--border);
+    }
+
+    .step-body {
+      padding: 16px 18px;
     }
 
     .step-body strong {
@@ -345,77 +425,121 @@
     }
 
     .step-body span {
-      color: var(--text-muted);
+      color: var(--muted);
       font-size: 0.875rem;
-      line-height: 1.6;
+      line-height: 1.55;
     }
 
-    .shortcut-table {
-      width: 100%;
-      max-width: 68ch;
-      border-collapse: collapse;
+    /* Callout */
+    .note {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      border: 1px solid #bfdbfe;
+      background: var(--accent-soft);
+      margin: 20px 0;
+      font-size: 0.875rem;
+      color: #1e40af;
+    }
+
+    .note svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .note strong { color: #1d4ed8; }
+
+    .tip {
+      border-color: var(--border);
+      background: var(--surface);
+      color: var(--muted);
+    }
+
+    .tip strong { color: var(--text); }
+
+    /* Shortcuts */
+    .keys {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
       margin-bottom: 16px;
-      font-size: 0.875rem;
     }
 
-    .shortcut-table th,
-    .shortcut-table td {
-      text-align: left;
-      padding: 10px 12px;
+    .key-row {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 16px;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--border);
-      vertical-align: top;
+      align-items: center;
     }
 
-    .shortcut-table th {
-      font-size: 0.6875rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-faint);
-      background: var(--surface-alt);
+    .key-row:last-child { border-bottom: none; }
+
+    .key-row:nth-child(odd) { background: var(--surface); }
+
+    .key-combo {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
     }
 
-    .shortcut-table td:first-child { width: 42%; white-space: nowrap; }
-    .shortcut-table td:last-child { color: var(--text-muted); }
+    .key-desc {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
 
-    kbd, .kbd {
+    kbd {
       display: inline-block;
       padding: 2px 7px;
       border-radius: 5px;
       border: 1px solid var(--border);
-      background: var(--surface);
+      background: #fff;
       font-family: inherit;
       font-size: 0.8125rem;
       font-weight: 500;
       color: var(--text);
-      box-shadow: 0 1px 0 rgba(0,0,0,0.04);
-      margin: 0 1px;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
     }
 
-    .callout {
-      max-width: 68ch;
-      padding: 14px 16px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--surface-alt);
-      margin: 16px 0;
-      font-size: 0.875rem;
-      color: var(--text-muted);
+    /* Platform badges */
+    .platforms {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 16px;
     }
 
-    .callout strong { color: var(--text); }
-
-    .callout-tip {
-      border-color: #bfdbfe;
-      background: var(--blue-soft);
+    .platform {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
 
-    .callout-tip strong { color: #1d4ed8; }
+    .platform img { width: 100%; height: 100%; object-fit: contain; }
+    .platform.spotify { background: #1db954; }
+    .platform.tiktok { background: #010101; }
+    .platform.soundcloud { background: #ff5500; }
+    .platform svg { width: 18px; height: 18px; fill: #fff; }
 
+    /* Code */
     code {
-      font-family: ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
+      font-family: ui-monospace, "Cascadia Code", monospace;
       font-size: 0.8125rem;
-      background: var(--surface);
+      background: var(--surface-2);
       border: 1px solid var(--border);
       border-radius: 4px;
       padding: 1px 6px;
@@ -423,14 +547,13 @@
     }
 
     pre {
-      max-width: 68ch;
-      padding: 14px 16px;
-      border-radius: 10px;
+      padding: 16px;
+      border-radius: var(--radius);
       border: 1px solid var(--border);
-      background: var(--surface-alt);
+      background: var(--surface);
       overflow-x: auto;
       font-size: 0.8125rem;
-      line-height: 1.5;
+      line-height: 1.55;
       margin: 12px 0 16px;
     }
 
@@ -440,8 +563,8 @@
       padding: 0;
     }
 
+    /* FAQ */
     .faq {
-      max-width: 68ch;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -449,7 +572,7 @@
 
     details {
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: var(--radius);
       overflow: hidden;
     }
 
@@ -464,78 +587,41 @@
       justify-content: space-between;
       gap: 12px;
       user-select: none;
+      color: var(--text);
     }
 
     summary::-webkit-details-marker { display: none; }
 
     summary::after {
       content: "+";
-      font-size: 1.1rem;
+      font-size: 1.125rem;
       font-weight: 400;
-      color: var(--text-faint);
-      flex-shrink: 0;
+      color: var(--faint);
     }
 
-    details[open] summary::after { content: "−"; }
+    details[open] summary::after { content: "-"; }
 
     details[open] summary {
       border-bottom: 1px solid var(--border);
-      background: var(--surface-alt);
+      background: var(--surface);
     }
 
     .faq-body {
       padding: 14px 16px;
       font-size: 0.875rem;
-      color: var(--text-muted);
+      color: var(--muted);
     }
 
-    .faq-body p { margin-bottom: 8px; }
-
-    .platform-badges {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-      margin: 16px 0 20px;
-    }
-
-    .platform-badge {
-      width: 30px;
-      height: 30px;
-      border-radius: 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-
-    .platform-badge img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: contain;
-    }
-
-    .platform-badge.spotify { background: #1db954; }
-    .platform-badge.tiktok { background: #010101; }
-    .platform-badge.soundcloud { background: #ff5500; }
-
-    .platform-badge svg {
-      width: 16px;
-      height: 16px;
-      fill: #fff;
-    }
-
-    .site-footer {
+    /* Footer */
+    .footer {
       border-top: 1px solid var(--border);
-      padding: 24px;
+      padding: 28px 24px;
       text-align: center;
       font-size: 0.8125rem;
-      color: var(--text-faint);
+      color: var(--faint);
     }
 
-    .site-footer a { color: var(--text-muted); }
+    .footer a { color: var(--muted); }
 
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
@@ -544,22 +630,22 @@
 </head>
 <body>
 
-  <header class="site-header">
+  <header class="header">
     <a class="brand" href="index.html">Beats.</a>
-    <nav class="header-links" aria-label="Site">
+    <nav class="nav" aria-label="Site">
       <a href="index.html">Home</a>
-      <a href="help.html" aria-current="page">Help</a>
+      <a href="help.html" class="active">Help</a>
       <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a>
-      <a class="btn btn-primary" id="download-link" href="downloads/Beats-Setup-x64.exe">Download</a>
+      <a class="btn-dl" id="download-link" href="#">Download</a>
     </nav>
   </header>
 
-  <div class="page-wrap">
-    <aside class="sidebar" aria-label="Table of contents">
-      <p class="sidebar-label">On this page</p>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Contents">
+      <p class="sidebar-title">Contents</p>
       <ul class="toc" id="toc">
         <li><a href="#getting-started">Getting started</a></li>
-        <li><a href="#widget">The widget</a></li>
+        <li><a href="#widget">Widget</a></li>
         <li><a href="#dashboard">Dashboard</a></li>
         <li><a href="#playlists">Playlists</a></li>
         <li><a href="#downloads">Downloads</a></li>
@@ -572,415 +658,417 @@
       </ul>
     </aside>
 
-    <main>
-      <div class="hero">
+    <main class="content">
+      <div class="page-hero">
         <h1>Help &amp; manual</h1>
-        <p>Install Beats, build playlists, download music, and control the floating widget on Windows - no account required.</p>
-        <p class="hero-meta">Windows 10 / 11 | 64-bit | Local playback only</p>
+        <p>Everything you need to install Beats, manage playlists, and control the floating player on Windows.</p>
+        <div class="tags">
+          <span class="tag">Windows 10 / 11</span>
+          <span class="tag">64-bit</span>
+          <span class="tag">No account</span>
+          <span class="tag">Local playback</span>
+        </div>
       </div>
 
-      <nav class="quick-nav" aria-label="Popular topics">
-        <a href="#getting-started">
-          <strong>Quick start</strong>
-          <span>Install and play your first song in five steps.</span>
+      <nav class="quick-grid" aria-label="Popular topics">
+        <a class="quick-card" href="#getting-started">
+          <span class="quick-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </span>
+          <span class="quick-text">
+            <strong>Quick start</strong>
+            <span>Install and play in five steps.</span>
+          </span>
         </a>
-        <a href="#downloads">
-          <strong>Download from web</strong>
-          <span>Paste a YouTube, Spotify, or TikTok link.</span>
+        <a class="quick-card" href="#downloads">
+          <span class="quick-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </span>
+          <span class="quick-text">
+            <strong>Download from web</strong>
+            <span>Paste a YouTube or Spotify link.</span>
+          </span>
         </a>
-        <a href="#shortcuts">
-          <strong>Shortcuts</strong>
-          <span>Hide the widget, open the dashboard, reset layout.</span>
+        <a class="quick-card" href="#shortcuts">
+          <span class="quick-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg>
+          </span>
+          <span class="quick-text">
+            <strong>Shortcuts</strong>
+            <span>Hide widget, open dashboard.</span>
+          </span>
         </a>
-        <a href="#youtube-cookies">
-          <strong>YouTube cookies</strong>
-          <span>Fix sign-in or bot-check download errors.</span>
+        <a class="quick-card" href="#youtube-cookies">
+          <span class="quick-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          </span>
+          <span class="quick-text">
+            <strong>YouTube cookies</strong>
+            <span>Fix sign-in or bot-check errors.</span>
+          </span>
         </a>
       </nav>
 
       <section id="getting-started">
-        <h2>Getting started</h2>
+        <div class="section-head">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </span>
+          <h2>Getting started</h2>
+        </div>
         <p class="lead">Install once, create a playlist, add music, and press play.</p>
 
-        <ul class="steps">
+        <ol class="steps">
           <li>
-            <span class="step-num" aria-hidden="true">1</span>
+            <span class="step-num">1</span>
             <div class="step-body">
               <strong>Install Beats</strong>
-              <span>Download and run <code>Beats-Setup-x64.exe</code> from the <a href="index.html">home page</a> or <a href="https://github.com/Delexoo/beats/releases/latest" target="_blank" rel="noopener">GitHub Releases</a>. Works on Windows 10 and 11 (64-bit).</span>
+              <span>Download <code>Beats-Setup-x64.exe</code> from the <a href="index.html">home page</a> or <a href="https://github.com/Delexoo/beats/releases/latest" target="_blank" rel="noopener">GitHub Releases</a>.</span>
             </div>
           </li>
           <li>
-            <span class="step-num" aria-hidden="true">2</span>
+            <span class="step-num">2</span>
             <div class="step-body">
               <strong>Open the dashboard</strong>
-              <span>Press <kbd>Ctrl</kbd> + <kbd>\</kbd>, or hover the widget and click the gear button.</span>
+              <span>Press <kbd>Ctrl</kbd> + <kbd>\</kbd>, or click the gear on the widget.</span>
             </div>
           </li>
           <li>
-            <span class="step-num" aria-hidden="true">3</span>
+            <span class="step-num">3</span>
             <div class="step-body">
               <strong>Create a playlist</strong>
-              <span>Click <strong>New Playlist</strong> in the sidebar and give it a name. Each playlist is a folder on your disk.</span>
+              <span>Click <strong>New Playlist</strong> in the sidebar. Each playlist is a folder on disk.</span>
             </div>
           </li>
           <li>
-            <span class="step-num" aria-hidden="true">4</span>
+            <span class="step-num">4</span>
             <div class="step-body">
               <strong>Add music</strong>
-              <span>Click the <strong>+</strong> on your playlist row, then choose <strong>Add files</strong>, <strong>Add folder</strong>, or <strong>Paste audio link</strong>.</span>
+              <span>Click <strong>+</strong> on a playlist, then choose <strong>Add files</strong>, <strong>Add folder</strong>, or <strong>Paste audio link</strong>.</span>
             </div>
           </li>
           <li>
-            <span class="step-num" aria-hidden="true">5</span>
+            <span class="step-num">5</span>
             <div class="step-body">
               <strong>Press play</strong>
-              <span>Double-click a song in the list, or use the play/pause button on the widget.</span>
+              <span>Double-click a song or use the play button on the widget.</span>
             </div>
           </li>
-        </ul>
+        </ol>
 
-        <div class="callout callout-tip">
-          <strong>First download?</strong> Beats automatically downloads <code>yt-dlp</code>, <code>ffmpeg</code>, and (for Spotify) <code>spotDL</code> on first use - about 130&nbsp;MB total, one time only.
+        <div class="note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span><strong>First download?</strong> Beats installs <code>yt-dlp</code>, <code>ffmpeg</code>, and <code>spotDL</code> automatically on first use (~130 MB, one time).</span>
         </div>
       </section>
 
       <section id="widget">
-        <h2>The widget</h2>
-        <p class="lead">A small floating pill that stays on top of every app.</p>
+        <div class="section-head">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="4"/></svg>
+          </span>
+          <h2>Widget</h2>
+        </div>
+        <p class="lead">A floating pill that stays on top of every app.</p>
+        <p>Shows album art, track info, and playback controls. No taskbar icon.</p>
 
-        <p>The widget shows album art, the current track, and playback controls. It has no taskbar icon and stays visible over other windows so you can control music without switching apps.</p>
+        <h3>Move</h3>
+        <p>Drag the <strong>album art</strong> to reposition anywhere on screen.</p>
 
-        <h3>Move the widget</h3>
-        <p>Drag the <strong>album art</strong> to reposition the pill anywhere on screen.</p>
-
-        <h3>Hide and show</h3>
-        <p>Press <kbd>Alt</kbd> + <kbd>\</kbd> to slide the widget off the nearest screen edge. Press the same shortcut again to bring it back. You can also click the small chevron tab at the top center of your screen.</p>
+        <h3>Hide &amp; show</h3>
+        <p>Press <kbd>Alt</kbd> + <kbd>\</kbd> to slide off the nearest edge, or click the chevron tab at the top of your screen.</p>
 
         <h3>Expanded controls</h3>
-        <p>Hover the widget to reveal loop and gear buttons. Turn on <strong>Extended widget</strong> in the dashboard header to keep those controls visible at all times.</p>
-
-        <h3>Minimize</h3>
-        <p>Click the minimize button in the dashboard header to hide the widget completely. Use the top chevron or <kbd>Alt</kbd> + <kbd>\</kbd> to show it again.</p>
+        <p>Hover to reveal loop and settings. Enable <strong>Extended widget</strong> in the dashboard to keep them visible.</p>
       </section>
 
       <section id="dashboard">
-        <h2>Dashboard</h2>
-        <p class="lead">Your control center for playlists, tracks, and playback.</p>
+        <div class="section-head">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </span>
+          <h2>Dashboard</h2>
+        </div>
+        <p class="lead">Your control center for playlists and playback.</p>
+        <p>Open with <kbd>Ctrl</kbd> + <kbd>\</kbd> or the gear button.</p>
 
-        <p>Open the dashboard with <kbd>Ctrl</kbd> + <kbd>\</kbd> or by clicking the gear button on the widget. It includes:</p>
-        <ul>
+        <ul class="list">
           <li><strong>Playlists sidebar</strong> - create, rename, delete, and pin playlists</li>
-          <li><strong>Track list</strong> - browse, play, drag to reorder, and remove songs</li>
-          <li><strong>Now playing footer</strong> - seek bar, volume, like/save, shuffle, and loop</li>
-          <li><strong>Header controls</strong> - extended widget toggle, layout reset, help, donate, minimize, and exit</li>
+          <li><strong>Track list</strong> - browse, play, drag to reorder, remove songs</li>
+          <li><strong>Now playing footer</strong> - seek, volume, like, save, shuffle, loop</li>
+          <li><strong>Header</strong> - extended widget, layout reset, help, minimize, exit</li>
         </ul>
 
-        <h3>Resize the dashboard</h3>
-        <p>Drag the edges to resize. Press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>\</kbd> to reset the widget position and dashboard size to defaults.</p>
-
-        <h3>Zoom the track list</h3>
-        <p>Hold <kbd>Ctrl</kbd> and scroll to scale song rows up or down.</p>
-
-        <h3>Liked Songs &amp; Saves</h3>
-        <p>Use the heart and bookmark icons in the footer to add tracks to <strong>Liked Songs</strong> or <strong>Saves</strong>. These collections appear at the bottom of the playlist sidebar.</p>
+        <h3>Resize &amp; zoom</h3>
+        <p>Drag edges to resize. <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>\</kbd> resets layout. Hold <kbd>Ctrl</kbd> and scroll to zoom the track list.</p>
       </section>
 
       <section id="playlists">
-        <h2>Playlists</h2>
-        <p class="lead">Simple folder-based libraries you own completely.</p>
+        <div class="section-head">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </span>
+          <h2>Playlists</h2>
+        </div>
+        <p class="lead">Folder-based libraries stored on your disk.</p>
+        <p>Default location: <code>%USERPROFILE%\Music\Beats</code></p>
 
-        <p>Every playlist is a folder. By default they live in <code>%USERPROFILE%\Music\Beats</code> (shown as <code>My Music\Beats</code> in File Explorer).</p>
-
-        <h3>Create &amp; manage</h3>
-        <ul>
-          <li><strong>New Playlist</strong> - creates a new folder</li>
-          <li><strong>Rename</strong> - right-click a playlist</li>
-          <li><strong>Delete</strong> - right-click a playlist (removes the folder and its files)</li>
-          <li><strong>Pin</strong> - right-click to pin a playlist above Liked/Saves</li>
+        <h3>Manage</h3>
+        <ul class="list">
+          <li><strong>New Playlist</strong> - create a folder</li>
+          <li><strong>Rename / Delete / Pin</strong> - right-click a playlist</li>
+          <li><strong>Add tracks</strong> - click <strong>+</strong> for files, folder, or link</li>
         </ul>
 
-        <h3>Add tracks</h3>
-        <p>Click the <strong>+</strong> on a playlist row:</p>
-        <ul>
-          <li><strong>Add files</strong> - pick individual songs from your computer</li>
-          <li><strong>Add folder</strong> - import an entire folder at once</li>
-          <li><strong>Paste audio link</strong> - download from YouTube, Spotify, TikTok, SoundCloud, and more</li>
-        </ul>
+        <h3>Formats</h3>
+        <p>MP3, WAV, FLAC, M4A, AAC, OGG, Opus, WMA, AIFF, ALAC.</p>
 
-        <h3>Supported audio formats</h3>
-        <p>MP3, WAV, FLAC, M4A, AAC, OGG, Opus, WMA, AIFF, and ALAC.</p>
-
-        <div class="callout">
-          <strong>Tip:</strong> You can add or remove files directly in File Explorer. Beats watches playlist folders and updates the track list automatically.
+        <div class="note tip">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.5 4.5-3.5 5.5L14 22h-4l-.5-7.5C7.5 13.5 6 11.5 6 9a7 7 0 0 1 7-7z"/></svg>
+          <span>Add or remove files in File Explorer. Beats updates the list automatically.</span>
         </div>
       </section>
 
       <section id="downloads">
-        <h2>Downloads</h2>
-        <p class="lead">Paste a link and save audio straight into a playlist.</p>
+        <div class="section-head">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </span>
+          <h2>Downloads</h2>
+        </div>
+        <p class="lead">Paste a link and save MP3s into a playlist folder.</p>
+        <p>Click <strong>+</strong> on a playlist, choose <strong>Paste audio link</strong>, paste a URL, and hit <strong>Download</strong>.</p>
 
-        <p>From any playlist, click <strong>+</strong> -> <strong>Paste audio link</strong>, paste a URL, and click <strong>Download</strong>. Files are saved as MP3 in that playlist's folder.</p>
-
-        <h3>Supported platforms</h3>
-        <div class="platform-badges" aria-label="Supported platforms">
-          <span class="platform-badge" title="YouTube">
-            <img src="assets/youtube.png" width="30" height="30" alt="YouTube" />
+        <div class="platforms" aria-label="Supported platforms">
+          <span class="platform" title="YouTube"><img src="assets/youtube.png" width="36" height="36" alt="YouTube" /></span>
+          <span class="platform spotify" title="Spotify" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
           </span>
-          <span class="platform-badge spotify" title="Spotify" aria-hidden="true">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+          <span class="platform tiktok" title="TikTok" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.5a8.16 8.16 0 0 0 4.77 1.52V6.6a4.85 4.85 0 0 1-1-.09z"/></svg>
           </span>
-          <span class="platform-badge tiktok" title="TikTok" aria-hidden="true">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.5a8.16 8.16 0 0 0 4.77 1.52V6.6a4.85 4.85 0 0 1-1-.09z"/></svg>
-          </span>
-          <span class="platform-badge soundcloud" title="SoundCloud" aria-hidden="true">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.175 13.5c-.64 0-1.175.533-1.175 1.175v2.65c0 .642.535 1.175 1.175 1.175S2.35 17.967 2.35 17.325v-2.65c0-.642-.523-1.175-1.175-1.175zm2.65 1.325c-.642 0-1.175.535-1.175 1.175v1.325c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-1.325c0-.64-.533-1.175-1.175-1.175zm2.65-1.325c-.642 0-1.175.533-1.175 1.175v2.65c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-2.65c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v3.3c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-3.3c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v3.95c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-3.95c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v4.6c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-4.6c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v5.25c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-5.25c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v5.9c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-5.9c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v6.55c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-6.55c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v7.2c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-7.2c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v7.85c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-7.85c0-.642-.533-1.175-1.175-1.175z"/></svg>
+          <span class="platform soundcloud" title="SoundCloud" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M1.175 13.5c-.64 0-1.175.533-1.175 1.175v2.65c0 .642.535 1.175 1.175 1.175S2.35 17.967 2.35 17.325v-2.65c0-.642-.523-1.175-1.175-1.175zm2.65 1.325c-.642 0-1.175.535-1.175 1.175v1.325c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-1.325c0-.64-.533-1.175-1.175-1.175zm2.65-1.325c-.642 0-1.175.533-1.175 1.175v2.65c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-2.65c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v3.3c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-3.3c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v3.95c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-3.95c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v4.6c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-4.6c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v5.25c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-5.25c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v5.9c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-5.9c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v6.55c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-6.55c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v7.2c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-7.2c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v7.85c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-7.85c0-.642-.533-1.175-1.175-1.175z"/></svg>
           </span>
         </div>
-        <ul>
-          <li><strong>YouTube</strong> - videos, playlists, and channels</li>
-          <li><strong>Spotify</strong> - tracks, albums, and playlists (via spotDL)</li>
-          <li><strong>TikTok</strong>, <strong>SoundCloud</strong>, <strong>Instagram</strong>, and 1,000+ other sites via yt-dlp</li>
+
+        <ul class="list">
+          <li><strong>YouTube</strong> - videos, playlists, channels</li>
+          <li><strong>Spotify</strong> - tracks, albums, playlists</li>
+          <li><strong>TikTok, SoundCloud, Instagram</strong> - and 1,000+ sites via yt-dlp</li>
         </ul>
 
-        <h3>Playlists &amp; privacy</h3>
-        <p>For YouTube and Spotify playlists, make sure they are <strong>public or unlisted</strong>. Private playlists cannot be downloaded.</p>
-
-        <h3>Batch downloads</h3>
-        <p>When downloading a playlist or album, Beats shows progress for each track. Large batches may take several minutes depending on your connection.</p>
+        <p>Playlists must be <strong>public or unlisted</strong>. Private playlists cannot be downloaded.</p>
       </section>
 
       <section id="playback">
-        <h2>Playback</h2>
-        <p class="lead">Control music from the widget or the dashboard footer.</p>
+        <div class="section-head">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </span>
+          <h2>Playback</h2>
+        </div>
+        <p class="lead">Control music from the widget or dashboard footer.</p>
 
-        <p>Both the floating widget and the dashboard footer offer play/pause, previous, and next. The dashboard footer also includes:</p>
-        <ul>
-          <li><strong>Seek bar</strong> - click or drag to jump within the current track</li>
-          <li><strong>Volume</strong> - adjust output level (saved between sessions)</li>
-          <li><strong>Shuffle</strong> - randomize the queue order</li>
-          <li><strong>Loop</strong> - repeat the current song (toggle on the widget or in the footer)</li>
-          <li><strong>Like &amp; Save</strong> - add the current track to Liked Songs or Saves</li>
+        <ul class="list">
+          <li><strong>Seek bar</strong> - jump within the current track</li>
+          <li><strong>Volume</strong> - saved between sessions</li>
+          <li><strong>Shuffle &amp; loop</strong> - on widget or in footer</li>
+          <li><strong>Like &amp; save</strong> - add to Liked Songs or Saves</li>
         </ul>
 
-        <p>Double-click any song in the track list to start playback. Drag songs to reorder them within a playlist.</p>
+        <p>Double-click a song to play. Drag to reorder within a playlist.</p>
       </section>
 
       <section id="shortcuts">
-        <h2>Shortcuts</h2>
-        <p class="lead">Control Beats without touching the mouse.</p>
+        <div class="section-head">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg>
+          </span>
+          <h2>Shortcuts</h2>
+        </div>
+        <p class="lead">Keyboard controls for Beats.</p>
 
-        <table class="shortcut-table">
-          <thead>
-            <tr>
-              <th>Shortcut</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><kbd>Alt</kbd> + <kbd>\</kbd></td>
-              <td>Hide or show the widget</td>
-            </tr>
-            <tr>
-              <td><kbd>Ctrl</kbd> + <kbd>\</kbd></td>
-              <td>Open or close the dashboard</td>
-            </tr>
-            <tr>
-              <td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>\</kbd></td>
-              <td>Reset widget position and dashboard size</td>
-            </tr>
-            <tr>
-              <td><kbd>Ctrl</kbd> + scroll</td>
-              <td>Zoom the track list (in dashboard)</td>
-            </tr>
-            <tr>
-              <td>Drag album art</td>
-              <td>Move the widget</td>
-            </tr>
-            <tr>
-              <td>Top chevron tab</td>
-              <td>Same as <kbd>Alt</kbd> + <kbd>\</kbd></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="keys">
+          <div class="key-row">
+            <span class="key-combo"><kbd>Alt</kbd> + <kbd>\</kbd></span>
+            <span class="key-desc">Hide or show the widget</span>
+          </div>
+          <div class="key-row">
+            <span class="key-combo"><kbd>Ctrl</kbd> + <kbd>\</kbd></span>
+            <span class="key-desc">Open or close the dashboard</span>
+          </div>
+          <div class="key-row">
+            <span class="key-combo"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>\</kbd></span>
+            <span class="key-desc">Reset widget position and dashboard size</span>
+          </div>
+          <div class="key-row">
+            <span class="key-combo"><kbd>Ctrl</kbd> + scroll</span>
+            <span class="key-desc">Zoom the track list</span>
+          </div>
+          <div class="key-row">
+            <span class="key-combo">Drag album art</span>
+            <span class="key-desc">Move the widget</span>
+          </div>
+        </div>
 
-        <div class="callout">
-          Hotkeys use the backslash (<kbd>\</kbd>) key on US keyboard layouts. If another app already registered a combo, use the on-screen buttons or chevron tab instead.
+        <div class="note tip">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span>Hotkeys use the backslash key on US layouts. If another app uses the same combo, use the chevron tab or on-screen buttons.</span>
         </div>
       </section>
 
       <section id="youtube-cookies">
-        <h2>YouTube cookies</h2>
-        <p class="lead">Optional setup when YouTube blocks downloads or asks you to sign in.</p>
+        <div class="section-head">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </span>
+          <h2>YouTube cookies</h2>
+        </div>
+        <p class="lead">Optional fix for sign-in or bot-check errors.</p>
+        <p>Export a Netscape-format <code>cookies.txt</code> while logged into YouTube, then point Beats at it.</p>
 
-        <p>Most downloads work without any extra setup. If YouTube returns a sign-in or bot-check error, export a Netscape-format <code>cookies.txt</code> file while logged into YouTube and point Beats at it.</p>
+        <h3>Step 1 - Export</h3>
+        <ul class="list">
+          <li>Install a cookie export extension (<a href="https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies" target="_blank" rel="noopener">yt-dlp wiki</a>)</li>
+          <li>Export cookies for <code>youtube.com</code> while logged in</li>
+          <li>Save as <code>cookies.txt</code> in Documents or similar</li>
+        </ul>
 
-        <h3>Step 1 - Export cookies</h3>
-        <ol>
-          <li>Install a browser extension that exports Netscape-format cookies (see the <a href="https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies" target="_blank" rel="noopener">yt-dlp wiki</a> for recommended extensions).</li>
-          <li>While logged into YouTube in your browser, export cookies for <code>youtube.com</code>.</li>
-          <li>Save the file as <code>cookies.txt</code> somewhere permanent (e.g. your Documents folder).</li>
-        </ol>
+        <h3>Step 2 - Import in Beats</h3>
+        <ul class="list">
+          <li>Open <strong>+</strong> on a playlist, then <strong>Paste audio link</strong></li>
+          <li>Click <strong>Set up cookies in Beats</strong></li>
+          <li>Browse to your <code>cookies.txt</code> file</li>
+        </ul>
 
-        <h3>Step 2 - Point Beats at the file</h3>
-        <ol>
-          <li>Open the dashboard and click <strong>+</strong> on a playlist -> <strong>Paste audio link</strong>.</li>
-          <li>Click <strong>Set up cookies in Beats</strong> at the bottom of the dialog.</li>
-          <li>Click <strong>Browse…</strong> and select your <code>cookies.txt</code> file.</li>
-        </ol>
-
-        <p>Beats passes this file to yt-dlp on every download, so your browser can stay closed and you avoid "cookie database locked" errors from Edge or Chrome.</p>
-
-        <div class="callout callout-tip">
-          <strong>When to use this:</strong> Only when downloads fail with sign-in, bot-check, or age-restriction errors. Clear the cookies path anytime with the <strong>Clear</strong> button.
+        <div class="note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span>Only needed when downloads fail. Clear the path anytime with the <strong>Clear</strong> button.</span>
         </div>
       </section>
 
       <section id="files">
-        <h2>Files &amp; folders</h2>
-        <p class="lead">Where Beats stores settings, tools, and your music.</p>
+        <div class="section-head">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </span>
+          <h2>Files &amp; folders</h2>
+        </div>
+        <p class="lead">Where Beats stores settings and music.</p>
 
-        <h3>Application data</h3>
+        <h3>App data</h3>
         <pre><code>%APPDATA%\Beats\
 ├── settings.json
 ├── liked-songs.json
-├── saved-songs.json
-├── playlist-orders.json
 ├── artwork\
 └── tools\
     ├── yt-dlp.exe
     ├── ffmpeg.exe
     └── spotdl.exe</code></pre>
 
-        <h3>Music library (default)</h3>
+        <h3>Music library</h3>
         <pre><code>%USERPROFILE%\Music\Beats\
 ├── My Playlist\
 │   └── song.mp3
-└── Another Playlist\
-    └── ...</code></pre>
+└── Another Playlist\</code></pre>
 
-        <p>To use a different music folder, close Beats and edit the <code>PlaylistsRoot</code> value in <code>settings.json</code>, then restart. Your playlists remain ordinary folders - back them up, sync them, or move them like any other files.</p>
+        <p>Edit <code>PlaylistsRoot</code> in <code>settings.json</code> to change the music folder. Restart Beats after editing.</p>
       </section>
 
       <section id="troubleshooting">
-        <h2>Troubleshooting</h2>
-        <p class="lead">Common issues and how to fix them.</p>
+        <div class="section-head">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          </span>
+          <h2>Troubleshooting</h2>
+        </div>
+        <p class="lead">Common fixes.</p>
 
-        <h3>YouTube says "Sign in to confirm you're not a bot"</h3>
-        <p>Set up a <a href="#youtube-cookies">YouTube cookies file</a>. Beats also retries with multiple yt-dlp player clients automatically.</p>
+        <h3>YouTube bot-check error</h3>
+        <p>Set up <a href="#youtube-cookies">YouTube cookies</a>. Beats also retries with multiple yt-dlp clients.</p>
 
         <h3>Hotkeys don't work</h3>
-        <p>Another app may have registered the same key combo. Use the top chevron tab or on-screen buttons. Only one Beats instance can register hotkeys at a time.</p>
+        <p>Another app may use the same combo. Use the chevron tab or on-screen buttons.</p>
 
-        <h3>Spotify download is slow the first time</h3>
-        <p>The first Spotify download also installs spotDL and its dependencies. Later downloads are much faster.</p>
+        <h3>Widget off-screen</h3>
+        <p>Press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>\</kbd> to reset position.</p>
 
-        <h3>Widget is off-screen</h3>
-        <p>Press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>\</kbd> to reset the widget position and dashboard size to defaults.</p>
+        <h3>"Already running"</h3>
+        <p>Close Beats from Task Manager if the process is stuck.</p>
 
-        <h3>Beats won't start - "Already running"</h3>
-        <p>Only one instance can run at a time. Close Beats from Task Manager if the process is stuck in the background.</p>
-
-        <h3>Need more help?</h3>
-        <p>Open an issue on <a href="https://github.com/Delexoo/beats/issues" target="_blank" rel="noopener">GitHub</a> or visit <a href="https://delexo.store" target="_blank" rel="noopener">delexo.store</a>.</p>
+        <h3>More help</h3>
+        <p><a href="https://github.com/Delexoo/beats/issues" target="_blank" rel="noopener">GitHub Issues</a> or <a href="https://delexo.store" target="_blank" rel="noopener">delexo.store</a></p>
       </section>
 
       <section id="faq">
-        <h2>FAQ</h2>
-        <p class="lead">Quick answers to common questions.</p>
+        <div class="section-head">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>
+          </span>
+          <h2>FAQ</h2>
+        </div>
+        <p class="lead">Quick answers.</p>
 
         <div class="faq">
           <details>
             <summary>Is Beats free?</summary>
-            <div class="faq-body">
-              <p>Yes. Beats is free to download and use on Windows 10 and 11. No account is required.</p>
-            </div>
+            <div class="faq-body"><p>Yes. Free on Windows 10 and 11. No account required.</p></div>
           </details>
-
           <details>
             <summary>Does Beats stream music?</summary>
-            <div class="faq-body">
-              <p>No. Beats plays local files from your playlists and downloads new tracks to your disk. Nothing is streamed from the cloud during playback.</p>
-            </div>
+            <div class="faq-body"><p>No. It plays local files and saves downloads to your disk.</p></div>
           </details>
-
           <details>
-            <summary>Can I use Beats without downloading from the web?</summary>
-            <div class="faq-body">
-              <p>Yes. Add your existing music with <strong>Add files</strong> or <strong>Add folder</strong>. The download feature is entirely optional.</p>
-            </div>
+            <summary>Can I skip the download feature?</summary>
+            <div class="faq-body"><p>Yes. Use <strong>Add files</strong> or <strong>Add folder</strong> for existing music.</p></div>
           </details>
-
           <details>
-            <summary>Where do downloaded songs go?</summary>
-            <div class="faq-body">
-              <p>Into the playlist folder you chose when pasting the link. Each playlist is a folder under your music root (default: <code>My Music\Beats</code>).</p>
-            </div>
+            <summary>Where do downloads go?</summary>
+            <div class="faq-body"><p>Into the playlist folder you chose. Default root: <code>My Music\Beats</code>.</p></div>
           </details>
-
           <details>
-            <summary>Why does Beats download extra tools on first use?</summary>
-            <div class="faq-body">
-              <p>Web downloads require yt-dlp, ffmpeg, and (for Spotify) spotDL. Beats downloads them automatically so you don't have to install anything manually. They're stored in <code>%APPDATA%\Beats\tools</code>.</p>
-            </div>
+            <summary>Why extra tools on first download?</summary>
+            <div class="faq-body"><p>Web downloads need yt-dlp, ffmpeg, and spotDL. Beats installs them to <code>%APPDATA%\Beats\tools</code>.</p></div>
           </details>
-
           <details>
-            <summary>Can I move my playlists to another computer?</summary>
-            <div class="faq-body">
-              <p>Yes. Copy your playlist folders (and optionally <code>%APPDATA%\Beats\settings.json</code>) to the new machine. If the path changed, update <code>PlaylistsRoot</code> in <code>settings.json</code> before restarting Beats.</p>
-            </div>
-          </details>
-
-          <details>
-            <summary>Does Beats collect my data?</summary>
-            <div class="faq-body">
-              <p>No. Beats runs locally on your PC. Playlists, settings, and downloads stay on your machine. Beats does not require an account and does not send telemetry.</p>
-            </div>
+            <summary>Does Beats collect data?</summary>
+            <div class="faq-body"><p>No. Everything stays on your PC. No account, no telemetry.</p></div>
           </details>
         </div>
       </section>
     </main>
   </div>
 
-  <footer class="site-footer">
-    <p>© Delexo | <a href="index.html">Home</a> | <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a> | <a href="https://delexo.store" target="_blank" rel="noopener">delexo.store</a></p>
+  <footer class="footer">
+    <p>&copy; Delexo | <a href="index.html">Home</a> | <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a> | <a href="https://delexo.store" target="_blank" rel="noopener">delexo.store</a></p>
   </footer>
 
   <script>
     (function () {
-      var repoMeta = document.querySelector('meta[name="beats-repo"]');
-      var repo = repoMeta ? repoMeta.content : "Delexoo/beats";
-      var ASSET = "Beats-Setup-x64.exe";
+      var repo = (document.querySelector('meta[name="beats-repo"]') || {}).content || "Delexoo/beats";
       var dl = document.getElementById("download-link");
-      if (dl) {
-        dl.href = "https://github.com/" + repo + "/releases/latest/download/" + ASSET;
-      }
+      if (dl) dl.href = "https://github.com/" + repo + "/releases/latest/download/Beats-Setup-x64.exe";
 
-      var tocLinks = document.querySelectorAll(".toc a");
+      var links = document.querySelectorAll(".toc a");
       var sections = [];
-      tocLinks.forEach(function (link) {
-        var id = link.getAttribute("href").slice(1);
-        var el = document.getElementById(id);
-        if (el) sections.push({ link: link, el: el });
+      links.forEach(function (a) {
+        var el = document.getElementById(a.getAttribute("href").slice(1));
+        if (el) sections.push({ link: a, el: el });
       });
 
-      function updateToc() {
-        if (!sections.length) return;
-        var scrollY = window.scrollY + 100;
-        var current = sections[0];
-        for (var i = 0; i < sections.length; i++) {
-          if (sections[i].el.offsetTop <= scrollY) {
-            current = sections[i];
-          }
-        }
-        tocLinks.forEach(function (l) { l.classList.remove("is-active"); });
-        if (current) current.link.classList.add("is-active");
+      function onScroll() {
+        var y = window.scrollY + 100;
+        var cur = sections[0];
+        sections.forEach(function (s) {
+          if (s.el.offsetTop <= y) cur = s;
+        });
+        links.forEach(function (l) { l.classList.remove("active"); });
+        if (cur) cur.link.classList.add("active");
       }
 
-      window.addEventListener("scroll", updateToc, { passive: true });
-      updateToc();
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
     })();
   </script>
 </body>
