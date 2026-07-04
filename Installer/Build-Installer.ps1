@@ -70,19 +70,37 @@ if (-not $SkipPublish) {
 Write-Host "`n==> Running Inno Setup Compiler..." -ForegroundColor Cyan
 $iscc = Resolve-IsccPath
 $iss  = Join-Path $scriptDir "MusicWidget.iss"
-& $iscc $iss
+$csproj = Join-Path $RepoRoot "MusicWidget\MusicWidget.csproj"
+$verMatch = Select-String -Path $csproj -Pattern '<Version>([^<]+)</Version>' | Select-Object -First 1
+$appVersion = if ($verMatch) { $verMatch.Matches[0].Groups[1].Value } else { "2.2.0" }
+Write-Host "    Version: $appVersion" -ForegroundColor DarkGray
+& $iscc "/DMyAppVersion=$appVersion" $iss
 if ($LASTEXITCODE -ne 0) { throw "iscc failed (exit $LASTEXITCODE)." }
 
 $out = Join-Path $scriptDir "Output\Beats-Setup-x64.exe"
 if (Test-Path $out) {
-    Write-Host "`nInstaller built: $out" -ForegroundColor Green
+    $sizeMb = [math]::Round((Get-Item $out).Length / 1MB, 1)
+    Write-Host "`nInstaller built: $out ($sizeMb MB)" -ForegroundColor Green
 
     $webDownloads = Join-Path $RepoRoot "website\downloads"
     if (-not (Test-Path $webDownloads)) {
         New-Item -ItemType Directory -Path $webDownloads -Force | Out-Null
     }
-    Copy-Item $out (Join-Path $webDownloads "Beats-Setup-x64.exe") -Force
+    $webOut = Join-Path $webDownloads "Beats-Setup-x64.exe"
+    Copy-Item $out $webOut -Force
     Write-Host "Copied to website\downloads\Beats-Setup-x64.exe (local preview)" -ForegroundColor Green
+
+    $versionJson = Join-Path $RepoRoot "version.json"
+    if (Test-Path $versionJson) {
+        @{ version = $appVersion; asset = "Beats-Setup-x64.exe"; sizeMb = $sizeMb } |
+            ConvertTo-Json | Set-Content -Path $versionJson -Encoding UTF8
+        Write-Host "Updated version.json ($appVersion, ${sizeMb} MB)" -ForegroundColor Green
+    }
+
+    Write-Host "`nPublish to GitHub (website download button):" -ForegroundColor Cyan
+    Write-Host "  git tag v$appVersion" -ForegroundColor DarkGray
+    Write-Host "  git push origin v$appVersion" -ForegroundColor DarkGray
+    Write-Host "  (or Actions -> Release -> Run workflow)" -ForegroundColor DarkGray
 } else {
     Write-Warning "iscc completed but the expected installer file wasn't found at $out."
 }

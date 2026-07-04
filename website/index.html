@@ -8,7 +8,7 @@
   <meta name="beats-repo" content="Delexoo/beats" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #ffffff;
@@ -224,7 +224,15 @@
       margin: 0 0 14px;
     }
 
-    h1,
+    h1 {
+      font-family: "Anton", sans-serif;
+      font-size: clamp(3rem, 6.5vw, 4.25rem);
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      margin-bottom: 14px;
+    }
+
     .chapter-title {
       font-family: "Inter", system-ui, -apple-system, sans-serif;
       font-size: clamp(2.75rem, 6vw, 3.75rem);
@@ -769,9 +777,10 @@
                     A floating desktop player for Windows. Play local playlists, download from YouTube, Spotify, TikTok, and more, all from a minimal widget on your screen.
                   </p>
                   <div class="cta-stack">
-                    <a id="download-btn" class="btn btn-primary" href="downloads/Beats-Setup-x64.exe">Download for Windows</a>
+                    <a id="download-btn" class="btn btn-primary" href="downloads/Beats-Setup-x64.exe" download="Beats-Setup-x64.exe">Download for Windows</a>
                     <a id="github-btn-secondary" class="btn btn-secondary" href="#" target="_blank" rel="noopener">View on GitHub</a>
                   </div>
+                  <p class="meta" id="version-meta-home">Windows 10 / 11 · 64-bit</p>
                 </div>
 
                 <div class="hero-stage" id="stage-features" data-stage-name="features">
@@ -877,7 +886,7 @@
                     <p class="features-heading">Download now</p>
                     <p class="download-lead">Free for Windows 10 and 11. No account required.</p>
                     <div class="cta-stack">
-                      <a id="download-btn-section" class="btn btn-primary" href="downloads/Beats-Setup-x64.exe">Download for Windows</a>
+                      <a id="download-btn-section" class="btn btn-primary" href="downloads/Beats-Setup-x64.exe" download="Beats-Setup-x64.exe">Download for Windows</a>
                       <a id="github-btn-section" class="btn btn-secondary" href="#" target="_blank" rel="noopener">View on GitHub</a>
                     </div>
                     <p class="meta" id="version-meta-section">Windows 10 / 11 · 64-bit</p>
@@ -1011,21 +1020,37 @@
       const githubBtnSecondary = document.getElementById("github-btn-secondary");
       const githubBtnSection = document.getElementById("github-btn-section");
       const versionMetaSection = document.getElementById("version-meta-section");
+      const versionMetaHome = document.getElementById("version-meta-home");
+
+      function setVersionMeta(text) {
+        if (versionMetaSection) versionMetaSection.textContent = text;
+        if (versionMetaHome) versionMetaHome.textContent = text;
+      }
+
+      function formatReleaseMeta(data) {
+        if (!data || !data.tag_name) return null;
+        var v = data.tag_name.replace(/^v/i, "");
+        var asset = (data.assets || []).find(function (a) { return a.name === ASSET; });
+        var size = asset && asset.size ? " · " + Math.round(asset.size / (1024 * 1024)) + " MB" : "";
+        return "v" + v + size + " · Windows 10 / 11 · 64-bit";
+      }
 
       if (repo) {
         var releaseUrl = "https://github.com/" + repo + "/releases/latest/download/" + ASSET;
         var repoUrl = "https://github.com/" + repo;
         downloadBtn.href = releaseUrl;
-        if (downloadBtnSection) downloadBtnSection.href = releaseUrl;
+        downloadBtn.setAttribute("download", ASSET);
+        if (downloadBtnSection) {
+          downloadBtnSection.href = releaseUrl;
+          downloadBtnSection.setAttribute("download", ASSET);
+        }
         githubBtnSecondary.href = repoUrl;
         if (githubBtnSection) githubBtnSection.href = repoUrl;
         fetch("https://api.github.com/repos/" + repo + "/releases/latest")
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (data) {
-            if (data && data.tag_name && versionMetaSection) {
-              var v = data.tag_name.replace(/^v/i, "");
-              versionMetaSection.textContent = "v" + v + " · Windows 10 / 11 · 64-bit";
-            }
+            var meta = formatReleaseMeta(data);
+            if (meta) setVersionMeta(meta);
           })
           .catch(function () {});
       } else {

@@ -1,0 +1,15 @@
+Welcome to Beats
+
+This installer will set up Beats on your PC — a floating desktop music player for Windows 10 and 11.
+
+What you get:
+  • A minimal always-on-top widget for playback controls
+  • Folder-based playlists under My Music\Beats
+  • Download tracks from YouTube, Spotify, TikTok, and more
+
+No account is required. Beats runs locally on your machine.
+
+Need help after installing? Visit:
+  https://delexoo.github.io/beats/help.html
+
+Click Next to choose an install location, or Cancel to exit.
