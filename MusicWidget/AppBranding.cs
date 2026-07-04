@@ -7,7 +7,7 @@ public static class AppBranding
     public const string AppDataFolderName = "Beats";
     public const string LegacyAppDataFolderName = "MusicWidget";
     public const string DefaultPlaylistsFolderName = "Beats";
-    public const string UserAgent = "Beats/2.2.5";
+    public const string UserAgent = "Beats/2.2.6";
     public const string HelpPageUrl = "https://delexoo.github.io/beats/help.html";
     public const string GitHubOwner = "Delexoo";
     public const string GitHubRepo = "beats";

@@ -2028,10 +2028,6 @@ public partial class SettingsPanel : UserControl
         UpdateButton.IsEnabled = false;
         UpdateButton.Style = (Style)FindResource("FlatButton");
         UpdateButton.ToolTip = "Checking for updates...";
-        if (UpdateButtonLabel is not null)
-        {
-            UpdateButtonLabel.Visibility = Visibility.Collapsed;
-        }
         if (UpdateButtonIcon is not null)
         {
             UpdateButtonIcon.Fill = (Brush)FindResource("Brush.TextDim");
@@ -2052,11 +2048,6 @@ public partial class SettingsPanel : UserControl
         {
             UpdateButton.Style = (Style)FindResource("PrimaryButton");
             UpdateButton.ToolTip = $"Version {result.LatestVersion} is available. Click to download and install.";
-            if (UpdateButtonLabel is not null)
-            {
-                UpdateButtonLabel.Text = "Update";
-                UpdateButtonLabel.Visibility = Visibility.Visible;
-            }
             if (UpdateButtonIcon is not null)
             {
                 UpdateButtonIcon.Fill = Brushes.White;
@@ -2066,10 +2057,6 @@ public partial class SettingsPanel : UserControl
 
         UpdateButton.Style = (Style)FindResource("FlatButton");
         UpdateButton.ToolTip = $"You are on the latest version (v{App.Updates.CurrentVersion}). Click to check again.";
-        if (UpdateButtonLabel is not null)
-        {
-            UpdateButtonLabel.Visibility = Visibility.Collapsed;
-        }
         if (UpdateButtonIcon is not null)
         {
             UpdateButtonIcon.Fill = (Brush)FindResource("Brush.TextDim");
@@ -2129,10 +2116,6 @@ public partial class SettingsPanel : UserControl
 
         _updateInstallInFlight = true;
         UpdateButton.IsEnabled = false;
-        if (UpdateButtonLabel is not null)
-        {
-            UpdateButtonLabel.Visibility = Visibility.Collapsed;
-        }
         UpdateButton.ToolTip = "Downloading update...";
 
         try
