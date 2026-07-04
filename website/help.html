@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Help — Beats</title>
+  <meta name="description" content="User manual for Beats — the floating desktop music player for Windows." />
+  <meta name="beats-repo" content="Delexoo/beats" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #111111;
+      --text-muted: #6b7280;
+      --text-faint: #9ca3af;
+      --border: #e5e7eb;
+      --surface: #f3f4f6;
+      --surface-alt: #f9fafb;
+      --blue: #2563eb;
+      --blue-soft: #eff6ff;
+      --max-w: 1120px;
+      --sidebar-w: 220px;
+      --header-h: 56px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: calc(var(--header-h) + 24px);
+    }
+
+    body {
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ----- Header ----- */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: var(--header-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .brand:hover { text-decoration: none; }
+
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 0.875rem;
+    }
+
+    .header-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    .header-links a:hover { color: var(--text); text-decoration: none; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: background 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--text);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #1f2937;
+      text-decoration: none;
+    }
+
+    /* ----- Layout ----- */
+    .page-wrap {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      gap: 48px;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .page-wrap {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        padding-top: 28px;
+      }
+    }
+
+    /* ----- Sidebar ----- */
+    .sidebar {
+      position: sticky;
+      top: calc(var(--header-h) + 24px);
+    }
+
+    @media (max-width: 860px) {
+      .sidebar { position: static; }
+    }
+
+    .sidebar-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 12px;
+    }
+
+    .toc {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .toc a {
+      display: block;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      margin-left: -2px;
+    }
+
+    .toc a:hover {
+      color: var(--text);
+      background: var(--surface);
+      text-decoration: none;
+    }
+
+    .toc a.is-active {
+      color: var(--text);
+      font-weight: 500;
+      border-left-color: var(--text);
+      background: var(--surface);
+    }
+
+    @media (max-width: 860px) {
+      .toc {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .toc a {
+        border: 1px solid var(--border);
+        border-left: 1px solid var(--border);
+        padding: 5px 10px;
+      }
+
+      .toc a.is-active {
+        border-color: var(--text);
+        background: var(--text);
+        color: #fff;
+      }
+    }
+
+    /* ----- Main content ----- */
+    .hero {
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 4vw, 2.5rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      max-width: 52ch;
+      font-size: 1rem;
+    }
+
+    section {
+      margin-bottom: 48px;
+      scroll-margin-top: calc(var(--header-h) + 24px);
+    }
+
+    section h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+      padding-top: 8px;
+    }
+
+    section > .lead {
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+      margin-bottom: 20px;
+      max-width: 60ch;
+    }
+
+    h3 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      margin: 24px 0 8px;
+    }
+
+    p { margin-bottom: 12px; max-width: 68ch; }
+    p:last-child { margin-bottom: 0; }
+
+    ul, ol {
+      margin: 0 0 16px 0;
+      padding-left: 1.25rem;
+      max-width: 68ch;
+    }
+
+    li { margin-bottom: 6px; color: var(--text-muted); }
+    li strong { color: var(--text); font-weight: 600; }
+
+    /* Steps */
+    .steps {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 68ch;
+    }
+
+    .steps li {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 14px;
+      align-items: start;
+      margin: 0;
+    }
+
+    .step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--text);
+      color: #fff;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-body strong {
+      display: block;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.9375rem;
+      margin-bottom: 4px;
+    }
+
+    .step-body span {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    /* Keycaps */
+    .shortcut-table {
+      width: 100%;
+      max-width: 68ch;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+      font-size: 0.875rem;
+    }
+
+    .shortcut-table th,
+    .shortcut-table td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    .shortcut-table th {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-faint);
+      background: var(--surface-alt);
+    }
+
+    .shortcut-table td:first-child { width: 42%; }
+    .shortcut-table td:last-child { color: var(--text-muted); }
+
+    kbd, .kbd {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-family: inherit;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+      margin: 0 1px;
+    }
+
+    /* Callout */
+    .callout {
+      max-width: 68ch;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      margin: 16px 0;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .callout strong { color: var(--text); }
+
+    .callout-tip {
+      border-color: #bfdbfe;
+      background: var(--blue-soft);
+    }
+
+    .callout-tip strong { color: #1d4ed8; }
+
+    /* Code / paths */
+    code {
+      font-family: ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
+      font-size: 0.8125rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--text);
+    }
+
+    pre {
+      max-width: 68ch;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      overflow-x: auto;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      margin: 12px 0 16px;
+    }
+
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    /* FAQ details */
+    .faq {
+      max-width: 68ch;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    details {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    summary {
+      padding: 14px 16px;
+      font-weight: 500;
+      font-size: 0.9375rem;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      user-select: none;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    summary::after {
+      content: "+";
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: var(--text-faint);
+      flex-shrink: 0;
+    }
+
+    details[open] summary::after { content: "−"; }
+
+    details[open] summary {
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-alt);
+    }
+
+    .faq-body {
+      padding: 14px 16px;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .faq-body p { margin-bottom: 8px; }
+
+    .platform-badges {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 16px 0 20px;
+    }
+
+    .platform-badges img {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      display: block;
+    }
+
+    /* Footer */
+    .site-footer {
+      border-top: 1px solid var(--border);
+      padding: 24px;
+      text-align: center;
+      font-size: 0.8125rem;
+      color: var(--text-faint);
+    }
+
+    .site-footer a { color: var(--text-muted); }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <a class="brand" href="index.html">Beats</a>
+    <nav class="header-links" aria-label="Site">
+      <a href="index.html">Home</a>
+      <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn btn-primary" id="download-link" href="downloads/Beats-Setup-x64.exe">Download</a>
+    </nav>
+  </header>
+
+  <div class="page-wrap">
+    <aside class="sidebar" aria-label="Table of contents">
+      <p class="sidebar-label">On this page</p>
+      <ul class="toc" id="toc">
+        <li><a href="#getting-started">Getting started</a></li>
+        <li><a href="#widget">The widget</a></li>
+        <li><a href="#dashboard">Dashboard</a></li>
+        <li><a href="#playlists">Playlists</a></li>
+        <li><a href="#downloads">Downloads</a></li>
+        <li><a href="#shortcuts">Shortcuts</a></li>
+        <li><a href="#youtube-cookies">YouTube cookies</a></li>
+        <li><a href="#files">Files &amp; folders</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+    </aside>
+
+    <main>
+      <div class="hero">
+        <h1>Help &amp; manual</h1>
+        <p>Everything you need to install Beats, build playlists, download music, and control the floating widget on Windows.</p>
+      </div>
+
+      <!-- Getting started -->
+      <section id="getting-started">
+        <h2>Getting started</h2>
+        <p class="lead">Install once, create a playlist, add music, and press play.</p>
+
+        <ol class="steps">
+          <li>
+            <span class="step-num" aria-hidden="true">1</span>
+            <div class="step-body">
+              <strong>Install Beats</strong>
+              <span>Download and run <code>Beats-Setup-x64.exe</code> from the <a href="index.html">home page</a> or <a href="https://github.com/Delexoo/beats/releases/latest" target="_blank" rel="noopener">GitHub Releases</a>. Works on Windows 10 and 11 (64-bit).</span>
+            </div>
+          </li>
+          <li>
+            <span class="step-num" aria-hidden="true">2</span>
+            <div class="step-body">
+              <strong>Open the dashboard</strong>
+              <span>Click the settings gear on the widget pill, or press <kbd>Ctrl</kbd> + <kbd>\</kbd>.</span>
+            </div>
+          </li>
+          <li>
+            <span class="step-num" aria-hidden="true">3</span>
+            <div class="step-body">
+              <strong>Create a playlist</strong>
+              <span>Click <strong>New Playlist</strong> in the sidebar and give it a name. Each playlist is a folder on your disk.</span>
+            </div>
+          </li>
+          <li>
+            <span class="step-num" aria-hidden="true">4</span>
+            <div class="step-body">
+              <strong>Add music</strong>
+              <span>Click the <strong>+</strong> on your playlist row, then choose <strong>Add files</strong>, <strong>Add folder</strong>, or <strong>Paste audio link</strong>.</span>
+            </div>
+          </li>
+          <li>
+            <span class="step-num" aria-hidden="true">5</span>
+            <div class="step-body">
+              <strong>Press play</strong>
+              <span>Double-click a song in the list, or use the play/pause button on the widget.</span>
+            </div>
+          </li>
+        </ol>
+
+        <div class="callout callout-tip">
+          <strong>First download?</strong> Beats automatically downloads <code>yt-dlp</code>, <code>ffmpeg</code>, and (for Spotify) <code>spotDL</code> on first use — about 130 MB total, one time only.
+        </div>
+      </section>
+
+      <!-- Widget -->
+      <section id="widget">
+        <h2>The widget</h2>
+        <p class="lead">A small floating pill that stays on top of every app.</p>
+
+        <p>The widget shows album art, the current track, and playback controls. It has no taskbar icon and stays visible over other windows so you can control music without switching apps.</p>
+
+        <h3>Move the widget</h3>
+        <p>Drag the <strong>album art</strong> to reposition the pill anywhere on screen.</p>
+
+        <h3>Hide and show</h3>
+        <p>Press <kbd>Alt</kbd> + <kbd>\</kbd> to slide the widget off the nearest screen edge. Press the same shortcut again to bring it back. You can also click the small chevron tab at the top center of your primary monitor.</p>
+
+        <h3>Expanded controls</h3>
+        <p>Hover the widget to reveal loop and settings buttons. Enable <strong>Extended widget</strong> in the dashboard header to keep those controls visible at all times.</p>
+
+        <h3>Minimize</h3>
+        <p>Click the minimize button in the dashboard to hide the widget completely. Use the top chevron or <kbd>Alt</kbd> + <kbd>\</kbd> to show it again.</p>
+      </section>
+
+      <!-- Dashboard -->
+      <section id="dashboard">
+        <h2>Dashboard</h2>
+        <p class="lead">Your control center for playlists, tracks, and settings.</p>
+
+        <p>Open the dashboard with <kbd>Ctrl</kbd> + <kbd>\</kbd> or by clicking the settings gear on the widget. It includes:</p>
+        <ul>
+          <li><strong>Playlists sidebar</strong> — create, rename, delete, and pin playlists</li>
+          <li><strong>Track list</strong> — browse, play, reorder, and remove songs</li>
+          <li><strong>Now playing footer</strong> — seek bar, volume, like/save, shuffle, and loop</li>
+          <li><strong>Header controls</strong> — extended widget toggle, layout reset, help, donate, minimize, and exit</li>
+        </ul>
+
+        <h3>Resize the dashboard</h3>
+        <p>Drag the edges to resize. Press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>\</kbd> to reset the widget position and dashboard size to defaults.</p>
+
+        <h3>Zoom the track list</h3>
+        <p>Hold <kbd>Ctrl</kbd> and scroll to scale song rows up or down.</p>
+
+        <h3>Liked Songs &amp; Saves</h3>
+        <p>Use the heart and bookmark icons in the footer to add tracks to <strong>Liked Songs</strong> or <strong>Saves</strong>. These collections appear at the bottom of the playlist sidebar.</p>
+      </section>
+
+      <!-- Playlists -->
+      <section id="playlists">
+        <h2>Playlists</h2>
+        <p class="lead">Simple folder-based libraries you own completely.</p>
+
+        <p>Every playlist is a folder. By default they live in <code>My Music\Beats</code>. You can change the root folder in settings.</p>
+
+        <h3>Create &amp; manage</h3>
+        <ul>
+          <li><strong>New Playlist</strong> — creates a new folder</li>
+          <li><strong>Rename</strong> — right-click a playlist</li>
+          <li><strong>Delete</strong> — right-click a playlist (removes the folder and its files)</li>
+          <li><strong>Pin</strong> — right-click to pin a playlist above Liked/Saves</li>
+        </ul>
+
+        <h3>Add tracks</h3>
+        <p>Click the <strong>+</strong> on a playlist row:</p>
+        <ul>
+          <li><strong>Add files</strong> — pick individual songs from your computer</li>
+          <li><strong>Add folder</strong> — import an entire folder at once</li>
+          <li><strong>Paste audio link</strong> — download from YouTube, Spotify, TikTok, SoundCloud, and more</li>
+        </ul>
+
+        <h3>Supported audio formats</h3>
+        <p>MP3, WAV, FLAC, M4A, AAC, OGG, Opus, WMA, AIFF, and ALAC.</p>
+
+        <div class="callout">
+          <strong>Tip:</strong> You can add or remove files directly in File Explorer. Beats watches playlist folders and updates the track list automatically.
+        </div>
+      </section>
+
+      <!-- Downloads -->
+      <section id="downloads">
+        <h2>Downloads</h2>
+        <p class="lead">Paste a link and save audio straight into a playlist.</p>
+
+        <p>From any playlist, click <strong>+</strong> → <strong>Paste audio link</strong>, paste a URL, and click <strong>Download</strong>. Files are saved as MP3 in that playlist's folder.</p>
+
+        <h3>Supported platforms</h3>
+        <div class="platform-badges" aria-label="Supported platforms">
+          <img src="assets/youtube.png" width="30" height="30" alt="YouTube" />
+        </div>
+        <ul>
+          <li><strong>YouTube</strong> — videos, playlists, and channels</li>
+          <li><strong>Spotify</strong> — tracks, albums, and playlists (via spotDL)</li>
+          <li><strong>TikTok</strong>, <strong>SoundCloud</strong>, <strong>Instagram</strong>, and 1,000+ other sites via yt-dlp</li>
+        </ul>
+
+        <h3>Playlists &amp; privacy</h3>
+        <p>For YouTube and Spotify playlists, make sure they are <strong>public or unlisted</strong>. Private playlists cannot be downloaded.</p>
+
+        <h3>Batch downloads</h3>
+        <p>When downloading a playlist or album, Beats shows progress for each track. Large batches may take several minutes depending on your connection.</p>
+      </section>
+
+      <!-- Shortcuts -->
+      <section id="shortcuts">
+        <h2>Shortcuts</h2>
+        <p class="lead">Control Beats without touching the mouse.</p>
+
+        <table class="shortcut-table">
+          <thead>
+            <tr>
+              <th>Shortcut</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><kbd>Alt</kbd> + <kbd>\</kbd></td>
+              <td>Hide or show the widget</td>
+            </tr>
+            <tr>
+              <td><kbd>Ctrl</kbd> + <kbd>\</kbd></td>
+              <td>Open or close the dashboard</td>
+            </tr>
+            <tr>
+              <td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>\</kbd></td>
+              <td>Reset widget position and dashboard size</td>
+            </tr>
+            <tr>
+              <td><kbd>Ctrl</kbd> + scroll</td>
+              <td>Zoom the track list (in dashboard)</td>
+            </tr>
+            <tr>
+              <td>Drag album art</td>
+              <td>Move the widget</td>
+            </tr>
+            <tr>
+              <td>Top chevron tab</td>
+              <td>Same as <kbd>Alt</kbd> + <kbd>\</kbd></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout">
+          Hotkeys use the backslash (<kbd>\</kbd>) key on US keyboard layouts. If another app already registered a combo, use the on-screen buttons or chevron tab instead.
+        </div>
+      </section>
+
+      <!-- YouTube cookies -->
+      <section id="youtube-cookies">
+        <h2>YouTube cookies</h2>
+        <p class="lead">Optional setup when YouTube blocks downloads or asks you to sign in.</p>
+
+        <p>Most downloads work without any extra setup. If YouTube returns a sign-in or bot-check error, export a Netscape-format <code>cookies.txt</code> file while logged into YouTube and point Beats at it.</p>
+
+        <h3>Step 1 — Export cookies</h3>
+        <ol>
+          <li>Install a browser extension that exports Netscape-format cookies (see the <a href="https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies" target="_blank" rel="noopener">yt-dlp wiki</a> for recommended extensions).</li>
+          <li>While logged into YouTube in your browser, export cookies for <code>youtube.com</code>.</li>
+          <li>Save the file as <code>cookies.txt</code> somewhere permanent (e.g. your Documents folder).</li>
+        </ol>
+
+        <h3>Step 2 — Point Beats at the file</h3>
+        <ol>
+          <li>Open the dashboard and click <strong>+</strong> on a playlist → <strong>Paste audio link</strong>.</li>
+          <li>Click <strong>Set up cookies in Beats</strong> at the bottom of the dialog.</li>
+          <li>Click <strong>Browse…</strong> and select your <code>cookies.txt</code> file.</li>
+        </ol>
+
+        <p>Beats passes this file to yt-dlp on every download, so your browser can stay closed and you avoid "cookie database locked" errors from Edge or Chrome.</p>
+
+        <div class="callout callout-tip">
+          <strong>When to use this:</strong> Only when downloads fail with sign-in, bot-check, or age-restriction errors. Clear the cookies path anytime with the <strong>Clear</strong> button.
+        </div>
+      </section>
+
+      <!-- Files -->
+      <section id="files">
+        <h2>Files &amp; folders</h2>
+        <p class="lead">Where Beats stores settings, tools, and your music.</p>
+
+        <h3>Application data</h3>
+        <pre><code>%APPDATA%\Beats\
+├── settings.json
+├── liked-songs.json
+├── saved-songs.json
+├── playlist-orders.json
+├── artwork\
+└── tools\
+    ├── yt-dlp.exe
+    ├── ffmpeg.exe
+    └── spotdl.exe</code></pre>
+
+        <h3>Music library (default)</h3>
+        <pre><code>%USERPROFILE%\Music\Beats\
+├── My Playlist\
+│   └── song.mp3
+└── Another Playlist\
+    └── ...</code></pre>
+
+        <p>The music root folder can be changed in Beats settings. Your playlists remain ordinary folders — back them up, sync them, or move them like any other files.</p>
+      </section>
+
+      <!-- Troubleshooting -->
+      <section id="troubleshooting">
+        <h2>Troubleshooting</h2>
+        <p class="lead">Common issues and how to fix them.</p>
+
+        <h3>YouTube says "Sign in to confirm you're not a bot"</h3>
+        <p>Set up a <a href="#youtube-cookies">YouTube cookies file</a>. Beats also retries with multiple yt-dlp player clients automatically.</p>
+
+        <h3>Hotkeys don't work</h3>
+        <p>Another app may have registered the same key combo. Use the top chevron tab or on-screen buttons. Only one Beats instance can register hotkeys at a time.</p>
+
+        <h3>Spotify download is slow the first time</h3>
+        <p>The first Spotify download also installs spotDL and its dependencies. Later downloads are much faster.</p>
+
+        <h3>Widget is off-screen</h3>
+        <p>Press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>\</kbd> to reset the widget position and dashboard size to defaults.</p>
+
+        <h3>Beats won't start — "Already running"</h3>
+        <p>Only one instance can run at a time. Close Beats from Task Manager if the process is stuck in the background.</p>
+
+        <h3>Need more help?</h3>
+        <p>Open an issue on <a href="https://github.com/Delexoo/beats/issues" target="_blank" rel="noopener">GitHub</a> or visit <a href="https://delexo.store" target="_blank" rel="noopener">delexo.store</a>.</p>
+      </section>
+
+      <!-- FAQ -->
+      <section id="faq">
+        <h2>FAQ</h2>
+        <p class="lead">Quick answers to common questions.</p>
+
+        <div class="faq">
+          <details>
+            <summary>Is Beats free?</summary>
+            <div class="faq-body">
+              <p>Yes. Beats is free to download and use on Windows 10 and 11. No account is required.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Does Beats stream music?</summary>
+            <div class="faq-body">
+              <p>No. Beats plays local files from your playlists and downloads new tracks to your disk. Nothing is streamed from the cloud during playback.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Can I use Beats without downloading from the web?</summary>
+            <div class="faq-body">
+              <p>Yes. Add your existing music with <strong>Add files</strong> or <strong>Add folder</strong>. The download feature is entirely optional.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Where do downloaded songs go?</summary>
+            <div class="faq-body">
+              <p>Into the playlist folder you chose when pasting the link. Each playlist is a folder under your music root (default: <code>My Music\Beats</code>).</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Why does Beats download extra tools on first use?</summary>
+            <div class="faq-body">
+              <p>Web downloads require yt-dlp, ffmpeg, and (for Spotify) spotDL. Beats downloads them automatically so you don't have to install anything manually. They're stored in <code>%APPDATA%\Beats\tools</code>.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Can I move my playlists to another computer?</summary>
+            <div class="faq-body">
+              <p>Yes. Copy your playlist folders (and optionally <code>%APPDATA%\Beats\settings.json</code>) to the new machine. Point Beats at the same music root folder in settings.</p>
+            </div>
+          </details>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <p>© Delexo · <a href="index.html">Home</a> · <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a> · <a href="https://delexo.store" target="_blank" rel="noopener">delexo.store</a></p>
+  </footer>
+
+  <script>
+    (function () {
+      var repoMeta = document.querySelector('meta[name="beats-repo"]');
+      var repo = repoMeta ? repoMeta.content : "Delexoo/beats";
+      var ASSET = "Beats-Setup-x64.exe";
+      var dl = document.getElementById("download-link");
+      if (dl) {
+        dl.href = "https://github.com/" + repo + "/releases/latest/download/" + ASSET;
+      }
+
+      var tocLinks = document.querySelectorAll(".toc a");
+      var sections = [];
+      tocLinks.forEach(function (link) {
+        var id = link.getAttribute("href").slice(1);
+        var el = document.getElementById(id);
+        if (el) sections.push({ link: link, el: el });
+      });
+
+      function updateToc() {
+        var scrollY = window.scrollY + 100;
+        var current = sections[0];
+        for (var i = 0; i < sections.length; i++) {
+          if (sections[i].el.offsetTop <= scrollY) {
+            current = sections[i];
+          }
+        }
+        tocLinks.forEach(function (l) { l.classList.remove("is-active"); });
+        if (current) current.link.classList.add("is-active");
+      }
+
+      window.addEventListener("scroll", updateToc, { passive: true });
+      updateToc();
+    })();
+  </script>
+</body>
+</html>

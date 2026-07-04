@@ -11,6 +11,7 @@ public sealed class Track : INotifyPropertyChanged
     private ImageSource? _artworkSource;
     private string? _title;
     private string? _artist;
+    private bool _isLiked;
 
     public string FilePath { get; }
     public string FileName => Path.GetFileName(FilePath);
@@ -61,6 +62,17 @@ public sealed class Track : INotifyPropertyChanged
     }
 
     public string Initials => ComputeInitials(_title ?? DisplayName);
+
+    public bool IsLiked
+    {
+        get => _isLiked;
+        set
+        {
+            if (_isLiked == value) return;
+            _isLiked = value;
+            OnPropertyChanged();
+        }
+    }
 
     public Track(string filePath)
     {

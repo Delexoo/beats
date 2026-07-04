@@ -23,9 +23,11 @@
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
 
-    <!-- Pill bar -->
+    <!-- Pill bar (row host stretches to dashboard width so the pill can center above it) -->
+    <Grid x:Name="PillRowHost"
+          Grid.Row="0"
+          HorizontalAlignment="Stretch">
     <Border x:Name="PillBorder"
-            Grid.Row="0"
             Style="{StaticResource WidgetPillBar}"
             HorizontalAlignment="Left"
             MouseEnter="PillBorder_MouseEnter"
@@ -33,9 +35,8 @@
         <Grid VerticalAlignment="Center">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto"/>
-          <ColumnDefinition Width="56"/>
-          <ColumnDefinition Width="128"/>
-          <ColumnDefinition Width="102"/>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="82"/>
         </Grid.ColumnDefinitions>
 
         <!-- Hover: loop + settings (clipped reveal, matches website .pill-hover-controls) -->
@@ -47,15 +48,18 @@
                 HorizontalAlignment="Left">
           <StackPanel x:Name="HoverControlsPanel"
                       Orientation="Vertical"
-                      Width="24"
-                      Margin="0,0,6,0"
-                      Opacity="0"
+                      Width="20"
+                      Margin="0,0,5,0"
+                      Opacity="1"
                       IsHitTestVisible="False">
             <Button x:Name="LoopButton"
                     Style="{StaticResource WhiteCircleButton.Utility}"
-                    ToolTip="Loop current song"
+                    ToolTip="Loop current song (off)"
+                    ToolTipService.InitialShowDelay="400"
+                    ToolTipService.BetweenShowDelay="300"
+                    ToolTipService.ShowDuration="5000"
                     Click="Loop_Click">
-              <Grid Width="12" Height="12">
+              <Grid Width="10" Height="10">
                 <Rectangle x:Name="LoopIconRect">
                   <Rectangle.Fill>
                     <SolidColorBrush Color="#0A0A0A"/>
@@ -69,85 +73,101 @@
             </Button>
             <Button x:Name="GearButton"
                     Style="{StaticResource WhiteCircleButton.Utility}"
-                    Margin="0,6,0,0"
-                    ToolTip="Dashboard"
+                    Margin="0,4,0,0"
+                    ToolTip="Open dashboard"
+                    ToolTipService.InitialShowDelay="400"
+                    ToolTipService.BetweenShowDelay="300"
+                    ToolTipService.ShowDuration="5000"
                     Click="Gear_Click">
               <Path Data="{StaticResource Icon.Gear}"
                     Fill="{StaticResource Brush.WidgetIcon}"
                     Stretch="Uniform"
-                    Width="14" Height="14"/>
+                    Width="12" Height="12"/>
             </Button>
           </StackPanel>
         </Border>
 
-        <!-- Album art (drag handle) -->
+        <!-- Album art + track info -->
         <Grid Grid.Column="1"
-              Width="56" Height="56"
-              Margin="0,0,14,0"
               VerticalAlignment="Center"
-              HorizontalAlignment="Left">
-          <Border x:Name="AlbumArtBorder"
-                  Width="56"
-                  Height="56"
-                  CornerRadius="8"
-                  Background="{StaticResource Brush.WidgetArt}"
-                  ClipToBounds="True"
-                  SnapsToDevicePixels="True"
-                  Padding="3">
-            <Border.Clip>
-              <RectangleGeometry Rect="0,0,56,56" RadiusX="8" RadiusY="8"/>
-            </Border.Clip>
-            <Grid>
-              <TextBlock x:Name="AlbumArtInitials"
-                         Text="♪"
-                         Foreground="{StaticResource Brush.TextDim}"
-                         FontFamily="{StaticResource Font.Display}"
-                         FontWeight="SemiBold"
-                         FontSize="18"
-                         HorizontalAlignment="Center"
-                         VerticalAlignment="Center"/>
-              <Image x:Name="AlbumArtImage"
-                     Visibility="Collapsed"
-                     Stretch="UniformToFill"
-                     RenderOptions.BitmapScalingMode="HighQuality"/>
-            </Grid>
-          </Border>
-          <Thumb Style="{StaticResource MoveThumbStyle}"
-                 DragStarted="MoveThumb_DragStarted"
-                 DragDelta="MoveThumb_DragDelta"
-                 DragCompleted="MoveThumb_DragCompleted"/>
-        </Grid>
+              HorizontalAlignment="Left"
+              Margin="0,0,12,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="44"/>
+            <ColumnDefinition Width="8"/>
+            <ColumnDefinition Width="120"/>
+          </Grid.ColumnDefinitions>
 
-        <!-- Track info (fixed width — matches website .pill-info) -->
-        <StackPanel Grid.Column="2"
-                    Width="128"
-                    Margin="0,0,16,0"
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Left">
-          <TextBlock x:Name="TrackTitle"
-                     Text="Nothing playing"
-                     Width="128"
-                     Foreground="White"
-                     FontFamily="{StaticResource Font.Body}"
-                     FontWeight="SemiBold"
-                     FontSize="13.5"
-                     TextTrimming="CharacterEllipsis"
-                     TextWrapping="NoWrap"/>
+          <!-- Album art (drag handle) -->
+          <Grid Grid.Column="0"
+                Width="44" Height="44"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Left">
+            <Border x:Name="AlbumArtBorder"
+                    Width="44"
+                    Height="44"
+                    CornerRadius="6"
+                    Background="{StaticResource Brush.WidgetArt}"
+                    ClipToBounds="True"
+                    SnapsToDevicePixels="True">
+              <Grid Width="44" Height="44">
+                <Border x:Name="AlbumArtImageHost"
+                        Visibility="Collapsed"
+                        CornerRadius="6"
+                        ClipToBounds="True">
+                  <Border.Background>
+                    <ImageBrush x:Name="AlbumArtBrush"
+                                Stretch="UniformToFill"
+                                AlignmentX="Center"
+                                AlignmentY="Center"/>
+                  </Border.Background>
+                </Border>
+                <TextBlock x:Name="AlbumArtInitials"
+                           Text="♪"
+                           Foreground="{StaticResource Brush.TextDim}"
+                           FontFamily="{StaticResource Font.Display}"
+                           FontWeight="SemiBold"
+                           FontSize="14"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+              </Grid>
+            </Border>
+            <Thumb Style="{StaticResource MoveThumbStyle}"
+                   DragStarted="MoveThumb_DragStarted"
+                   DragDelta="MoveThumb_DragDelta"
+                   DragCompleted="MoveThumb_DragCompleted"/>
+          </Grid>
+
+          <!-- Track details (right of cover; ellipsis when too long) -->
+          <StackPanel Grid.Column="2"
+                      Width="120"
+                      VerticalAlignment="Center"
+                      HorizontalAlignment="Left">
+            <TextBlock x:Name="TrackTitle"
+                       Text="Nothing playing"
+                       MaxWidth="120"
+                       Foreground="White"
+                       FontFamily="{StaticResource Font.Body}"
+                       FontWeight="SemiBold"
+                       FontSize="12"
+                       TextTrimming="CharacterEllipsis"
+                       TextWrapping="NoWrap"/>
           <TextBlock x:Name="TrackArtist"
                      Text=""
-                     Width="128"
-                     Foreground="{StaticResource Brush.WidgetArtist}"
-                     FontFamily="{StaticResource Font.Body}"
-                     FontSize="11.5"
-                     Margin="0,2,0,0"
-                     TextTrimming="CharacterEllipsis"
-                     TextWrapping="NoWrap"/>
-        </StackPanel>
+                     MaxWidth="120"
+                       Foreground="{StaticResource Brush.WidgetArtist}"
+                       FontFamily="{StaticResource Font.Body}"
+                       FontSize="10"
+                       Margin="0,2,0,0"
+                       TextTrimming="CharacterEllipsis"
+                       TextWrapping="NoWrap"/>
+          </StackPanel>
+        </Grid>
 
         <!-- Transport controls -->
-        <StackPanel Grid.Column="3"
+        <StackPanel Grid.Column="2"
                     Orientation="Horizontal"
-                    Width="102"
+                    Width="82"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Left">
           <Button x:Name="PrevButton"
@@ -157,19 +177,19 @@
             <Path Data="{StaticResource Icon.Previous}"
                   Fill="{StaticResource Brush.WidgetIcon}"
                   Stretch="Uniform"
-                  Width="13" Height="13"/>
+                  Width="11" Height="11"/>
           </Button>
 
           <Button x:Name="PlayPauseButton"
                   Style="{StaticResource WhiteCircleButton.Large}"
-                  Margin="6,0"
+                  Margin="4,0"
                   ToolTip="Play / Pause"
                   Click="PlayPause_Click">
             <Path x:Name="PlayPauseIcon"
                   Data="{StaticResource Icon.Play}"
                   Fill="{StaticResource Brush.WidgetIcon}"
                   Stretch="Uniform"
-                  Width="16" Height="16"/>
+                  Width="14" Height="14"/>
           </Button>
 
           <Button x:Name="NextButton"
@@ -179,17 +199,19 @@
             <Path Data="{StaticResource Icon.Next}"
                   Fill="{StaticResource Brush.WidgetIcon}"
                   Stretch="Uniform"
-                  Width="13" Height="13"/>
+                  Width="11" Height="11"/>
           </Button>
         </StackPanel>
       </Grid>
     </Border>
+    </Grid>
 
     <!-- Settings panel host (animated expand) -->
     <Border x:Name="SettingsHost"
             Grid.Row="1"
             Margin="0,6,0,0"
             HorizontalAlignment="Stretch"
+            MinWidth="{Binding ElementName=SettingsPanelControl, Path=Width}"
             Background="{StaticResource Brush.Surface}"
             BorderBrush="{StaticResource Brush.Border}"
             BorderThickness="1"
@@ -212,7 +234,7 @@
                DragDelta="MoveThumb_DragDelta"
                DragCompleted="MoveThumb_DragCompleted"/>
         <views:SettingsPanel x:Name="SettingsPanelControl"
-                             Width="460"
+                             HorizontalAlignment="Stretch"
                              MinWidth="380"
                              MinHeight="400"/>
         <Thumb x:Name="ResizeGrip"

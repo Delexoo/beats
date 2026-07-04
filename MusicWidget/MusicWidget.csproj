@@ -36,6 +36,7 @@
          at runtime (including self-contained publish). -->
     <Resource Include="Assets\AppIcon.ico" />
     <Resource Include="Assets\loop.png" />
+    <Resource Include="Assets\youtube.png" />
   </ItemGroup>
 
   <ItemGroup>

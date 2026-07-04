@@ -1,97 +1,518 @@
+<div align="center">
+
 # Beats
 
-A clean, frameless desktop pill-widget for Windows that plays your local music and downloads tracks from almost any site (YouTube, Spotify, SoundCloud, Instagram, TikTok, etc.) as MP3.
+**A floating desktop music player for Windows.**  
+Play local playlists, download tracks from the web, and control everything from a minimal always-on-top widget.
 
-## Download
+[![Latest release](https://img.shields.io/github/v/release/Delexoo/beats?label=release&sort=semver&color=2563eb)](https://github.com/Delexoo/beats/releases/latest)
+[![Windows](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078d4?logo=windows&logoColor=white)](https://github.com/Delexoo/beats/releases/latest)
+[![.NET](https://img.shields.io/badge/.NET-8.0-512bd4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
+[![License](https://img.shields.io/github/license/Delexoo/beats)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/Delexoo/beats?style=social)](https://github.com/Delexoo/beats/stargazers)
 
-**Latest installer:** [Beats-Setup-x64.exe](https://github.com/Delexoo/beats/releases/latest/download/Beats-Setup-x64.exe)
+<br />
+
+[**Download for Windows**](https://github.com/Delexoo/beats/releases/latest/download/Beats-Setup-x64.exe)
+&nbsp;·&nbsp;
+[**Help &amp; manual**](https://delexoo.github.io/beats/help.html)
+&nbsp;·&nbsp;
+[**Website**](https://delexoo.github.io/beats/)
+&nbsp;·&nbsp;
+[**Releases**](https://github.com/Delexoo/beats/releases)
+&nbsp;·&nbsp;
+[**Report an issue**](https://github.com/Delexoo/beats/issues)
+
+<br />
+
+<sub>Free · No account required · x64 only</sub>
+
+</div>
+
+---
+
+## Table of contents
+
+- [Overview](#overview)
+- [Preview](#preview)
+- [Quick start](#quick-start)
+- [Features](#features)
+- [Keyboard shortcuts](#keyboard-shortcuts)
+- [Supported sources](#supported-sources)
+- [System requirements](#system-requirements)
+- [Installation](#installation)
+- [Where your data lives](#where-your-data-lives)
+- [Tech stack](#tech-stack)
+- [Project structure](#project-structure)
+- [Development](#development)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+
+---
+
+## Overview
+
+**Beats** is a frameless, always-on-top desktop widget for Windows. It keeps your music one glance away while you work, game, or browse — without cluttering the taskbar.
+
+| | |
+|---|---|
+| **Local playback** | Folder-based playlists under `My Music\Beats` — portable, editable, and yours |
+| **Web downloads** | Paste a URL; Beats saves MP3s into the playlist you choose |
+| **Minimal UI** | A draggable pill with album art, transport controls, and an expandable dashboard |
+| **Stay out of the way** | Hide off-screen with `Alt` + `\` or the top-screen chevron; bring it back instantly |
+
+Built with **WPF** and **.NET 8**, powered by **LibVLC** for playback and **yt-dlp** / **spotDL** / **ffmpeg** for downloads (bootstrapped automatically on first use).
+
+---
+
+## Preview
+
+> **Live demo:** open the [project website](https://delexoo.github.io/beats/) for an interactive preview of the widget on a Windows 11 desktop.
+
+<!-- Add a screenshot once available, e.g.:
+![Beats widget on desktop](docs/screenshot.png)
+-->
+
+---
+
+## Quick start
+
+<details open>
+<summary><strong>Get running in under a minute</strong></summary>
+
+<br />
+
+1. **Download** the latest installer: [Beats-Setup-x64.exe](https://github.com/Delexoo/beats/releases/latest/download/Beats-Setup-x64.exe)
+2. **Run** the installer and launch Beats from the Start menu.
+3. **Open the dashboard** — click the settings gear on the pill, or press `Ctrl` + `\`.
+4. **Create a playlist** — use **New Playlist** in the dashboard sidebar.
+5. **Add music** — drag files into a playlist folder, or paste a URL to download.
+
+On first download, Beats silently fetches `yt-dlp`, `ffmpeg`, and (for Spotify) `spotDL` into `%APPDATA%\Beats\tools`. This is a one-time setup (~130 MB total).
+
+</details>
+
+---
 
 ## Features
 
-- **Pill widget**: dark rounded bar with blue circular buttons — Settings, Loop, Previous, Play/Pause, Next.
-- **Always on top, draggable**, no taskbar entry. Drag the pill anywhere on screen.
-- **CTRL+\\ hotkey** slides the widget off the nearest screen edge and back in on the next press.
-- **Top-of-screen toggle**: a tiny chevron at the top center of your primary monitor — click to hide / show the widget.
-- **Loop current song** — toggle on/off with the loop button.
-- **Folder-based playlists** — each playlist is a folder under `My Music\Beats`, so all your songs stay portable.
-- **Paste any URL → MP3**: powered by `yt-dlp` + `ffmpeg` (auto-downloaded on first run). Spotify links use **spotDL** for tracks, albums, and playlists.
-- **Create / rename / delete playlists**, add tracks from disk, remove tracks.
+### At a glance
 
-## Requirements
+| Category | Highlights |
+|---|---|
+| **Widget** | Always on top · draggable · no taskbar icon · hover to expand loop & settings |
+| **Dashboard** | Playlists · track list · seek bar · volume · liked & saved songs |
+| **Playback** | Play / pause · previous / next · shuffle · loop current · LibVLC engine |
+| **Library** | Folder playlists · pin favorites · custom sort order · live folder watching |
+| **Downloads** | YouTube · Spotify · TikTok · SoundCloud · Instagram · 1000+ sites via yt-dlp |
+| **Quality of life** | Global hotkeys · top chevron hide tab · resizable dashboard · crash logging |
 
-- Windows 10 / 11 (x64)
-- .NET 8 Desktop Runtime (or build from source with the .NET 8 SDK)
+<details>
+<summary><strong>Widget &amp; playback</strong></summary>
 
-## Build & Run
+<br />
+
+- **Floating pill widget** — dark rounded bar with album art, title, artist, and transport controls
+- **Always on top** — stays visible over any application; no taskbar entry
+- **Draggable** — grab the album art to reposition anywhere on screen
+- **Hover expand** — loop and settings controls appear on hover (or keep them pinned in settings)
+- **Hide & show** — slide off the nearest screen edge via `Alt` + `\` or the top-center chevron tab
+- **Shuffle & loop** — toggle shuffle for the queue; loop the current track independently
+- **Volume control** — adjustable from the dashboard footer
+- **Rich formats** — MP3, WAV, FLAC, M4A, AAC, OGG, Opus, WMA, AIFF, ALAC
+
+</details>
+
+<details>
+<summary><strong>Playlists &amp; library</strong></summary>
+
+<br />
+
+- **Folder-based playlists** — each playlist is a folder under your music root (default: `My Music\Beats`)
+- **Portable library** — copy, back up, or sync folders like any other files on disk
+- **Create · rename · delete** — full playlist management from the dashboard
+- **Add from disk** — import existing audio files into any playlist
+- **Liked Songs & Saves** — built-in collections separate from normal playlists
+- **Pin playlists** — right-click to pin favorites above the Liked/Saves divider
+- **Custom order** — drag to reorder playlists and tracks; order persists across sessions
+- **Live updates** — file system watchers refresh track lists when files change on disk
+- **Album artwork** — embedded art and cached covers via TagLib
+
+</details>
+
+<details>
+<summary><strong>Web downloads</strong></summary>
+
+<br />
+
+- **Paste any URL** — download dialog accepts links from supported platforms
+- **YouTube** — videos, playlists, and channels via yt-dlp nightly builds with multi-client fallbacks
+- **Spotify** — tracks, albums, and playlists via spotDL v4 (with metadata)
+- **Social & audio sites** — TikTok, SoundCloud, Instagram Reels audio, and any site yt-dlp supports
+- **Progress tracking** — live percentage and item counts during batch downloads
+- **YouTube cookies (optional)** — import a Netscape `cookies.txt` when downloads are blocked or rate-limited
+- **Smart URL cleanup** — strips tracking parameters from YouTube, Instagram, TikTok, and other social links
+
+</details>
+
+<details>
+<summary><strong>Dashboard &amp; settings</strong></summary>
+
+<br />
+
+- **Resizable dashboard** — drag edges to resize; `Ctrl` + `Shift` + `\` resets layout to defaults
+- **Track list zoom** — `Ctrl` + scroll to scale song rows
+- **Configurable music root** — change where playlists are stored
+- **Extended widget mode** — keep loop/settings visible without hovering
+- **In-app help** — Quick start, YouTube cookies guide, and shortcuts reference
+- **Single instance** — only one Beats process runs at a time
+
+</details>
+
+---
+
+## Keyboard shortcuts
+
+| Action | Shortcut |
+|---|---|
+| Hide or show widget | `Alt` + `\` |
+| Open or close dashboard | `Ctrl` + `\` |
+| Reset widget position & dashboard size | `Ctrl` + `Shift` + `\` |
+| Scale track list (in dashboard) | `Ctrl` + scroll |
+
+<details>
+<summary><strong>Mouse gestures</strong></summary>
+
+<br />
+
+| Gesture | Action |
+|---|---|
+| **Drag album art** | Move the widget anywhere on screen |
+| **Top chevron tab** | Same as `Alt` + `\` — toggle widget visibility |
+| **Hover pill** | Reveal loop and settings controls (unless pinned open) |
+| **Click settings gear** | Open the dashboard |
+
+</details>
+
+> **Note:** Hotkeys use the `\` (backslash) key on US layouts. If a combo is already registered by another app, the chevron tab and on-screen buttons still work.
+
+---
+
+## Supported sources
+
+<details>
+<summary><strong>Platforms with first-class support</strong></summary>
+
+<br />
+
+| Platform | Method | Notes |
+|---|---|---|
+| **YouTube** | yt-dlp | Videos, playlists, channels; optional cookies for restricted content |
+| **Spotify** | spotDL | Tracks, albums, playlists with metadata |
+| **TikTok** | yt-dlp | Short links (`vm.tiktok.com`, etc.) auto-resolved |
+| **SoundCloud** | yt-dlp | Tracks and sets |
+| **Instagram** | yt-dlp | Reels audio URLs supported |
+
+</details>
+
+<details>
+<summary><strong>Everything else yt-dlp supports</strong></summary>
+
+<br />
+
+Beats delegates generic URLs to [yt-dlp](https://github.com/yt-dlp/yt-dlp), which supports **1,000+ sites**. If yt-dlp can extract audio from a link, Beats can download it as MP3.
+
+Spotify links always route through spotDL regardless of URL pattern.
+
+</details>
+
+---
+
+## System requirements
+
+| Requirement | Details |
+|---|---|
+| **OS** | Windows 10 or Windows 11 (64-bit) |
+| **Runtime** | [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) (included in the installer) |
+| **Disk space** | ~50 MB app + ~130 MB tools on first download |
+| **Network** | Required for initial tool bootstrap and web downloads |
+
+---
+
+## Installation
+
+<details open>
+<summary><strong>End users — installer (recommended)</strong></summary>
+
+<br />
+
+Download the latest release:
+
+**[Beats-Setup-x64.exe](https://github.com/Delexoo/beats/releases/latest/download/Beats-Setup-x64.exe)**
+
+The installer registers Beats in the Start menu and handles the .NET 8 Desktop Runtime dependency.
+
+</details>
+
+<details>
+<summary><strong>First-run tool bootstrap</strong></summary>
+
+<br />
+
+On the first web download, Beats automatically downloads these tools into `%APPDATA%\Beats\tools`:
+
+| Tool | Size (approx.) | Purpose |
+|---|---|---|
+| `yt-dlp.exe` | ~10 MB | Extract audio from web URLs (nightly build) |
+| `ffmpeg.exe` | ~80 MB | Transcode and mux audio |
+| `spotdl.exe` | ~42 MB | Spotify track/album/playlist downloads |
+
+After the initial bootstrap, all downloads run locally with no additional setup.
+
+</details>
+
+---
+
+## Where your data lives
+
+<details>
+<summary><strong>Application data</strong> — <code>%APPDATA%\Beats\</code></summary>
+
+<br />
+
+```
+%APPDATA%\Beats\
+├── settings.json           # Preferences, window layout, volume, etc.
+├── liked-songs.json        # Liked Songs collection
+├── saved-songs.json        # Saves collection
+├── playlist-orders.json    # Custom playlist & track ordering
+├── artwork\                # Cached album art
+└── tools\
+    ├── yt-dlp.exe
+    ├── ffmpeg.exe
+    └── spotdl.exe
+```
+
+</details>
+
+<details>
+<summary><strong>Music library</strong> — default <code>%USERPROFILE%\Music\Beats\</code></summary>
+
+<br />
+
+```
+%USERPROFILE%\Music\Beats\     (configurable in settings)
+├── My Playlist\
+│   ├── Artist - Song.mp3
+│   └── ...
+├── Workout Mix\
+│   └── ...
+└── ...
+```
+
+Each subfolder is a playlist. Add, remove, or rename files directly in Explorer — Beats picks up changes automatically.
+
+</details>
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| **UI** | WPF (.NET 8, x64) |
+| **Playback** | [LibVLCSharp](https://github.com/videolan/libvlcsharp) + VideoLAN.LibVLC |
+| **Metadata** | [TagLib#](https://github.com/mono/taglib-sharp) |
+| **Downloads** | [yt-dlp](https://github.com/yt-dlp/yt-dlp) · [spotDL](https://github.com/spotDL/spotify-downloader) · [ffmpeg](https://ffmpeg.org/) |
+| **Installer** | [Inno Setup 6](https://jrsoftware.org/isdl.php) |
+| **CI/CD** | GitHub Actions (release + Pages deploy) |
+| **Website** | Static HTML landing page on GitHub Pages |
+
+```mermaid
+flowchart LR
+    subgraph UI["WPF Frontend"]
+        W[Widget Pill]
+        D[Dashboard]
+    end
+
+    subgraph Core["Services"]
+        P[AudioPlayer]
+        PL[PlaylistManager]
+        DL[DownloadService]
+        TB[ToolBootstrapper]
+    end
+
+    subgraph External["External Tools"]
+        VLC[LibVLC]
+        YTD[yt-dlp]
+        SD[spotDL]
+        FF[ffmpeg]
+    end
+
+    W --> P
+    D --> PL
+    D --> DL
+    DL --> TB
+    TB --> YTD
+    TB --> SD
+    TB --> FF
+    P --> VLC
+    DL --> YTD
+    DL --> SD
+```
+
+---
+
+## Project structure
+
+```
+beats/
+├── MusicWidget/              # WPF application (AssemblyName: Beats)
+│   ├── Views/                # Widget, dashboard, dialogs
+│   ├── Services/             # Audio, downloads, playlists, hotkeys
+│   ├── Models/               # Settings, tracks, playlists
+│   └── Resources/            # Styles and assets
+├── Installer/                # Inno Setup script + build scripts
+├── website/                  # GitHub Pages landing page
+├── .github/workflows/        # Release & Pages CI
+├── version.json              # Version + installer asset name
+└── MusicWidget.sln
+```
+
+---
+
+## Development
+
+<details>
+<summary><strong>Build &amp; run from source</strong></summary>
+
+<br />
+
+**Prerequisites:** [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
 ```powershell
+git clone https://github.com/Delexoo/beats.git
+cd beats
 dotnet restore
 dotnet build -c Release
 dotnet run --project MusicWidget -c Release
 ```
 
-On first launch the app will silently download `yt-dlp.exe` (~10 MB) and `ffmpeg.exe` (~80 MB) into `%APPDATA%\Beats\tools`. The first Spotify download also fetches `spotdl.exe` (~42 MB). After that, downloads are local and instant.
+</details>
 
-## Build installer
+<details>
+<summary><strong>Build the Windows installer</strong></summary>
 
-Requires [Inno Setup 6](https://jrsoftware.org/isdl.php).
+<br />
+
+**Prerequisites:** [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) · [Inno Setup 6](https://jrsoftware.org/isdl.php)
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File Installer\Build-Installer.ps1
 ```
 
-Output: `Installer\Output\Beats-Setup-x64.exe` (also copied to `website\downloads\` for local preview).
+Output: `Installer\Output\Beats-Setup-x64.exe`
 
-## GitHub setup
+</details>
 
-1. Create a new repo on GitHub (e.g. `beats`).
-2. Repo: [github.com/Delexoo/beats](https://github.com/Delexoo/beats)
-3. Push this project:
+<details>
+<summary><strong>Publish a release</strong></summary>
 
-```powershell
-git init
-git add -A
-git commit -m "Initial commit: Beats app, installer, and landing page"
-git branch -M main
-git remote add origin https://github.com/Delexoo/beats.git
-git push -u origin main
-```
+<br />
 
-4. Publish a release (builds the installer automatically):
+Releases are built automatically by GitHub Actions when you push a version tag:
 
 ```powershell
 git tag v2.2.0
 git push origin v2.2.0
 ```
 
-Or run **Actions → Release → Run workflow** from the GitHub UI.
+Or trigger manually: **Actions → Release → Run workflow**.
 
-Each release uploads `Beats-Setup-x64.exe` under a stable filename. The website Download button points at `releases/latest/download/Beats-Setup-x64.exe`, so visitors always get the newest build.
+Each release uploads `Beats-Setup-x64.exe` under a stable filename so the website and README download links always resolve to the latest build.
 
-### GitHub Pages (optional)
+</details>
 
-In repo **Settings → Pages**, set source to the `/website` folder on `main`. Your landing page will be live at `https://delexoo.github.io/beats/`.
+<details>
+<summary><strong>Deploy the website (GitHub Pages)</strong></summary>
 
-## Hotkeys
+<br />
 
-| Action | Shortcut |
-|---|---|
-| Slide widget off / back in | `CTRL` + `\` |
+The landing page in `/website` deploys automatically on push to `main`.
 
-## File layout
+Manual setup (one-time): **Settings → Pages → Source:** Deploy from branch `main`, folder `/website`.
 
-```
-%APPDATA%\Beats\
-  settings.json
-  tools\yt-dlp.exe
-  tools\ffmpeg.exe
-  tools\spotdl.exe
+Live URL: **[delexoo.github.io/beats](https://delexoo.github.io/beats/)**
 
-%USERPROFILE%\Music\Beats\   (default; configurable in settings)
-  <Playlist 1>\
-    *.mp3
-```
+</details>
+
+---
+
+## Troubleshooting
+
+<details>
+<summary><strong>YouTube downloads fail or say &quot;Sign in&quot;</strong></summary>
+
+<br />
+
+YouTube occasionally blocks automated downloads. In the dashboard help section, follow the **YouTube cookies** guide to export a Netscape-format `cookies.txt` from your browser and point Beats to it in settings.
+
+Beats also retries with multiple yt-dlp player clients automatically before giving up.
+
+</details>
+
+<details>
+<summary><strong>Hotkeys don&apos;t work</strong></summary>
+
+<br />
+
+Another application may have registered the same key combo. Use the top chevron tab or on-screen buttons instead. Only one Beats instance can register hotkeys at a time.
+
+</details>
+
+<details>
+<summary><strong>Spotify download is slow the first time</strong></summary>
+
+<br />
+
+The first Spotify download also bootstraps spotDL and its Deno dependency. Subsequent Spotify downloads are much faster.
+
+</details>
+
+<details>
+<summary><strong>Find crash logs</strong></summary>
+
+<br />
+
+Beats writes crash logs to `%APPDATA%\Beats\` for unexpected errors. Include these when [opening an issue](https://github.com/Delexoo/beats/issues).
+
+</details>
+
+---
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+Copyright © 2026 [Delexo](https://delexo.store)
+
+---
+
+## Acknowledgments
+
+Beats builds on excellent open-source tools:
+
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) — web media extraction
+- [spotDL](https://github.com/spotDL/spotify-downloader) — Spotify downloads
+- [ffmpeg](https://ffmpeg.org/) — audio transcoding
+- [LibVLC / LibVLCSharp](https://github.com/videolan/libvlcsharp) — playback engine
+- [TagLib#](https://github.com/mono/taglib-sharp) — audio metadata
+
+<div align="center">
+
+<br />
+
+**[⬇ Download Beats](https://github.com/Delexoo/beats/releases/latest/download/Beats-Setup-x64.exe)** · **[🌐 Website](https://delexoo.github.io/beats/)** · **[⭐ Star on GitHub](https://github.com/Delexoo/beats)**
+
+</div>

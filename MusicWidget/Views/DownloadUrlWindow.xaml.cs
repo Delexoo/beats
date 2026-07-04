@@ -15,6 +15,7 @@ public partial class DownloadUrlWindow : Window
     private readonly Playlist _playlist;
     private bool _running;
     public bool AnyDownloaded { get; private set; }
+    public bool OpenYoutubeCookiesRequested { get; private set; }
 
     public DownloadUrlWindow(Playlist playlist)
     {
@@ -159,6 +160,13 @@ public partial class DownloadUrlWindow : Window
 
     private void Close_Click(object sender, RoutedEventArgs e)
     {
+        Close();
+    }
+
+    private void YoutubeCookiesSetup_Click(object sender, RoutedEventArgs e)
+    {
+        if (_running) return;
+        OpenYoutubeCookiesRequested = true;
         Close();
     }
 

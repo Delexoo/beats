@@ -55,6 +55,7 @@ public partial class SettingsPanel : UserControl
     private enum View { Home, Help, QuickStart, Shortcuts, YoutubeCookies }
 
     private const string MoreProgramsUrl = "https://delexo.store";
+    private const string HelpPageUrl = AppBranding.HelpPageUrl;
 
     private readonly Playlist _likedPlaylist = new(
         "Liked Songs",
@@ -75,6 +76,7 @@ public partial class SettingsPanel : UserControl
     private Track? _nowPlayingTrack;
     private bool _suppressVolumeChanged;
     private bool _suppressProgressChanged;
+    private bool _suppressKeepWidgetExpandedChanged;
     private int _lastNonZeroVolume = 80;
     private DispatcherTimer? _progressTimer;
 
@@ -95,6 +97,7 @@ public partial class SettingsPanel : UserControl
         UpdatePlayPauseTrackButton();
         UpdateShuffleButton();
         InitializeFooter();
+        InitializeKeepWidgetExpandedToggle();
         StartProgressTimer();
         App.Playlists.PlaylistsChanged += OnPlaylistsChanged;
         App.Playlists.PlaylistTracksChanged += OnPlaylistTracksChanged;
@@ -600,11 +603,48 @@ public partial class SettingsPanel : UserControl
         owner?.ResetLayoutToDefaults();
     }
 
+    private void InitializeKeepWidgetExpandedToggle()
+    {
+        _suppressKeepWidgetExpandedChanged = true;
+        KeepWidgetExpandedToggle.IsChecked = App.Settings.Current.KeepWidgetExpanded;
+        _suppressKeepWidgetExpandedChanged = false;
+    }
+
+    private void KeepWidgetExpandedToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if (_suppressKeepWidgetExpandedChanged)
+        {
+            return;
+        }
+
+        App.Settings.Current.KeepWidgetExpanded = KeepWidgetExpandedToggle.IsChecked == true;
+        App.Settings.Save();
+
+        if (Window.GetWindow(this) is WidgetWindow owner)
+        {
+            owner.ApplyKeepWidgetExpandedPreference();
+        }
+    }
+
     // ----- Navigation -----
 
     private View _currentView = View.Home;
 
-    private void OpenHelp_Click(object sender, RoutedEventArgs e) => ShowView(View.Help);
+    private void OpenHelp_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = HelpPageUrl,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            ModernMessageBox.ShowWarning("Could not open browser: " + ex.Message);
+        }
+    }
     private void OpenQuickStart_Click(object sender, RoutedEventArgs e) => ShowView(View.QuickStart);
     private void OpenShortcuts_Click(object sender, RoutedEventArgs e) => ShowView(View.Shortcuts);
     private void OpenYoutubeCookies_Click(object sender, RoutedEventArgs e) => ShowView(View.YoutubeCookies);
@@ -629,9 +669,9 @@ public partial class SettingsPanel : UserControl
     {
         var target = _currentView switch
         {
-            View.QuickStart => View.Help,
-            View.Shortcuts => View.Help,
-            View.YoutubeCookies => View.Help,
+            View.QuickStart => View.Home,
+            View.Shortcuts => View.Home,
+            View.YoutubeCookies => View.Home,
             View.Help => View.Home,
             _ => View.Home,
         };
@@ -845,6 +885,7 @@ public partial class SettingsPanel : UserControl
         TracksList.ItemsSource = pl.Tracks;
         TracksHeader.Text = $"{pl.Name} Playlist";
 
+        SyncTrackLikedStates();
         LoadArtworkForTracks(pl);
 
         // After re-binding the tracks list, re-select the playing track if it
@@ -856,6 +897,25 @@ public partial class SettingsPanel : UserControl
 
     private void RebuildLikedTracks() => RebuildPinnedTracks(App.LikedSongs, _likedPlaylist);
     private void RebuildSavedTracks() => RebuildPinnedTracks(App.SavedSongs, _savesPlaylist);
+
+    private void SyncTrackLikedStates()
+    {
+        var liked = App.LikedSongs;
+        void Sync(IEnumerable<Track> tracks)
+        {
+            foreach (var track in tracks)
+            {
+                track.IsLiked = liked.Contains(track.FilePath);
+            }
+        }
+
+        Sync(_likedPlaylist.Tracks);
+        Sync(_savesPlaylist.Tracks);
+        foreach (var playlist in _playlistsCache)
+        {
+            Sync(playlist.Tracks);
+        }
+    }
 
     /// <summary>
     /// Repopulates the given pinned playlist's Tracks collection from the store's
@@ -1062,7 +1122,11 @@ public partial class SettingsPanel : UserControl
             Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive),
         };
         window.ShowDialog();
-        if (window.AnyDownloaded)
+        if (window.OpenYoutubeCookiesRequested)
+        {
+            ShowView(View.YoutubeCookies);
+        }
+        else if (window.AnyDownloaded)
         {
             RefreshAll();
         }
@@ -1822,6 +1886,7 @@ public partial class SettingsPanel : UserControl
             try
             {
                 RebuildLikedTracks();
+                SyncTrackLikedStates();
                 UpdateFooterLikeIcon();
                 if (PlaylistsList.SelectedItem is Playlist sel && sel.Kind == PlaylistKind.Liked)
                 {

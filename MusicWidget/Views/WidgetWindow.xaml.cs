@@ -23,16 +23,17 @@ public partial class WidgetWindow : Window
     /// Stays in sync between first-launch positioning and the Reset Layout action.
     /// </summary>
     private const double DefaultTopOffset = 16;
-    /// <summary>Collapsed pill width: padding 20 + art 70 + info 144 + transport 102.</summary>
-    private const double DefaultPillWidthEstimate = 336;
-    /// <summary>24px buttons + 6px right margin — matches website .pill-hover-controls.</summary>
-    private const double HoverControlsExpandedWidth = 30;
+    /// <summary>Collapsed pill width: padding 20 + art/info 262 + transport 102.</summary>
+    private const double DefaultPillWidthEstimate = 282;
+    /// <summary>20px buttons + 5px right margin — matches website .pill-hover-controls.</summary>
+    private const double HoverControlsExpandedWidth = 25;
     private const double HoverWidthAnimMs = 280;
-    private const double HoverOpacityAnimMs = 220;
     private static readonly IEasingFunction HoverWidthEase = new CubicEase { EasingMode = EasingMode.EaseOut };
     private static readonly IEasingFunction HoverCollapseEase = new CubicEase { EasingMode = EasingMode.EaseIn };
     private DispatcherTimer? _hoverCollapseTimer;
     private double _hoverClipWidth;
+    private bool _hoverAnimTargetExpanded;
+    private double _hoverAnimTargetWidth;
     private double _settingsTargetHeight = DefaultDashboardHeight;
     private bool _resizingDashboard;
     private HotkeyService? _hotkeys;
@@ -40,6 +41,11 @@ public partial class WidgetWindow : Window
     private bool _userMovedWidget;
     private bool _hoverExpanded;
     private bool _animatingHover;
+    private double _pillBaseWidth;
+    private double _pillDashboardMargin = -1;
+    private double _hoverAnchorCenterX;
+    private bool _settingsAnimOpen;
+    private double _settingsAnimPillCenterX;
     private MusicWidget.Models.Track? _boundTrack;
 
     public WidgetWindow()
@@ -68,6 +74,13 @@ public partial class WidgetWindow : Window
     {
         ApplyDefaultDashboardSize();
         ScheduleStartupCentering();
+        Dispatcher.BeginInvoke(new Action(ApplyKeepWidgetExpandedPreference), DispatcherPriority.Loaded);
+
+        _hoverCollapseTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(120),
+        };
+        _hoverCollapseTimer.Tick += HoverCollapseTimer_Tick;
 
         _hotkeys = new HotkeyService(this);
         _hotkeys.ToggleVisibilityPressed += OnToggleVisibilityHotkey;
@@ -113,6 +126,12 @@ public partial class WidgetWindow : Window
 
     private void WidgetWindow_SizeChanged(object sender, SizeChangedEventArgs e)
     {
+        if (e.WidthChanged && _animatingSettings && _settingsAnimOpen && !IsBeingDragged)
+        {
+            AlignPillOverDashboardPreservingScreenX(_settingsAnimPillCenterX);
+            return;
+        }
+
         if (!e.WidthChanged || IsBeingDragged || _userMovedWidget || _settingsExpanded ||
             _resizingDashboard || _animatingSettings || _animatingHover || _hoverExpanded)
         {
@@ -145,6 +164,7 @@ public partial class WidgetWindow : Window
 
         SettingsPanelControl.Width = Math.Clamp(DefaultDashboardWidth, MinDashboardWidth, maxW);
         _settingsTargetHeight = Math.Clamp(DefaultDashboardHeight, MinDashboardHeight, maxH);
+        UpdatePillDashboardAlignment();
     }
 
     /// <summary>
@@ -198,8 +218,185 @@ public partial class WidgetWindow : Window
     /// </summary>
     private void PreservePillScreenX(double pillCenterXBefore)
     {
+        try
+        {
+            if (!IsLoaded || IsBeingDragged)
+            {
+                return;
+            }
+
+            UpdateLayout();
+            Left += pillCenterXBefore - GetPillScreenCenterX();
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "WidgetWindow.PreservePillScreenX");
+        }
+    }
+
+    private void AlignPillOverDashboardPreservingScreenX(double pillCenterX)
+    {
+        UpdatePillDashboardAlignment();
         UpdateLayout();
-        Left += pillCenterXBefore - GetPillScreenCenterX();
+        PreservePillScreenX(pillCenterX);
+    }
+
+    private bool IsDashboardHosted =>
+        SettingsHost.Visibility == Visibility.Visible;
+
+    /// <summary>
+    /// True while the dashboard is opening/open (host visible + expanded flag).
+    /// Height is intentionally excluded so the pill centers as soon as the window
+    /// widens, not after the height animation passes zero.
+    /// </summary>
+    private bool ShouldAlignPillOverDashboard =>
+        _settingsExpanded && IsDashboardHosted;
+
+    private bool ShouldKeepWidgetExpanded() =>
+        App.Settings.Current.KeepWidgetExpanded ||
+        (_settingsExpanded && IsDashboardHosted);
+
+    /// <summary>
+    /// Applies the dashboard "Extended widget" preference to the pill hover controls.
+    /// </summary>
+    public void ApplyKeepWidgetExpandedPreference()
+    {
+        if (ShouldKeepWidgetExpanded())
+        {
+            _hoverAnchorCenterX = GetPillScreenCenterX();
+            SetHoverControlsExpanded(true, immediate: true, force: true);
+            UpdatePillLayoutDuringHover();
+            return;
+        }
+
+        if (!PillBorder.IsMouseOver)
+        {
+            SetHoverControlsExpanded(false, immediate: true, force: true);
+        }
+    }
+
+    /// <summary>
+    /// Keeps the pill centered over the dashboard when open, or pinned to its screen
+    /// center while hover expands/collapses when the dashboard is closed.
+    /// </summary>
+    private void UpdatePillLayoutDuringHover()
+    {
+        if (_animatingSettings || IsBeingDragged)
+        {
+            return;
+        }
+
+        if (ShouldAlignPillOverDashboard)
+        {
+            UpdatePillDashboardAlignment();
+            return;
+        }
+
+        if (_hoverExpanded || _animatingHover)
+        {
+            PreservePillScreenX(_hoverAnchorCenterX);
+        }
+    }
+
+    /// <summary>
+    /// When the dashboard is open, offset the pill so it stays centered over the panel
+    /// (including while hover expands/collapses the pill width).
+    /// </summary>
+    private void UpdatePillDashboardAlignment()
+    {
+        try
+        {
+            if (!IsLoaded || IsBeingDragged)
+            {
+                return;
+            }
+
+            PillBorder.HorizontalAlignment = HorizontalAlignment.Left;
+
+            if (!ShouldAlignPillOverDashboard)
+            {
+                SetPillDashboardMargin(0);
+                return;
+            }
+
+            var dashboardW = GetDashboardWidth();
+            if (dashboardW <= 0)
+            {
+                SetPillDashboardMargin(0);
+                return;
+            }
+
+            var pillW = GetEffectivePillWidth();
+            if (pillW <= 0)
+            {
+                SetPillDashboardMargin(0);
+                return;
+            }
+
+            SetPillDashboardMargin(Math.Max(0, (dashboardW - pillW) / 2.0));
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "WidgetWindow.UpdatePillDashboardAlignment");
+        }
+    }
+
+    private void SetPillDashboardMargin(double leftMargin)
+    {
+        if (Math.Abs(_pillDashboardMargin - leftMargin) < 0.5)
+        {
+            return;
+        }
+
+        _pillDashboardMargin = leftMargin;
+        PillBorder.BeginAnimation(FrameworkElement.MarginProperty, null);
+        PillBorder.Margin = new Thickness(leftMargin, 0, 0, 0);
+    }
+
+    private void CachePillBaseWidth()
+    {
+        if (!IsLoaded)
+        {
+            _pillBaseWidth = DefaultPillWidthEstimate;
+            return;
+        }
+
+        UpdateLayout();
+        var measured = PillBorder.ActualWidth - _hoverClipWidth;
+        _pillBaseWidth = measured > 0 ? measured : DefaultPillWidthEstimate;
+    }
+
+    private double GetEffectivePillWidth()
+    {
+        var measured = PillBorder.ActualWidth;
+        if (measured > 0)
+        {
+            return measured;
+        }
+
+        var clipW = HoverControlsClip.Width;
+        if (double.IsNaN(clipW) || clipW < 0)
+        {
+            clipW = _hoverClipWidth;
+        }
+
+        return _pillBaseWidth + clipW;
+    }
+
+    private double GetDashboardWidth()
+    {
+        var dashboardW = SettingsPanelControl.Width;
+        if (double.IsNaN(dashboardW) || dashboardW <= 0)
+        {
+            dashboardW = SettingsHost.ActualWidth;
+        }
+
+        if (dashboardW <= 0)
+        {
+            dashboardW = SettingsPanelControl.ActualWidth;
+        }
+
+        return dashboardW;
     }
 
     /// <summary>
@@ -233,8 +430,18 @@ public partial class WidgetWindow : Window
             _boundTrack = null;
         }
 
-        _hoverCollapseTimer?.Stop();
-        _hoverCollapseTimer = null;
+        if (_hoverCollapseTimer is not null)
+        {
+            _hoverCollapseTimer.Stop();
+            _hoverCollapseTimer.Tick -= HoverCollapseTimer_Tick;
+            _hoverCollapseTimer = null;
+        }
+
+        HoverControlsClip.BeginAnimation(FrameworkElement.WidthProperty, null);
+        SettingsHost.BeginAnimation(HeightProperty, null);
+        PillBorder.BeginAnimation(FrameworkElement.MarginProperty, null);
+        BeginAnimation(LeftProperty, null);
+        BeginAnimation(TopProperty, null);
 
         _hotkeys?.Dispose();
         Application.Current.Shutdown();
@@ -291,7 +498,7 @@ public partial class WidgetWindow : Window
         if (hiding)
         {
             CollapseSettingsImmediate();
-            SetHoverControlsExpanded(false, immediate: true);
+            SetHoverControlsExpanded(false, immediate: true, force: true);
             WindowAnimator.SlideOffNearestEdge(this, OnDone);
         }
         else
@@ -325,11 +532,25 @@ public partial class WidgetWindow : Window
     {
         BeginAnimation(LeftProperty, null);
         BeginAnimation(TopProperty, null);
+
+        _hoverCollapseTimer?.Stop();
+        _animatingHover = false;
+
+        HoverControlsClip.BeginAnimation(FrameworkElement.WidthProperty, null);
+        PillBorder.BeginAnimation(FrameworkElement.MarginProperty, null);
+        HoverControlsClip.Width = _hoverClipWidth;
+        PillBorder.Margin = new Thickness(_pillDashboardMargin > 0 ? _pillDashboardMargin : 0, 0, 0, 0);
+
         IsBeingDragged = true;
     }
 
     private void MoveThumb_DragDelta(object sender, DragDeltaEventArgs e)
     {
+        if (!IsBeingDragged)
+        {
+            return;
+        }
+
         Left += e.HorizontalChange;
         Top += e.VerticalChange;
     }
@@ -337,6 +558,8 @@ public partial class WidgetWindow : Window
     private void MoveThumb_DragCompleted(object sender, DragCompletedEventArgs e)
     {
         IsBeingDragged = false;
+        _hoverAnchorCenterX = GetPillScreenCenterX();
+
         if (Math.Abs(e.HorizontalChange) > 3 || Math.Abs(e.VerticalChange) > 3)
         {
             _userMovedWidget = true;
@@ -357,26 +580,20 @@ public partial class WidgetWindow : Window
 
     private void PillBorder_MouseLeave(object sender, MouseEventArgs e)
     {
-        if (IsBeingDragged)
+        if (IsBeingDragged || _animatingSettings || ShouldKeepWidgetExpanded())
         {
             return;
         }
 
-        // Brief delay avoids flicker when the pointer crosses child elements during expand.
-        _hoverCollapseTimer ??= new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(100),
-        };
-        _hoverCollapseTimer.Tick -= HoverCollapseTimer_Tick;
-        _hoverCollapseTimer.Tick += HoverCollapseTimer_Tick;
-        _hoverCollapseTimer.Stop();
-        _hoverCollapseTimer.Start();
+        // Debounced leave — avoids flicker when crossing child elements.
+        _hoverCollapseTimer?.Stop();
+        _hoverCollapseTimer?.Start();
     }
 
     private void HoverCollapseTimer_Tick(object? sender, EventArgs e)
     {
         _hoverCollapseTimer?.Stop();
-        if (PillBorder.IsMouseOver || IsBeingDragged)
+        if (PillBorder.IsMouseOver || IsBeingDragged || ShouldKeepWidgetExpanded() || _animatingSettings)
         {
             return;
         }
@@ -384,8 +601,18 @@ public partial class WidgetWindow : Window
         SetHoverControlsExpanded(false);
     }
 
-    private void SetHoverControlsExpanded(bool expanded, bool immediate = false)
+    private void SetHoverControlsExpanded(bool expanded, bool immediate = false, bool force = false)
     {
+        if (!force && (IsBeingDragged || _animatingSettings))
+        {
+            return;
+        }
+
+        if (!force && !expanded && ShouldKeepWidgetExpanded())
+        {
+            return;
+        }
+
         if (!immediate && !_animatingHover && _hoverExpanded == expanded)
         {
             return;
@@ -393,66 +620,221 @@ public partial class WidgetWindow : Window
 
         _hoverExpanded = expanded;
         _hoverCollapseTimer?.Stop();
+        _hoverAnchorCenterX = GetPillScreenCenterX();
+
+        CachePillBaseWidth();
 
         if (immediate)
         {
             HoverControlsClip.BeginAnimation(FrameworkElement.WidthProperty, null);
-            HoverControlsPanel.BeginAnimation(UIElement.OpacityProperty, null);
             _animatingHover = false;
             _hoverClipWidth = expanded ? HoverControlsExpandedWidth : 0;
-            ApplyHoverVisualState(expanded, _hoverClipWidth, expanded ? 1 : 0);
+            ApplyHoverVisualState(expanded, _hoverClipWidth);
             return;
         }
 
         _animatingHover = true;
+        _hoverAnimTargetExpanded = expanded;
+        _hoverAnimTargetWidth = expanded ? HoverControlsExpandedWidth : 0;
 
         if (expanded)
         {
             HoverControlsPanel.IsHitTestVisible = true;
         }
 
-        var toWidth = expanded ? HoverControlsExpandedWidth : 0;
-        var toOpacity = expanded ? 1.0 : 0.0;
         var ease = expanded ? HoverWidthEase : HoverCollapseEase;
-
-        // Omit From so SnapshotAndReplace continues from the in-flight value (smooth reverse).
         var widthAnim = new DoubleAnimation
         {
-            To = toWidth,
+            To = _hoverAnimTargetWidth,
             Duration = TimeSpan.FromMilliseconds(HoverWidthAnimMs),
             EasingFunction = ease,
             FillBehavior = FillBehavior.Stop,
         };
-        var opacityAnim = new DoubleAnimation
-        {
-            To = toOpacity,
-            Duration = TimeSpan.FromMilliseconds(HoverOpacityAnimMs),
-            EasingFunction = ease,
-            FillBehavior = FillBehavior.Stop,
-        };
-
-        widthAnim.Completed += (_, _) =>
-        {
-            _animatingHover = false;
-            _hoverClipWidth = toWidth;
-            ApplyHoverVisualState(expanded, toWidth, toOpacity);
-        };
+        widthAnim.CurrentTimeInvalidated += OnHoverWidthAnimationTick;
+        widthAnim.Completed += OnHoverWidthAnimationCompleted;
 
         HoverControlsClip.BeginAnimation(FrameworkElement.WidthProperty, widthAnim, HandoffBehavior.SnapshotAndReplace);
-        HoverControlsPanel.BeginAnimation(UIElement.OpacityProperty, opacityAnim, HandoffBehavior.SnapshotAndReplace);
     }
 
-    private void ApplyHoverVisualState(bool expanded, double clipWidth, double opacity)
+    private void OnHoverWidthAnimationTick(object? sender, EventArgs e)
+    {
+        if (IsBeingDragged)
+        {
+            return;
+        }
+
+        UpdatePillLayoutDuringHover();
+    }
+
+    private void OnHoverWidthAnimationCompleted(object? sender, EventArgs e)
+    {
+        if (sender is DoubleAnimation anim)
+        {
+            anim.Completed -= OnHoverWidthAnimationCompleted;
+        }
+
+        _animatingHover = false;
+        _hoverClipWidth = _hoverAnimTargetWidth;
+        ApplyHoverVisualState(_hoverAnimTargetExpanded, _hoverClipWidth);
+    }
+
+    private void ApplyHoverVisualState(bool expanded, double clipWidth)
     {
         HoverControlsClip.BeginAnimation(FrameworkElement.WidthProperty, null);
-        HoverControlsPanel.BeginAnimation(UIElement.OpacityProperty, null);
-
         HoverControlsClip.Width = clipWidth;
-        HoverControlsPanel.Opacity = opacity;
-        HoverControlsPanel.IsHitTestVisible = expanded && clipWidth > 0.5;
+        HoverControlsPanel.Opacity = 1;
+        HoverControlsPanel.IsHitTestVisible = expanded && clipWidth >= HoverControlsExpandedWidth - 0.5;
+
+        if (!_animatingSettings)
+        {
+            UpdatePillLayoutDuringHover();
+        }
+    }
+
+    /// <summary>
+    /// Sets hover clip width without triggering dashboard-close layout side effects.
+    /// </summary>
+    private void ApplyHoverStateSilently(bool expanded)
+    {
+        HoverControlsClip.BeginAnimation(FrameworkElement.WidthProperty, null);
+        _animatingHover = false;
+        _hoverExpanded = expanded;
+        _hoverClipWidth = expanded ? HoverControlsExpandedWidth : 0;
+        HoverControlsClip.Width = _hoverClipWidth;
+        HoverControlsPanel.Opacity = 1;
+        HoverControlsPanel.IsHitTestVisible = expanded;
+    }
+
+    /// <summary>
+    /// Eases the pill margin back after the dashboard height reaches zero, then collapses
+    /// the host and hover controls in one layout pass so the window width does not stutter.
+    /// </summary>
+    private void FinalizeDashboardClose()
+    {
+        _hoverAnchorCenterX = GetPillScreenCenterX();
+        _settingsExpanded = false;
+        SettingsHost.Height = 0;
+
+        if (_pillDashboardMargin <= 0.5)
+        {
+            CompleteDashboardCloseLayout();
+            return;
+        }
+
+        AnimateDashboardCloseMargin();
+    }
+
+    private void CompleteDashboardCloseLayout()
+    {
+        PillBorder.BeginAnimation(FrameworkElement.MarginProperty, null);
+
+        if (!App.Settings.Current.KeepWidgetExpanded)
+        {
+            ApplyHoverStateSilently(false);
+        }
+
+        SetPillDashboardMargin(0);
+        SettingsHost.Visibility = Visibility.Collapsed;
+
+        UpdateLayout();
+        PreservePillScreenX(_hoverAnchorCenterX);
+        EndSettingsAnimation();
+    }
+
+    private void AnimateDashboardCloseMargin()
+    {
+        PillBorder.BeginAnimation(FrameworkElement.MarginProperty, null);
+
+        var from = new Thickness(_pillDashboardMargin, 0, 0, 0);
+        if (from.Left <= 0.5)
+        {
+            CompleteDashboardCloseLayout();
+            return;
+        }
+
+        var marginAnim = new ThicknessAnimation
+        {
+            From = from,
+            To = new Thickness(0),
+            Duration = TimeSpan.FromMilliseconds(220),
+            EasingFunction = HoverCollapseEase,
+            FillBehavior = FillBehavior.Stop,
+        };
+        marginAnim.CurrentTimeInvalidated += (_, _) =>
+        {
+            if (!IsBeingDragged)
+            {
+                PreservePillScreenX(_hoverAnchorCenterX);
+            }
+        };
+        marginAnim.Completed += OnDashboardCloseMarginAnimationCompleted;
+        PillBorder.BeginAnimation(FrameworkElement.MarginProperty, marginAnim, HandoffBehavior.SnapshotAndReplace);
+    }
+
+    private void OnDashboardCloseMarginAnimationCompleted(object? sender, EventArgs e)
+    {
+        if (sender is ThicknessAnimation anim)
+        {
+            anim.Completed -= OnDashboardCloseMarginAnimationCompleted;
+        }
+
+        PillBorder.BeginAnimation(FrameworkElement.MarginProperty, null);
+        SetPillDashboardMargin(0);
+        PreservePillScreenX(_hoverAnchorCenterX);
+        CompleteDashboardCloseLayout();
+    }
+
+    private void SchedulePillPositionAfterLayout(double pillCenterX, Action? onComplete = null)
+    {
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (!IsLoaded)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            if (ShouldAlignPillOverDashboard)
+            {
+                AlignPillOverDashboardPreservingScreenX(pillCenterX);
+            }
+            else
+            {
+                UpdateLayout();
+                PreservePillScreenX(pillCenterX);
+            }
+
+            onComplete?.Invoke();
+        }), DispatcherPriority.Loaded);
+    }
+
+    private void EndSettingsAnimation()
+    {
+        _animatingSettings = false;
+
+        if (_settingsExpanded || ShouldKeepWidgetExpanded())
+        {
+            return;
+        }
+
+        if (!PillBorder.IsMouseOver)
+        {
+            return;
+        }
+
+        // Defer hover re-expand until the close layout finishes so the pill does not
+        // widen again in the same frame the dashboard host collapses.
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (!_settingsExpanded && !_animatingSettings && PillBorder.IsMouseOver)
+            {
+                SetHoverControlsExpanded(true);
+            }
+        }), DispatcherPriority.ApplicationIdle);
     }
 
     private bool _animatingSettings;
+    private double _pillCenterXBeforeResize;
 
     private void Gear_Click(object sender, RoutedEventArgs e)
     {
@@ -471,16 +853,16 @@ public partial class WidgetWindow : Window
 
     private void AnimateSettings(bool open)
     {
-        _settingsExpanded = open;
+        _settingsAnimOpen = open;
+        _settingsAnimPillCenterX = GetPillScreenCenterX();
         _animatingSettings = true;
-
-        var pillCenterXBefore = GetPillScreenCenterX();
 
         if (open)
         {
+            _settingsExpanded = true;
             SettingsHost.Visibility = Visibility.Visible;
-            UpdateLayout();
-            PreservePillScreenX(pillCenterXBefore);
+            AlignPillOverDashboardPreservingScreenX(_settingsAnimPillCenterX);
+            SchedulePillPositionAfterLayout(_settingsAnimPillCenterX);
         }
 
         double from = SettingsHost.Height;
@@ -493,19 +875,31 @@ public partial class WidgetWindow : Window
             Duration = TimeSpan.FromMilliseconds(220),
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
         };
-        anim.Completed += (_, _) =>
-        {
-            SettingsHost.BeginAnimation(HeightProperty, null);
-            SettingsHost.Height = to;
-            if (!open)
-            {
-                SettingsHost.Visibility = Visibility.Collapsed;
-                PreservePillScreenX(pillCenterXBefore);
-            }
-
-            _animatingSettings = false;
-        };
+        anim.Completed += OnSettingsHeightAnimationCompleted;
         SettingsHost.BeginAnimation(HeightProperty, anim, HandoffBehavior.SnapshotAndReplace);
+    }
+
+    private void OnSettingsHeightAnimationCompleted(object? sender, EventArgs e)
+    {
+        if (sender is DoubleAnimation anim)
+        {
+            anim.Completed -= OnSettingsHeightAnimationCompleted;
+        }
+
+        var to = _settingsAnimOpen ? _settingsTargetHeight : 0;
+
+        SettingsHost.BeginAnimation(HeightProperty, null);
+        SettingsHost.Height = to;
+        if (!_settingsAnimOpen)
+        {
+            FinalizeDashboardClose();
+        }
+        else
+        {
+            SetHoverControlsExpanded(true, immediate: true, force: true);
+            AlignPillOverDashboardPreservingScreenX(_settingsAnimPillCenterX);
+            SchedulePillPositionAfterLayout(_settingsAnimPillCenterX, EndSettingsAnimation);
+        }
     }
 
     private void CollapseSettingsImmediate()
@@ -518,11 +912,15 @@ public partial class WidgetWindow : Window
 
         _settingsExpanded = false;
         _animatingSettings = false;
-        var pillCenterXBefore = GetPillScreenCenterX();
+        var pillCenterX = GetPillScreenCenterX();
         SettingsHost.BeginAnimation(HeightProperty, null);
         SettingsHost.Height = 0;
         SettingsHost.Visibility = Visibility.Collapsed;
-        PreservePillScreenX(pillCenterXBefore);
+        SetPillDashboardMargin(0);
+        ApplyHoverStateSilently(false);
+        UpdateLayout();
+        PreservePillScreenX(pillCenterX);
+        _hoverAnchorCenterX = pillCenterX;
     }
 
     // ----- Dashboard resize grip -----
@@ -537,6 +935,7 @@ public partial class WidgetWindow : Window
         }
 
         _resizingDashboard = true;
+        _pillCenterXBeforeResize = GetPillScreenCenterX();
 
         // Stop any held animation so subsequent direct Height writes own the property.
         SettingsHost.BeginAnimation(HeightProperty, null);
@@ -560,6 +959,9 @@ public partial class WidgetWindow : Window
         SettingsPanelControl.Width = newW;
         _settingsTargetHeight = newH;
         SettingsHost.Height = newH;
+        UpdatePillDashboardAlignment();
+        UpdateLayout();
+        PreservePillScreenX(_pillCenterXBeforeResize);
     }
 
     private void ResizeGrip_DragCompleted(object sender, DragCompletedEventArgs e)
@@ -604,6 +1006,7 @@ public partial class WidgetWindow : Window
         if (_settingsExpanded)
         {
             SettingsHost.Visibility = Visibility.Visible;
+            UpdatePillDashboardAlignment();
             SettingsHost.BeginAnimation(HeightProperty, null);
             var heightAnim = new DoubleAnimation
             {
@@ -616,6 +1019,7 @@ public partial class WidgetWindow : Window
             {
                 SettingsHost.BeginAnimation(HeightProperty, null);
                 SettingsHost.Height = newH;
+                UpdatePillDashboardAlignment();
             };
             SettingsHost.BeginAnimation(HeightProperty, heightAnim, HandoffBehavior.SnapshotAndReplace);
         }
@@ -638,6 +1042,7 @@ public partial class WidgetWindow : Window
 
     private void AnimateBackToDefaultPosition()
     {
+        UpdatePillDashboardAlignment();
         var (defaultLeft, defaultTop) = ComputeDefaultPosition();
 
         BeginAnimation(LeftProperty, null);
@@ -762,33 +1167,49 @@ public partial class WidgetWindow : Window
 
     private void UpdateNowPlayingDisplay()
     {
-        var t = _boundTrack;
-        if (t is null)
+        if (!IsLoaded)
         {
-            TrackTitle.Text = "Nothing playing";
-            TrackArtist.Text = string.Empty;
-            AlbumArtInitials.Text = "♪";
-            AlbumArtInitials.Visibility = Visibility.Visible;
-            AlbumArtImage.Visibility = Visibility.Collapsed;
-            AlbumArtImage.Source = null;
             return;
         }
 
-        TrackTitle.Text = !string.IsNullOrWhiteSpace(t.Title) ? t.Title : t.DisplayName;
-        TrackArtist.Text = !string.IsNullOrWhiteSpace(t.Artist) ? t.Artist : "Unknown artist";
+        try
+        {
+            var t = _boundTrack;
+            if (t is null)
+            {
+            TrackTitle.Text = "Nothing playing";
+            TrackArtist.Text = string.Empty;
+            TrackTitle.ToolTip = null;
+            TrackArtist.ToolTip = null;
+                AlbumArtInitials.Text = "♪";
+                AlbumArtInitials.Visibility = Visibility.Visible;
+                AlbumArtImageHost.Visibility = Visibility.Collapsed;
+                AlbumArtBrush.ImageSource = null;
+                return;
+            }
 
-        if (t.ArtworkSource is not null)
-        {
-            AlbumArtImage.Source = t.ArtworkSource;
-            AlbumArtImage.Visibility = Visibility.Visible;
-            AlbumArtInitials.Visibility = Visibility.Collapsed;
+            TrackTitle.Text = !string.IsNullOrWhiteSpace(t.Title) ? t.Title : t.DisplayName;
+            TrackArtist.Text = !string.IsNullOrWhiteSpace(t.Artist) ? t.Artist : "Unknown artist";
+            TrackTitle.ToolTip = TrackTitle.Text;
+            TrackArtist.ToolTip = TrackArtist.Text;
+
+            if (t.ArtworkSource is not null)
+            {
+                AlbumArtBrush.ImageSource = t.ArtworkSource;
+                AlbumArtImageHost.Visibility = Visibility.Visible;
+                AlbumArtInitials.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                AlbumArtBrush.ImageSource = null;
+                AlbumArtImageHost.Visibility = Visibility.Collapsed;
+                AlbumArtInitials.Text = t.Initials;
+                AlbumArtInitials.Visibility = Visibility.Visible;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            AlbumArtImage.Source = null;
-            AlbumArtImage.Visibility = Visibility.Collapsed;
-            AlbumArtInitials.Text = t.Initials;
-            AlbumArtInitials.Visibility = Visibility.Visible;
+            CrashLog.Write(ex, "WidgetWindow.UpdateNowPlayingDisplay");
         }
     }
 
@@ -799,27 +1220,51 @@ public partial class WidgetWindow : Window
 
     private void UpdatePlayPauseIcon()
     {
-        var key = App.Player.IsPlaying ? "Icon.Pause" : "Icon.Play";
-        PlayPauseIcon.Data = (Geometry)Application.Current.Resources[key];
+        if (!IsLoaded)
+        {
+            return;
+        }
+
+        try
+        {
+            var key = App.Player.IsPlaying ? "Icon.Pause" : "Icon.Play";
+            PlayPauseIcon.Data = (Geometry)Application.Current.Resources[key];
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "WidgetWindow.UpdatePlayPauseIcon");
+        }
     }
 
     private void UpdateLoopIcon()
     {
-        var on = App.Player.LoopCurrent;
-        var dark = (Brush)Application.Current.Resources["Brush.WidgetIcon"];
-        var white = (Brush)Application.Current.Resources["Brush.WhiteButton"];
-
-        if (on)
+        if (!IsLoaded)
         {
-            LoopButton.Background = dark;
-            LoopIconRect.Fill = Brushes.White;
-            LoopButton.ToolTip = "Loop: ON (current song)";
+            return;
         }
-        else
+
+        try
         {
-            LoopButton.Background = white;
-            LoopIconRect.Fill = dark;
-            LoopButton.ToolTip = "Loop: OFF";
+            var on = App.Player.LoopCurrent;
+            var dark = (Brush)Application.Current.Resources["Brush.WidgetIcon"];
+            var white = (Brush)Application.Current.Resources["Brush.WhiteButton"];
+
+            if (on)
+            {
+                LoopButton.Background = dark;
+                LoopIconRect.Fill = Brushes.White;
+                LoopButton.ToolTip = "Loop current song (on)";
+            }
+            else
+            {
+                LoopButton.Background = white;
+                LoopIconRect.Fill = dark;
+                LoopButton.ToolTip = "Loop current song (off)";
+            }
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "WidgetWindow.UpdateLoopIcon");
         }
     }
 }

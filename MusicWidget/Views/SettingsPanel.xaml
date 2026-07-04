@@ -34,6 +34,7 @@
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto"/>
           <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <Border Grid.Column="0"
                 Width="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=30}"
@@ -80,7 +81,26 @@
         <TextBlock Grid.Column="1"
                    Text="{Binding DisplayName}"
                    VerticalAlignment="Center"
-                   TextTrimming="CharacterEllipsis"/>
+                   TextTrimming="CharacterEllipsis"
+                   Margin="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomThickness}, ConverterParameter='0,0,6,0'}"/>
+        <Path Grid.Column="2"
+              Data="{StaticResource Icon.Heart}"
+              Fill="#FFEF4444"
+              Stretch="Uniform"
+              VerticalAlignment="Center"
+              Width="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=12}"
+              Height="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=12}"
+              Visibility="Collapsed">
+          <Path.Style>
+            <Style TargetType="Path">
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsLiked}" Value="True">
+                  <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Path.Style>
+        </Path>
       </Grid>
     </DataTemplate>
 
@@ -357,10 +377,23 @@
           <StackPanel Grid.Column="1"
                       Orientation="Horizontal"
                       VerticalAlignment="Center">
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        Margin="0,0,6,0"
+                        ToolTip="Keep the widget extended (loop and settings visible) at all times">
+              <TextBlock Text="Extended widget"
+                         FontSize="11"
+                         Foreground="{StaticResource Brush.TextDim}"
+                         VerticalAlignment="Center"
+                         Margin="0,0,6,0"/>
+              <ToggleButton x:Name="KeepWidgetExpandedToggle"
+                            Style="{StaticResource ToggleSwitch}"
+                            Click="KeepWidgetExpandedToggle_Click"/>
+            </StackPanel>
             <Button x:Name="ResetLayoutButton"
                     Style="{StaticResource FlatButton}"
                     Padding="7,5"
-                    Margin="0,0,6,0"
+                    Margin="0,0,8,0"
                     ToolTip="Reset layout: restore default widget position and dashboard size"
                     Click="ResetLayout_Click">
               <Path Data="{StaticResource Icon.Refresh}"
@@ -370,7 +403,7 @@
             </Button>
             <Button Style="{StaticResource FlatButton}"
                     Padding="9,5"
-                    ToolTip="Open the help page"
+                    ToolTip="Open the help manual in your browser"
                     Click="OpenHelp_Click">
               <StackPanel Orientation="Horizontal">
                 <Path Data="{StaticResource Icon.Info}"

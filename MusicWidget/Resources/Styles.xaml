@@ -390,6 +390,44 @@
     </Setter>
   </Style>
 
+  <Style x:Key="ToggleSwitch" TargetType="ToggleButton">
+    <Setter Property="Width" Value="34"/>
+    <Setter Property="Height" Value="18"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ToggleButton">
+          <Grid>
+            <Border x:Name="track"
+                    Width="34" Height="18"
+                    CornerRadius="9"
+                    Background="{StaticResource Brush.SurfaceAlt}"
+                    BorderBrush="{StaticResource Brush.Border}"
+                    BorderThickness="1"/>
+            <Ellipse x:Name="thumb"
+                     Width="14" Height="14"
+                     Fill="{StaticResource Brush.TextDim}"
+                     HorizontalAlignment="Left"
+                     Margin="2,0,0,0"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="track" Property="Background" Value="{StaticResource Brush.Blue}"/>
+              <Setter TargetName="track" Property="BorderBrush" Value="{StaticResource Brush.Blue}"/>
+              <Setter TargetName="thumb" Property="Fill" Value="White"/>
+              <Setter TargetName="thumb" Property="HorizontalAlignment" Value="Right"/>
+              <Setter TargetName="thumb" Property="Margin" Value="0,0,2,0"/>
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="track" Property="BorderBrush" Value="#FF3A4256"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <Style x:Key="DarkListBox" TargetType="ListBox">
     <Setter Property="Background" Value="{StaticResource Brush.SurfaceAlt}"/>
     <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
@@ -703,10 +741,10 @@
 
   <Style x:Key="WidgetPillBar" TargetType="Border">
     <Setter Property="Background" Value="{StaticResource Brush.Surface}"/>
-    <Setter Property="BorderThickness" Value="0"/>
-    <Setter Property="CornerRadius" Value="18"/>
-    <!-- Matches website .beats-pill padding: 10px 14px 10px 10px -->
-    <Setter Property="Padding" Value="10,10,10,10"/>
+    <Setter Property="BorderBrush" Value="{StaticResource Brush.Border}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="14"/>
+    <Setter Property="Padding" Value="8,8,8,8"/>
     <Setter Property="SnapsToDevicePixels" Value="True"/>
     <Setter Property="UseLayoutRounding" Value="True"/>
     <Setter Property="Effect">
@@ -752,18 +790,18 @@
   </Style>
 
   <Style x:Key="WhiteCircleButton.Small" TargetType="Button" BasedOn="{StaticResource WhiteCircleButton}">
-    <Setter Property="Width" Value="26"/>
-    <Setter Property="Height" Value="26"/>
+    <Setter Property="Width" Value="22"/>
+    <Setter Property="Height" Value="22"/>
   </Style>
 
   <Style x:Key="WhiteCircleButton.Large" TargetType="Button" BasedOn="{StaticResource WhiteCircleButton}">
-    <Setter Property="Width" Value="38"/>
-    <Setter Property="Height" Value="38"/>
+    <Setter Property="Width" Value="30"/>
+    <Setter Property="Height" Value="30"/>
   </Style>
 
   <Style x:Key="WhiteCircleButton.Utility" TargetType="Button" BasedOn="{StaticResource WhiteCircleButton}">
-    <Setter Property="Width" Value="24"/>
-    <Setter Property="Height" Value="24"/>
+    <Setter Property="Width" Value="20"/>
+    <Setter Property="Height" Value="20"/>
   </Style>
 
   <Style x:Key="WidgetLoopStrokeIconStyle" TargetType="Path">
