@@ -702,11 +702,11 @@
   <SolidColorBrush x:Key="Brush.WidgetIcon" Color="#FF0A0A0A"/>
 
   <Style x:Key="WidgetPillBar" TargetType="Border">
-    <Setter Property="Background" Value="{StaticResource Brush.WidgetPill}"/>
+    <Setter Property="Background" Value="{StaticResource Brush.Surface}"/>
     <Setter Property="BorderThickness" Value="0"/>
     <Setter Property="CornerRadius" Value="18"/>
     <!-- Matches website .beats-pill padding: 10px 14px 10px 10px -->
-    <Setter Property="Padding" Value="8,10,8,8"/>
+    <Setter Property="Padding" Value="10,10,10,10"/>
     <Setter Property="SnapsToDevicePixels" Value="True"/>
     <Setter Property="UseLayoutRounding" Value="True"/>
     <Setter Property="Effect">

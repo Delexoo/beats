@@ -33,8 +33,8 @@
         <Grid VerticalAlignment="Center">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto"/>
-          <ColumnDefinition Width="52"/>
-          <ColumnDefinition Width="112"/>
+          <ColumnDefinition Width="56"/>
+          <ColumnDefinition Width="128"/>
           <ColumnDefinition Width="102"/>
         </Grid.ColumnDefinitions>
 
@@ -82,19 +82,20 @@
 
         <!-- Album art (drag handle) -->
         <Grid Grid.Column="1"
-              Width="52" Height="52"
-              Margin="0,0,12,0"
+              Width="56" Height="56"
+              Margin="0,0,14,0"
               VerticalAlignment="Center"
               HorizontalAlignment="Left">
           <Border x:Name="AlbumArtBorder"
-                  Width="52"
-                  Height="52"
+                  Width="56"
+                  Height="56"
                   CornerRadius="8"
                   Background="{StaticResource Brush.WidgetArt}"
                   ClipToBounds="True"
-                  SnapsToDevicePixels="True">
+                  SnapsToDevicePixels="True"
+                  Padding="3">
             <Border.Clip>
-              <RectangleGeometry Rect="0,0,52,52" RadiusX="8" RadiusY="8"/>
+              <RectangleGeometry Rect="0,0,56,56" RadiusX="8" RadiusY="8"/>
             </Border.Clip>
             <Grid>
               <TextBlock x:Name="AlbumArtInitials"
@@ -119,13 +120,13 @@
 
         <!-- Track info (fixed width — matches website .pill-info) -->
         <StackPanel Grid.Column="2"
-                    Width="112"
+                    Width="128"
                     Margin="0,0,16,0"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Left">
           <TextBlock x:Name="TrackTitle"
                      Text="Nothing playing"
-                     Width="112"
+                     Width="128"
                      Foreground="White"
                      FontFamily="{StaticResource Font.Body}"
                      FontWeight="SemiBold"
@@ -134,7 +135,7 @@
                      TextWrapping="NoWrap"/>
           <TextBlock x:Name="TrackArtist"
                      Text=""
-                     Width="112"
+                     Width="128"
                      Foreground="{StaticResource Brush.WidgetArtist}"
                      FontFamily="{StaticResource Font.Body}"
                      FontSize="11.5"

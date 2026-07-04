@@ -23,8 +23,8 @@ public partial class WidgetWindow : Window
     /// Stays in sync between first-launch positioning and the Reset Layout action.
     /// </summary>
     private const double DefaultTopOffset = 16;
-    /// <summary>Collapsed pill width: padding 16 + art 64 + info 128 + transport 102.</summary>
-    private const double DefaultPillWidthEstimate = 310;
+    /// <summary>Collapsed pill width: padding 20 + art 70 + info 144 + transport 102.</summary>
+    private const double DefaultPillWidthEstimate = 336;
     /// <summary>24px buttons + 6px right margin — matches website .pill-hover-controls.</summary>
     private const double HoverControlsExpandedWidth = 30;
     private const double HoverWidthAnimMs = 280;
