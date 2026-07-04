@@ -9,6 +9,7 @@ Play local playlists, download tracks from the web, and control everything from 
 [![Windows](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078d4?logo=windows&logoColor=white)](https://github.com/Delexoo/beats/releases/latest)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512bd4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/download/dotnet/8.0)
 [![License](https://img.shields.io/github/license/Delexoo/beats)](LICENSE)
+[![Website](https://img.shields.io/badge/website-delexoo.github.io%2Fbeats-111111?style=flat-square)](https://delexoo.github.io/beats/)
 [![GitHub stars](https://img.shields.io/github/stars/Delexoo/beats?style=social)](https://github.com/Delexoo/beats/stargazers)
 
 <br />
@@ -34,6 +35,7 @@ Play local playlists, download tracks from the web, and control everything from 
 ## Table of contents
 
 - [Overview](#overview)
+- [Website](#website)
 - [Preview](#preview)
 - [Quick start](#quick-start)
 - [Features](#features)
@@ -63,6 +65,29 @@ Play local playlists, download tracks from the web, and control everything from 
 | **Stay out of the way** | Hide off-screen with `Alt` + `\` or the top-screen chevron; bring it back instantly |
 
 Built with **WPF** and **.NET 8**, powered by **LibVLC** for playback and **yt-dlp** / **spotDL** / **ffmpeg** for downloads (bootstrapped automatically on first use).
+
+---
+
+## Website
+
+The project site is hosted on **GitHub Pages** at **[delexoo.github.io/beats](https://delexoo.github.io/beats/)**.
+
+<div align="center">
+
+[![Beats — floating desktop player for Windows](website/assets/albumcover.png)](https://delexoo.github.io/beats/)
+
+<br />
+
+[**Open the website**](https://delexoo.github.io/beats/) · [**Help & manual**](https://delexoo.github.io/beats/help.html)
+
+</div>
+
+| Page | URL | What you'll find |
+|---|---|---|
+| **Home** | [delexoo.github.io/beats](https://delexoo.github.io/beats/) | Download, features, how it works, interactive widget preview |
+| **Help** | [delexoo.github.io/beats/help.html](https://delexoo.github.io/beats/help.html) | Full user manual — setup, shortcuts, downloads, troubleshooting |
+
+The site lives in the [`website/`](website/) folder and deploys automatically when you push to `master` (see [Deploy the website](#deploy-the-website-github-pages) below).
 
 ---
 
@@ -439,9 +464,9 @@ Each release uploads `Beats-Setup-x64.exe` under a stable filename so the websit
 
 <br />
 
-The landing page in `/website` deploys automatically on push to `main`.
+The landing page in `/website` deploys automatically on push to `master`.
 
-Manual setup (one-time): **Settings → Pages → Source:** Deploy from branch `main`, folder `/website`.
+Manual setup (one-time): **Settings → Pages → Source:** Deploy from branch `master`, folder `/website`.
 
 Live URL: **[delexoo.github.io/beats](https://delexoo.github.io/beats/)**
 
@@ -513,6 +538,6 @@ Beats builds on excellent open-source tools:
 
 <br />
 
-**[⬇ Download Beats](https://github.com/Delexoo/beats/releases/latest/download/Beats-Setup-x64.exe)** · **[🌐 Website](https://delexoo.github.io/beats/)** · **[⭐ Star on GitHub](https://github.com/Delexoo/beats)**
+**[⬇ Download Beats](https://github.com/Delexoo/beats/releases/latest/download/Beats-Setup-x64.exe)** · **[🌐 Website](https://delexoo.github.io/beats/)** · **[📖 Help](https://delexoo.github.io/beats/help.html)** · **[⭐ Star on GitHub](https://github.com/Delexoo/beats)**
 
 </div>
