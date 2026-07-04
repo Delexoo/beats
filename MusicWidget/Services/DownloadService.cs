@@ -954,6 +954,9 @@ public sealed class DownloadService
         private double _currentSongPct;
         private string? _currentSongTitle;
 
+        private double _lastReportedPercent = -1;
+        private long _lastReportTicks;
+
         public AggregateDownloadProgress(IProgress<DownloadProgressUpdate>? progress)
         {
             _progress = progress;
@@ -1083,8 +1086,19 @@ public sealed class DownloadService
 
         private void Report()
         {
+            var percent = ComputePercent();
+            var now = Environment.TickCount64;
+            if (_lastReportedPercent >= 0
+                && Math.Abs(percent - _lastReportedPercent) < 0.75
+                && now - _lastReportTicks < 150)
+            {
+                return;
+            }
+
+            _lastReportedPercent = percent;
+            _lastReportTicks = now;
             _progress?.Report(new DownloadProgressUpdate(
-                ComputePercent(),
+                percent,
                 FormatMessage(),
                 _currentSongTitle));
         }

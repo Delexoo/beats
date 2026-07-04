@@ -1128,7 +1128,28 @@ public partial class SettingsPanel : UserControl
         }
         else if (window.AnyDownloaded)
         {
-            RefreshAll();
+            RefreshAfterDownload(playlist);
+        }
+    }
+
+    private void RefreshAfterDownload(Playlist playlist)
+    {
+        App.Playlists.ReloadTracks(playlist);
+
+        if (PlaylistsList.SelectedItem is Playlist selected
+            && string.Equals(selected.Name, playlist.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            RefreshTracks(playlist);
+            return;
+        }
+
+        var cached = _playlistsCache?.FirstOrDefault(p =>
+            string.Equals(p.Name, playlist.Name, StringComparison.OrdinalIgnoreCase));
+        if (cached is not null
+            && PlaylistsList.SelectedItem is Playlist selectedCached
+            && string.Equals(selectedCached.Name, cached.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            RefreshTracks(cached);
         }
     }
 

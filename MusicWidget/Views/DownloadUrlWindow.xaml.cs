@@ -66,6 +66,8 @@ public partial class DownloadUrlWindow : Window
 
         var progress = new Progress<DownloadProgressUpdate>(p =>
         {
+            if (!IsLoaded) return;
+
             if (p.Percent >= 0)
             {
                 DownloadProgress.Value = p.Percent;
@@ -100,9 +102,10 @@ public partial class DownloadUrlWindow : Window
 
         try
         {
-            await App.Tools.EnsureToolsAsync(progress);
+            await App.Tools.EnsureToolsAsync(progress).ConfigureAwait(true);
             DownloadStatus.Text = "Downloading...";
-            var result = await App.Downloader.DownloadAsync(url, dest, progress, CancellationToken.None);
+            var result = await App.Downloader.DownloadAsync(url, dest, progress, CancellationToken.None)
+                .ConfigureAwait(true);
             if (result.Success)
             {
                 AnyDownloaded = true;
@@ -110,11 +113,11 @@ public partial class DownloadUrlWindow : Window
                 var downloadedOrder = result.DownloadedPathsInOrder?.ToList();
                 if (downloadedOrder is null || downloadedOrder.Count == 0)
                 {
-                    downloadedOrder = Directory.EnumerateFiles(dest)
+                    downloadedOrder = await Task.Run(() => Directory.EnumerateFiles(dest)
                         .Where(PlaylistManager.IsAudioFile)
                         .Where(f => !existingFiles.Contains(f))
                         .OrderBy(f => File.GetLastWriteTimeUtc(f))
-                        .ToList();
+                        .ToList()).ConfigureAwait(true);
                 }
 
                 if (downloadedOrder.Count > 0)
@@ -122,12 +125,7 @@ public partial class DownloadUrlWindow : Window
                     App.PlaylistOrders.MergeDownloadOrder(_playlist.Name, downloadedOrder);
                 }
 
-                var cached = App.Playlists.GetPlaylists()
-                    .FirstOrDefault(p => string.Equals(p.Name, _playlist.Name, StringComparison.OrdinalIgnoreCase));
-                if (cached is not null)
-                {
-                    App.Playlists.ReloadTracks(cached);
-                }
+                App.Playlists.ReloadTracks(_playlist);
 
                 DownloadStatus.Text = "Done.";
                 DownloadCountText.Text = string.Empty;
