@@ -20,6 +20,7 @@ public partial class App : Application
     public static BackgroundDownloadService BackgroundDownloads { get; private set; } = null!;
     public static ToolBootstrapper Tools { get; private set; } = null!;
     public static ArtworkService Artwork { get; private set; } = null!;
+    public static UpdateService Updates { get; private set; } = null!;
     public static TrackListStore LikedSongs { get; private set; } = null!;
     public static TrackListStore SavedSongs { get; private set; } = null!;
     public static PlaylistOrderStore PlaylistOrders { get; private set; } = null!;
@@ -68,6 +69,7 @@ public partial class App : Application
             Downloader = new DownloadService(Tools);
             BackgroundDownloads = new BackgroundDownloadService();
             Artwork = new ArtworkService(ArtworkDir);
+            Updates = new UpdateService();
             LikedSongs = new TrackListStore(Path.Combine(AppDataDir, "liked-songs.json"));
             LikedSongs.Load();
             SavedSongs = new TrackListStore(Path.Combine(AppDataDir, "saved-songs.json"));

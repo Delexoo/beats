@@ -80,6 +80,9 @@ public partial class SettingsPanel : UserControl
     private int _lastNonZeroVolume = 80;
     private DispatcherTimer? _progressTimer;
     private DispatcherTimer? _backgroundDownloadHideTimer;
+    private UpdateCheckResult? _pendingUpdate;
+    private bool _updateCheckInFlight;
+    private bool _updateInstallInFlight;
 
     public SettingsPanel()
     {
@@ -111,6 +114,7 @@ public partial class SettingsPanel : UserControl
         App.SavedSongs.Changed += OnSavedSongsChanged;
         App.BackgroundDownloads.ProgressChanged += OnBackgroundDownloadProgress;
         App.BackgroundDownloads.Completed += OnBackgroundDownloadCompleted;
+        _ = CheckForUpdatesAsync(showUpToDateMessage: false);
         Unloaded += OnUnloaded;
     }
 
@@ -1955,6 +1959,205 @@ public partial class SettingsPanel : UserControl
     }
 
     // ----- Donate -----
+
+    private async Task CheckForUpdatesAsync(bool showUpToDateMessage)
+    {
+        if (_updateCheckInFlight || _updateInstallInFlight || !_isPanelActive)
+        {
+            return;
+        }
+
+        _updateCheckInFlight = true;
+        SetUpdateButtonCheckingState();
+
+        try
+        {
+            var result = await App.Updates.CheckForUpdateAsync().ConfigureAwait(true);
+            if (!_isPanelActive)
+            {
+                return;
+            }
+
+            _pendingUpdate = result;
+            ApplyUpdateButtonState(result);
+
+            if (showUpToDateMessage)
+            {
+                if (result is null)
+                {
+                    ModernMessageBox.ShowWarning(
+                        "Could not check for updates. Check your internet connection and try again.");
+                }
+                else if (result.IsUpdateAvailable)
+                {
+                    ModernMessageBox.ShowInfo(
+                        $"Version {result.LatestVersion} is available. Click Update to download and install.");
+                }
+                else
+                {
+                    ModernMessageBox.ShowInfo(
+                        $"You are on the latest version (v{App.Updates.CurrentVersion}).");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            if (_isPanelActive)
+            {
+                ApplyUpdateButtonState(null);
+                if (showUpToDateMessage)
+                {
+                    ModernMessageBox.ShowWarning("Could not check for updates: " + ex.Message);
+                }
+            }
+        }
+        finally
+        {
+            _updateCheckInFlight = false;
+        }
+    }
+
+    private void SetUpdateButtonCheckingState()
+    {
+        if (UpdateButton is null)
+        {
+            return;
+        }
+
+        UpdateButton.Visibility = Visibility.Visible;
+        UpdateButton.IsEnabled = false;
+        UpdateButton.Style = (Style)FindResource("FlatButton");
+        UpdateButton.ToolTip = "Checking for updates...";
+        if (UpdateButtonLabel is not null)
+        {
+            UpdateButtonLabel.Text = "Checking";
+        }
+        if (UpdateButtonIcon is not null)
+        {
+            UpdateButtonIcon.Fill = (Brush)FindResource("Brush.TextDim");
+        }
+    }
+
+    private void ApplyUpdateButtonState(UpdateCheckResult? result)
+    {
+        if (UpdateButton is null)
+        {
+            return;
+        }
+
+        UpdateButton.Visibility = Visibility.Visible;
+        UpdateButton.IsEnabled = !_updateInstallInFlight;
+
+        if (result?.IsUpdateAvailable == true)
+        {
+            UpdateButton.Style = (Style)FindResource("PrimaryButton");
+            UpdateButton.ToolTip = $"Version {result.LatestVersion} is available. Click to download and install.";
+            if (UpdateButtonLabel is not null)
+            {
+                UpdateButtonLabel.Text = "Update";
+            }
+            if (UpdateButtonIcon is not null)
+            {
+                UpdateButtonIcon.Fill = Brushes.White;
+            }
+            return;
+        }
+
+        UpdateButton.Style = (Style)FindResource("FlatButton");
+        UpdateButton.ToolTip = $"You are on the latest version (v{App.Updates.CurrentVersion}). Click to check again.";
+        if (UpdateButtonLabel is not null)
+        {
+            UpdateButtonLabel.Text = "Up to date";
+        }
+        if (UpdateButtonIcon is not null)
+        {
+            UpdateButtonIcon.Fill = (Brush)FindResource("Brush.TextDim");
+        }
+    }
+
+    private async void UpdateButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_updateInstallInFlight)
+        {
+            return;
+        }
+
+        if (_pendingUpdate?.IsUpdateAvailable == true)
+        {
+            await InstallPendingUpdateAsync().ConfigureAwait(true);
+            return;
+        }
+
+        await CheckForUpdatesAsync(showUpToDateMessage: true).ConfigureAwait(true);
+    }
+
+    private async Task InstallPendingUpdateAsync()
+    {
+        var update = _pendingUpdate;
+        if (update is null || !update.IsUpdateAvailable)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(update.DownloadUrl))
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = AppBranding.GitHubReleasesUrl,
+                    UseShellExecute = true,
+                });
+            }
+            catch (Exception ex)
+            {
+                ModernMessageBox.ShowWarning("Could not open releases page: " + ex.Message);
+            }
+
+            return;
+        }
+
+        var confirmed = ModernMessageBox.ConfirmYesNo(
+            $"Download and install Beats {update.LatestVersion}?\n\nBeats will close so the installer can update.",
+            "Install update",
+            ModernMessageBox.Severity.Question);
+        if (!confirmed)
+        {
+            return;
+        }
+
+        _updateInstallInFlight = true;
+        UpdateButton.IsEnabled = false;
+        if (UpdateButtonLabel is not null)
+        {
+            UpdateButtonLabel.Text = "Downloading";
+        }
+        UpdateButton.ToolTip = "Downloading update...";
+
+        try
+        {
+            var progress = new Progress<double>(percent =>
+            {
+                UiDispatcher.BeginInvokeSafe(() =>
+                {
+                    UpdateButton.ToolTip = $"Downloading update... {percent * 100:0}%";
+                });
+            });
+
+            var installerPath = await App.Updates
+                .DownloadInstallerAsync(update.DownloadUrl, progress)
+                .ConfigureAwait(true);
+
+            UpdateService.LaunchInstaller(installerPath);
+            ExitApp_Click(this, new RoutedEventArgs());
+        }
+        catch (Exception ex)
+        {
+            _updateInstallInFlight = false;
+            ApplyUpdateButtonState(_pendingUpdate);
+            ModernMessageBox.ShowWarning("Could not download update: " + ex.Message);
+        }
+    }
 
     private void Donate_Click(object sender, RoutedEventArgs e)
     {

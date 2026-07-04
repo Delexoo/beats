@@ -391,6 +391,27 @@
                             Style="{StaticResource ToggleSwitch}"
                             Click="KeepWidgetExpandedToggle_Click"/>
             </StackPanel>
+            <Button x:Name="UpdateButton"
+                    Style="{StaticResource FlatButton}"
+                    Padding="7,5"
+                    Margin="6,0,0,0"
+                    Visibility="Collapsed"
+                    ToolTip="Check for updates"
+                    Click="UpdateButton_Click">
+              <StackPanel Orientation="Horizontal">
+                <Path x:Name="UpdateButtonIcon"
+                      Data="{StaticResource Icon.Download}"
+                      Fill="{StaticResource Brush.TextDim}"
+                      Stretch="Uniform"
+                      Width="12" Height="12"
+                      VerticalAlignment="Center"/>
+                <TextBlock x:Name="UpdateButtonLabel"
+                           Text="Update"
+                           FontWeight="SemiBold"
+                           Margin="5,0,0,0"
+                           VerticalAlignment="Center"/>
+              </StackPanel>
+            </Button>
             <Button x:Name="ResetLayoutButton"
                     Style="{StaticResource FlatButton}"
                     Padding="7,5"
