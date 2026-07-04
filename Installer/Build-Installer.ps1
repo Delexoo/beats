@@ -1,0 +1,88 @@
+# Build the full installer end-to-end.
+#
+# Usage (from anywhere):
+#   powershell -ExecutionPolicy Bypass -File Installer\Build-Installer.ps1
+#
+# 1. Regenerates AppIcon.ico from the source PNG (so updating the PNG is
+#    enough; you don't have to remember to run the icon builder separately).
+# 2. Publishes a self-contained win-x64 build (apphost + DLLs + libvlc) for Inno.
+# 3. Invokes Inno Setup Compiler (iscc.exe) to package it.
+
+[CmdletBinding()]
+param(
+    [string]$Configuration = "Release",
+    [string]$RepoRoot,
+    [switch]$SkipPublish
+)
+
+$ErrorActionPreference = "Stop"
+
+# Resolve $PSScriptRoot defensively — Windows PowerShell occasionally leaves it
+# empty when a script is launched via "powershell -File" from another script,
+# and we need a stable anchor for relative paths.
+$scriptDir = $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($scriptDir)) {
+    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+}
+if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
+    $RepoRoot = Split-Path -Parent $scriptDir
+}
+
+function Resolve-IsccPath {
+    $candidates = @(
+        "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe",
+        "${env:ProgramFiles}\Inno Setup 6\iscc.exe"
+    )
+    foreach ($c in $candidates) {
+        if (Test-Path $c) { return $c }
+    }
+    # Fall back to PATH lookup.
+    $cmd = Get-Command iscc.exe -ErrorAction SilentlyContinue
+    if ($cmd) { return $cmd.Source }
+
+    throw "Could not find Inno Setup Compiler. Install Inno Setup 6 from https://jrsoftware.org/isdl.php and re-run this script."
+}
+
+Write-Host "==> Regenerating AppIcon.ico from PNG..." -ForegroundColor Cyan
+# Build-Icon.ps1 is a pure PowerShell script (no native calls) so $LASTEXITCODE
+# isn't a reliable signal; rely on PowerShell's -ErrorActionPreference=Stop
+# (set above) to surface any real failure as an exception instead.
+& (Join-Path $scriptDir "Build-Icon.ps1")
+
+if (-not $SkipPublish) {
+    Write-Host "`n==> Publishing Beats ($Configuration, win-x64, self-contained)..." -ForegroundColor Cyan
+    $proj = Join-Path $RepoRoot "MusicWidget\MusicWidget.csproj"
+    $pubProfile = "Properties\PublishProfiles\WinX64SelfContained.pubxml"
+
+    # The .NET 10 SDK has a cold-cache target-ordering quirk where the very
+    # first WPF build after a clean fails because MarkupCompilePass1 hasn't
+    # populated MusicWidget_Content.g.cs yet. A second invocation always
+    # succeeds because the generated files now exist. We retry once silently
+    # so CI / one-shot release builds aren't broken by it.
+    & dotnet publish $proj -c $Configuration -p:PublishProfile=$pubProfile --nologo
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "First publish failed (likely WPF cold-build quirk); retrying once..."
+        & dotnet publish $proj -c $Configuration -p:PublishProfile=$pubProfile --nologo
+        if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed twice (exit $LASTEXITCODE)." }
+    }
+}
+
+Write-Host "`n==> Running Inno Setup Compiler..." -ForegroundColor Cyan
+$iscc = Resolve-IsccPath
+$iss  = Join-Path $scriptDir "MusicWidget.iss"
+& $iscc $iss
+if ($LASTEXITCODE -ne 0) { throw "iscc failed (exit $LASTEXITCODE)." }
+
+$out = Join-Path $scriptDir "Output\Beats-Setup-x64.exe"
+if (Test-Path $out) {
+    Write-Host "`nInstaller built: $out" -ForegroundColor Green
+
+    $webDownloads = Join-Path $RepoRoot "website\downloads"
+    if (-not (Test-Path $webDownloads)) {
+        New-Item -ItemType Directory -Path $webDownloads -Force | Out-Null
+    }
+    Copy-Item $out (Join-Path $webDownloads "Beats-Setup-x64.exe") -Force
+    Write-Host "Copied to website\downloads\Beats-Setup-x64.exe (local preview)" -ForegroundColor Green
+} else {
+    Write-Warning "iscc completed but the expected installer file wasn't found at $out."
+}

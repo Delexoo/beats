@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>Beats</AssemblyName>
+    <RootNamespace>MusicWidget</RootNamespace>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <!--
+      ApplicationIcon stamps the .exe file with the icon shown in Explorer,
+      Task Manager's process list, and the Alt+Tab fallback. The WPF Window.Icon
+      is a separate thing (set in XAML) and shows in the title bar/taskbar at
+      runtime; it's loaded from the same .ico embedded as a resource below.
+    -->
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+
+    <!-- Version + author metadata is shown in Explorer's file properties and
+         picked up by Inno Setup via the {#GetVersionString(...)} preprocessor. -->
+    <Version>2.2.0</Version>
+    <AssemblyVersion>2.2.0.0</AssemblyVersion>
+    <FileVersion>2.2.0.0</FileVersion>
+    <Product>Beats</Product>
+    <Company>Delexo</Company>
+    <Copyright>Copyright © Delexo 2026</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Embed the .ico so WPF's pack URI ("/Assets/AppIcon.ico") can resolve
+         at runtime (including self-contained publish). -->
+    <Resource Include="Assets\AppIcon.ico" />
+    <Resource Include="Assets\loop.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LibVLCSharp" Version="3.8.5" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.21" />
+    <PackageReference Include="TagLibSharp" Version="2.3.0" />
+  </ItemGroup>
+
+</Project>
