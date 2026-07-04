@@ -91,11 +91,14 @@ if (Test-Path $out) {
     Write-Host "Copied to website\downloads\Beats-Setup-x64.exe (local preview)" -ForegroundColor Green
 
     $versionJson = Join-Path $RepoRoot "version.json"
+    $webVersionJson = Join-Path $RepoRoot "website\version.json"
+    $payload = @{ version = $appVersion; asset = "Beats-Setup-x64.exe"; sizeMb = $sizeMb }
     if (Test-Path $versionJson) {
-        @{ version = $appVersion; asset = "Beats-Setup-x64.exe"; sizeMb = $sizeMb } |
-            ConvertTo-Json | Set-Content -Path $versionJson -Encoding UTF8
+        $payload | ConvertTo-Json | Set-Content -Path $versionJson -Encoding UTF8
         Write-Host "Updated version.json ($appVersion, ${sizeMb} MB)" -ForegroundColor Green
     }
+    $payload | ConvertTo-Json | Set-Content -Path $webVersionJson -Encoding UTF8
+    Write-Host "Updated website\version.json ($appVersion, ${sizeMb} MB)" -ForegroundColor Green
 
     Write-Host "`nPublish to GitHub (website download button):" -ForegroundColor Cyan
     Write-Host "  git tag v$appVersion" -ForegroundColor DarkGray
