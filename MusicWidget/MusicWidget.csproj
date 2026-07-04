@@ -40,6 +40,9 @@
     <Resource Include="Assets\AppIcon.ico" />
     <Resource Include="Assets\loop.png" />
     <Resource Include="Assets\youtube.png" />
+    <Resource Include="Assets\Spotify.png" />
+    <Resource Include="Assets\instagram.jpg" />
+    <Resource Include="Assets\tiktok.png" />
   </ItemGroup>
 
   <ItemGroup>

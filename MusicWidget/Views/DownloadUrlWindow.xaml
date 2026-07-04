@@ -76,41 +76,30 @@
           </Viewbox>
         </Border>
         <Border Style="{StaticResource PlatformBadge}"
-                Background="{StaticResource Brush.Brand.Spotify}"
+                Background="Transparent"
                 ToolTip="Spotify">
-          <Viewbox Margin="5">
-            <Path Data="{StaticResource Icon.Brand.Spotify}"
-                  Stroke="White"
-                  StrokeThickness="1.65"
-                  StrokeStartLineCap="Round"
-                  StrokeEndLineCap="Round"
-                  Fill="Transparent"/>
+          <Viewbox Margin="2">
+            <Image Source="pack://application:,,,/Assets/Spotify.png"
+                   Stretch="Uniform"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
           </Viewbox>
         </Border>
         <Border Style="{StaticResource PlatformBadge}"
-                Background="{StaticResource Brush.Brand.Instagram}"
+                Background="Transparent"
                 ToolTip="Instagram">
-          <Viewbox Margin="6">
-            <Path Data="{StaticResource Icon.Brand.Instagram}"
-                  Stroke="White"
-                  StrokeThickness="1.45"
-                  Fill="Transparent"/>
+          <Viewbox Margin="2">
+            <Image Source="pack://application:,,,/Assets/instagram.jpg"
+                   Stretch="Uniform"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
           </Viewbox>
         </Border>
         <Border Style="{StaticResource PlatformBadge}"
-                Background="{StaticResource Brush.Brand.TikTok}"
-                BorderBrush="#FF2F2F2F"
-                BorderThickness="1"
+                Background="Transparent"
                 ToolTip="TikTok">
-          <Viewbox Margin="6">
-            <Path Data="{StaticResource Icon.Brand.TikTok}" Fill="White"/>
-          </Viewbox>
-        </Border>
-        <Border Style="{StaticResource PlatformBadge}"
-                Background="{StaticResource Brush.Brand.SoundCloud}"
-                ToolTip="SoundCloud">
-          <Viewbox Margin="5">
-            <Path Data="{StaticResource Icon.Brand.SoundCloud}" Fill="White"/>
+          <Viewbox Margin="2">
+            <Image Source="pack://application:,,,/Assets/tiktok.png"
+                   Stretch="Uniform"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
           </Viewbox>
         </Border>
         <Border Style="{StaticResource PlatformBadge}"
