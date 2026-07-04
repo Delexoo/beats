@@ -17,7 +17,15 @@
       --text-faint: #9ca3af;
       --border: #e5e7eb;
       --surface: #f3f4f6;
-      --pill: #2c2f33;
+      /* Match WPF WidgetPillBar / Styles.xaml */
+      --pill: #161a22;
+      --pill-border: #2a3140;
+      --pill-art: #1a1d21;
+      --pill-text: #f1f5f9;
+      --pill-artist: #94a3b8;
+      --pill-btn: #ffffff;
+      --pill-icon: #0a0a0a;
+      --pill-blue: #3b82f6;
       --scale: 1.32;
       --max-w: calc(1080px * var(--scale));
     }
@@ -91,10 +99,107 @@
       transform: scale(1.15);
     }
 
+    @media (max-width: 900px) {
+      :root { --scale: 1; }
+
+      html {
+        overflow: auto;
+        height: auto;
+        font-size: 17px;
+      }
+
+      body {
+        overflow: auto;
+        height: auto;
+        min-height: 100dvh;
+      }
+
+      .hero-viewport {
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;
+        justify-content: flex-start;
+      }
+
+      .shell-panel {
+        flex: none;
+        padding: 24px 20px 32px;
+        max-width: none;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+
+      .hero-left {
+        flex-direction: column;
+        gap: 0;
+      }
+
+      .chapter-rail,
+      .preview,
+      .widget-hint,
+      .cards-tip {
+        display: none !important;
+      }
+
+      .hero-stages {
+        position: static;
+        min-height: 0;
+        width: 100%;
+      }
+
+      .hero-stage,
+      .hero-stage.is-active {
+        position: static;
+        opacity: 1;
+        transform: none;
+        pointer-events: auto;
+        display: block;
+        margin-bottom: 56px;
+        padding-top: 8px;
+      }
+
+      .hero-stage.hero-copy,
+      .hero-stage .info-section,
+      .download-section {
+        align-items: center;
+        text-align: center;
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      .hero-copy .lead,
+      .hero-copy .cta-stack,
+      .download-section .cta-stack {
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hero-copy .lead {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero-stage .info-list {
+        max-width: 100%;
+      }
+
+      .panel-footer {
+        position: static;
+        padding: 24px 20px 32px;
+      }
+    }
+
     @media (max-width: 640px) {
       .chapter-dot {
         width: 9px;
         height: 9px;
+      }
+
+      .hero-stage .info-list {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -142,10 +247,6 @@
       gap: 56px;
       align-items: center;
       width: 100%;
-    }
-
-    @media (max-width: 900px) {
-      .hero-grid { grid-template-columns: 1fr; gap: 44px; }
     }
 
     .hero-left {
@@ -493,10 +594,11 @@
       width: calc(40px * var(--scale));
       height: calc(14px * var(--scale));
       padding: 0;
-      border: none;
+      border: 1px solid var(--pill-border);
+      border-top: none;
       border-radius: 0 0 calc(8px * var(--scale)) calc(8px * var(--scale));
-      background: rgba(28, 28, 30, 0.9);
-      color: rgba(255, 255, 255, 0.92);
+      background: var(--pill);
+      color: var(--pill-blue);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -579,9 +681,10 @@
       display: inline-flex;
       align-items: center;
       background: var(--pill);
-      border-radius: calc(18px * var(--scale));
+      border: 1px solid var(--pill-border);
+      border-radius: calc(14px * var(--scale));
       padding: calc(8px * var(--scale)) calc(10px * var(--scale)) calc(8px * var(--scale)) calc(8px * var(--scale));
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.12);
       max-width: 100%;
       cursor: default;
       user-select: none;
@@ -590,7 +693,7 @@
 
     .beats-pill:hover,
     .beats-pill:focus-within {
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.22);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28), 0 3px 10px rgba(0, 0, 0, 0.14);
     }
 
     .pill-hover-controls {
@@ -625,7 +728,7 @@
       overflow: hidden;
       flex-shrink: 0;
       margin-right: calc(10px * var(--scale));
-      background: #1a1d21;
+      background: var(--pill-art);
       box-sizing: border-box;
       cursor: grab;
       touch-action: none;
@@ -665,7 +768,7 @@
     .pill-title {
       font-size: calc(12.5px * var(--scale));
       font-weight: 600;
-      color: #fff;
+      color: var(--pill-text);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -674,7 +777,7 @@
 
     .pill-artist {
       font-size: calc(10.5px * var(--scale));
-      color: #94a3b8;
+      color: var(--pill-artist);
       margin-top: 2px;
       white-space: nowrap;
       overflow: hidden;
@@ -688,10 +791,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #fff;
+      background: var(--pill-btn);
       border: none;
       border-radius: 50%;
-      color: #0a0a0a;
+      color: var(--pill-icon);
       flex-shrink: 0;
       pointer-events: none;
     }
@@ -947,7 +1050,7 @@
       </div>
     </div>
     <footer class="panel-footer">
-      <p>© Delexo · <a href="help.html">Help</a> · <a href="https://delexo.store">delexo.store</a></p>
+      <p>© Delexo · <a href="help.html">Help</a> · <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a> · <a href="https://delexo.store">delexo.store</a></p>
     </footer>
   </main>
 
@@ -962,6 +1065,11 @@
       var locked = false;
       var lockMs = 650;
       var stageCount = Math.max(stages.length, dots.length);
+      var mobileLayout = window.matchMedia("(max-width: 900px)");
+
+      function isMobile() {
+        return mobileLayout.matches;
+      }
 
       function updateRail(index) {
         dots.forEach(function (dot, i) {
@@ -984,6 +1092,7 @@
       }
 
       function goToStage(index) {
+        if (isMobile()) return;
         if (index < 0 || index >= stageCount || index === current || locked) return;
         locked = true;
         setStage(index);
@@ -992,18 +1101,24 @@
 
       dots.forEach(function (dot) {
         dot.addEventListener("click", function () {
+          if (isMobile()) return;
           goToStage(parseInt(dot.getAttribute("data-stage"), 10));
         });
       });
 
-      viewport.addEventListener("wheel", function (e) {
-        if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-        e.preventDefault();
-        if (locked) return;
-        goToStage(current + (e.deltaY > 0 ? 1 : -1));
-      }, { passive: false });
-
-      setStage(0);
+      if (!isMobile()) {
+        viewport.addEventListener("wheel", function (e) {
+          if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+          e.preventDefault();
+          if (locked) return;
+          goToStage(current + (e.deltaY > 0 ? 1 : -1));
+        }, { passive: false });
+        setStage(0);
+      } else {
+        stages.forEach(function (stage) {
+          stage.classList.add("is-active");
+        });
+      }
     })();
   </script>
 
@@ -1073,6 +1188,7 @@
       var pillTitle = document.getElementById("pill-title");
       var pillArtist = document.getElementById("pill-artist");
       var beatsPill = document.querySelector(".beats-pill");
+      if (!beatsPill || !pillInfo || !pillTitle || !pillArtist) return;
       var currentIndex = 0;
       var fadeMs = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 280;
 
@@ -1113,7 +1229,7 @@
       var wrap = document.getElementById("desktop-widget-wrap");
       var handle = document.getElementById("pill-drag-handle");
       var hideTab = document.getElementById("desktop-hide-tab");
-      if (!screen || !wrap || !handle) return;
+      if (!screen || !wrap || !handle || window.matchMedia("(max-width: 900px)").matches) return;
 
       var dragging = false;
       var isHidden = false;

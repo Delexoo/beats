@@ -12,4 +12,4 @@ When the site is live on GitHub, the Download button uses the latest release:
 
   https://github.com/Delexoo/beats/releases/latest/download/Beats-Setup-x64.exe
 
-Update the beats-repo meta tag in website/index.html once your repo is created.
+Repo: https://github.com/Delexoo/beats (owner: https://github.com/Delexoo)

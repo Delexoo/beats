@@ -520,7 +520,7 @@ Beats writes crash logs to `%APPDATA%\Beats\` for unexpected errors. Include the
 
 MIT — see [LICENSE](LICENSE).
 
-Copyright © 2026 [Delexo](https://delexo.store)
+Copyright © 2026 [Delexo](https://delexo.store) · [@Delexoo on GitHub](https://github.com/Delexoo)
 
 ---
 

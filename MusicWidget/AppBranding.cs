@@ -9,4 +9,10 @@ public static class AppBranding
     public const string DefaultPlaylistsFolderName = "Beats";
     public const string UserAgent = "Beats/2.2.1";
     public const string HelpPageUrl = "https://delexoo.github.io/beats/help.html";
+    public const string GitHubOwner = "Delexoo";
+    public const string GitHubRepo = "beats";
+    public const string GitHubProfileUrl = "https://github.com/Delexoo";
+    public const string GitHubRepoUrl = "https://github.com/Delexoo/beats";
+    public const string GitHubReleasesUrl = "https://github.com/Delexoo/beats/releases";
+    public const string GitHubIssuesUrl = "https://github.com/Delexoo/beats/issues";
 }

@@ -55,7 +55,7 @@ UsedUserAreasWarning=no
 DisableDirPage=no
 DisableReadyPage=no
 ShowLanguageDialog=no
-LicenseFile=..\LICENSE
+LicenseFile=agreement.txt
 InfoBeforeFile=welcome.txt
 VersionInfoVersion={#MyAppVersion}.0
 VersionInfoProductVersion={#MyAppVersion}
@@ -68,7 +68,9 @@ VersionInfoCopyright=Copyright (C) {#MyAppPublisher} 2026
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
-english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nBeats is a free floating desktop music player for Windows. Play local playlists, download from the web, and control everything from a minimal widget on your screen.%n%nNo account required.
+english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nBeats is a free floating desktop music player for Windows. You must accept the Terms of Service and Privacy Policy on the next page before setup can continue.
+english.LicenseLabel=Terms of Service && Privacy Policy
+english.LicenseLabel3=I agree to the Terms of Service and Privacy Policy. I understand that Delexo created Beats only, is not affiliated with YouTube, Spotify, or other platforms, and that I am solely responsible for any music or content I use with this application.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -78,10 +80,16 @@ Name: "startupicon"; Description: "Launch {#MyAppName} when Windows starts"; Gro
 Source: "..\MusicWidget\bin\publish\win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\MusicWidget\Assets\AppIcon.png"; DestDir: "{app}\Assets"; Flags: ignoreversion
 Source: "..\MusicWidget\Assets\AppIcon.ico"; DestDir: "{app}\Assets"; Flags: ignoreversion
+Source: "agreement.txt"; DestDir: "{app}\Legal"; DestName: "Terms-and-Privacy.txt"; Flags: ignoreversion
+Source: "terms.txt"; DestDir: "{app}\Legal"; Flags: ignoreversion
+Source: "privacy.txt"; DestDir: "{app}\Legal"; Flags: ignoreversion
+Source: "..\LICENSE"; DestDir: "{app}\Legal"; DestName: "MIT-License.txt"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\Assets\AppIcon.ico"
 Name: "{group}\Help && manual"; Filename: "{#MyAppSupportURL}"; IconFilename: "{app}\Assets\AppIcon.ico"
+Name: "{group}\Terms of Service"; Filename: "notepad.exe"; Parameters: """{app}\Legal\terms.txt"""
+Name: "{group}\Privacy Policy"; Filename: "notepad.exe"; Parameters: """{app}\Legal\privacy.txt"""
 Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"; IconFilename: "{app}\Assets\AppIcon.ico"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\Assets\AppIcon.ico"; Tasks: desktopicon
 Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\Assets\AppIcon.ico"; Tasks: startupicon

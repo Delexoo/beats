@@ -29,6 +29,9 @@
     <Product>Beats</Product>
     <Company>Delexo</Company>
     <Copyright>Copyright © Delexo 2026</Copyright>
+    <RepositoryUrl>https://github.com/Delexoo/beats</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/Delexoo/beats</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
