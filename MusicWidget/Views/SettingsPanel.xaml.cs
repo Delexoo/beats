@@ -2030,7 +2030,7 @@ public partial class SettingsPanel : UserControl
         UpdateButton.ToolTip = "Checking for updates...";
         if (UpdateButtonLabel is not null)
         {
-            UpdateButtonLabel.Text = "Checking";
+            UpdateButtonLabel.Visibility = Visibility.Collapsed;
         }
         if (UpdateButtonIcon is not null)
         {
@@ -2055,6 +2055,7 @@ public partial class SettingsPanel : UserControl
             if (UpdateButtonLabel is not null)
             {
                 UpdateButtonLabel.Text = "Update";
+                UpdateButtonLabel.Visibility = Visibility.Visible;
             }
             if (UpdateButtonIcon is not null)
             {
@@ -2067,7 +2068,7 @@ public partial class SettingsPanel : UserControl
         UpdateButton.ToolTip = $"You are on the latest version (v{App.Updates.CurrentVersion}). Click to check again.";
         if (UpdateButtonLabel is not null)
         {
-            UpdateButtonLabel.Text = "Up to date";
+            UpdateButtonLabel.Visibility = Visibility.Collapsed;
         }
         if (UpdateButtonIcon is not null)
         {
@@ -2130,7 +2131,7 @@ public partial class SettingsPanel : UserControl
         UpdateButton.IsEnabled = false;
         if (UpdateButtonLabel is not null)
         {
-            UpdateButtonLabel.Text = "Downloading";
+            UpdateButtonLabel.Visibility = Visibility.Collapsed;
         }
         UpdateButton.ToolTip = "Downloading update...";
 
