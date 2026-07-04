@@ -360,6 +360,7 @@
       <Grid x:Name="HomeView" Visibility="Visible">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
           <RowDefinition Height="*"/>
           <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -457,8 +458,50 @@
           </StackPanel>
         </Grid>
 
+        <Border x:Name="BackgroundDownloadBanner"
+                Grid.Row="1"
+                Visibility="Collapsed"
+                Margin="0,0,0,10"
+                Background="{StaticResource Brush.SurfaceAlt}"
+                BorderBrush="{StaticResource Brush.Border}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="10,8">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+              <TextBlock x:Name="BackgroundDownloadTitle"
+                         Text="Downloading in background"
+                         FontWeight="SemiBold"
+                         FontSize="11"
+                         Foreground="{StaticResource Brush.Text}"/>
+              <TextBlock x:Name="BackgroundDownloadDetail"
+                         FontSize="10"
+                         Foreground="{StaticResource Brush.TextDim}"
+                         Margin="0,2,0,6"
+                         TextTrimming="CharacterEllipsis"/>
+              <ProgressBar x:Name="BackgroundDownloadProgress"
+                           Height="4"
+                           Minimum="0"
+                           Maximum="100"
+                           Foreground="{StaticResource Brush.Blue}"
+                           Background="{StaticResource Brush.SurfaceHigh}"
+                           BorderThickness="0"/>
+            </StackPanel>
+            <TextBlock Grid.Column="1"
+                       x:Name="BackgroundDownloadPercent"
+                       VerticalAlignment="Center"
+                       Margin="12,0,0,0"
+                       FontSize="10.5"
+                       Foreground="{StaticResource Brush.TextDim}"/>
+          </Grid>
+        </Border>
+
         <!-- Playlists + Songs section -->
-        <Border Grid.Row="1"
+        <Border Grid.Row="2"
                 Background="{StaticResource Brush.SurfaceAlt}"
                 BorderBrush="{StaticResource Brush.Border}"
                 BorderThickness="1"
@@ -661,7 +704,7 @@
         <!-- ============================================================ -->
         <!-- Now Playing footer (cover, title/artist, transport, volume)   -->
         <!-- ============================================================ -->
-        <Border Grid.Row="2"
+        <Border Grid.Row="3"
                 Margin="0,10,0,0"
                 Background="{StaticResource Brush.SurfaceAlt}"
                 BorderBrush="{StaticResource Brush.Border}"

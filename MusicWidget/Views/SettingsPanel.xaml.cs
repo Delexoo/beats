@@ -79,6 +79,7 @@ public partial class SettingsPanel : UserControl
     private bool _suppressKeepWidgetExpandedChanged;
     private int _lastNonZeroVolume = 80;
     private DispatcherTimer? _progressTimer;
+    private DispatcherTimer? _backgroundDownloadHideTimer;
 
     public SettingsPanel()
     {
@@ -108,6 +109,8 @@ public partial class SettingsPanel : UserControl
         App.Player.LoopCurrentChanged += OnLoopChanged;
         App.LikedSongs.Changed += OnLikedSongsChanged;
         App.SavedSongs.Changed += OnSavedSongsChanged;
+        App.BackgroundDownloads.ProgressChanged += OnBackgroundDownloadProgress;
+        App.BackgroundDownloads.Completed += OnBackgroundDownloadCompleted;
         Unloaded += OnUnloaded;
     }
 
@@ -125,6 +128,10 @@ public partial class SettingsPanel : UserControl
         App.Player.LoopCurrentChanged -= OnLoopChanged;
         App.LikedSongs.Changed -= OnLikedSongsChanged;
         App.SavedSongs.Changed -= OnSavedSongsChanged;
+        App.BackgroundDownloads.ProgressChanged -= OnBackgroundDownloadProgress;
+        App.BackgroundDownloads.Completed -= OnBackgroundDownloadCompleted;
+        _backgroundDownloadHideTimer?.Stop();
+        _backgroundDownloadHideTimer = null;
         if (_nowPlayingTrack is not null)
         {
             _nowPlayingTrack.PropertyChanged -= NowPlayingTrack_PropertyChanged;
@@ -1126,10 +1133,6 @@ public partial class SettingsPanel : UserControl
         {
             ShowView(View.YoutubeCookies);
         }
-        else if (window.AnyDownloaded)
-        {
-            RefreshAfterDownload(playlist);
-        }
     }
 
     private void RefreshAfterDownload(Playlist playlist)
@@ -1152,6 +1155,78 @@ public partial class SettingsPanel : UserControl
             RefreshTracks(cached);
         }
     }
+
+    private void OnBackgroundDownloadProgress(object? sender, BackgroundDownloadProgressEventArgs e)
+    {
+        if (!_isPanelActive)
+        {
+            return;
+        }
+
+        BackgroundDownloadBanner.Visibility = Visibility.Visible;
+        BackgroundDownloadTitle.Text = $"Downloading to \"{e.PlaylistName}\"";
+
+        var update = e.Update;
+        if (update.Percent >= 0)
+        {
+            BackgroundDownloadProgress.Value = update.Percent;
+            BackgroundDownloadPercent.Text = $"{update.Percent:0}%";
+        }
+
+        if (!string.IsNullOrWhiteSpace(update.CurrentSong))
+        {
+            BackgroundDownloadDetail.Text = update.CurrentSong;
+        }
+        else if (!string.IsNullOrWhiteSpace(update.Message))
+        {
+            BackgroundDownloadDetail.Text = update.Message;
+        }
+    }
+
+    private void OnBackgroundDownloadCompleted(object? sender, BackgroundDownloadCompletedEventArgs e)
+    {
+        if (!_isPanelActive)
+        {
+            return;
+        }
+
+        if (e.Success)
+        {
+            BackgroundDownloadTitle.Text = "Download complete";
+            BackgroundDownloadDetail.Text = e.DownloadedCount == 1
+                ? "1 song added to your playlist."
+                : $"{e.DownloadedCount} songs added to \"{e.PlaylistName}\".";
+            BackgroundDownloadProgress.Value = 100;
+            BackgroundDownloadPercent.Text = "100%";
+
+            var playlist = FindPlaylistByName(e.PlaylistName)
+                ?? App.Playlists.GetPlaylists()
+                    .FirstOrDefault(p => string.Equals(p.Name, e.PlaylistName, StringComparison.OrdinalIgnoreCase));
+            if (playlist is not null)
+            {
+                RefreshAfterDownload(playlist);
+            }
+        }
+        else
+        {
+            BackgroundDownloadTitle.Text = "Download failed";
+            BackgroundDownloadDetail.Text = e.Error ?? "Something went wrong.";
+            BackgroundDownloadPercent.Text = string.Empty;
+        }
+
+        _backgroundDownloadHideTimer?.Stop();
+        _backgroundDownloadHideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+        _backgroundDownloadHideTimer.Tick += (_, _) =>
+        {
+            _backgroundDownloadHideTimer?.Stop();
+            BackgroundDownloadBanner.Visibility = Visibility.Collapsed;
+        };
+        _backgroundDownloadHideTimer.Start();
+    }
+
+    private Playlist? FindPlaylistByName(string name) =>
+        _playlistsCache.FirstOrDefault(p =>
+            string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
 
     private void PlaylistsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {

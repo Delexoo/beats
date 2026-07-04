@@ -17,6 +17,7 @@ public partial class App : Application
     public static PlaylistManager Playlists { get; private set; } = null!;
     public static AudioPlayer Player { get; private set; } = null!;
     public static DownloadService Downloader { get; private set; } = null!;
+    public static BackgroundDownloadService BackgroundDownloads { get; private set; } = null!;
     public static ToolBootstrapper Tools { get; private set; } = null!;
     public static ArtworkService Artwork { get; private set; } = null!;
     public static TrackListStore LikedSongs { get; private set; } = null!;
@@ -65,6 +66,7 @@ public partial class App : Application
             Player = new AudioPlayer();
             Tools = new ToolBootstrapper(ToolsDir);
             Downloader = new DownloadService(Tools);
+            BackgroundDownloads = new BackgroundDownloadService();
             Artwork = new ArtworkService(ArtworkDir);
             LikedSongs = new TrackListStore(Path.Combine(AppDataDir, "liked-songs.json"));
             LikedSongs.Load();

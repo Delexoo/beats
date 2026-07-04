@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using MusicWidget.Models;
@@ -13,7 +9,7 @@ namespace MusicWidget.Views;
 public partial class DownloadUrlWindow : Window
 {
     private readonly Playlist _playlist;
-    private bool _running;
+    private bool _trackingDownload;
     public bool AnyDownloaded { get; private set; }
     public bool OpenYoutubeCookiesRequested { get; private set; }
 
@@ -23,38 +19,52 @@ public partial class DownloadUrlWindow : Window
         _playlist = playlist;
         TargetPlaylistText.Text = $"Saving to \"{playlist.Name}\"";
         Loaded += (_, _) => UrlBox.Focus();
+        Closed += OnClosed;
         KeyDown += OnKeyDown;
+    }
+
+    private void OnClosed(object? sender, EventArgs e)
+    {
+        DetachDownloadHandlers();
+    }
+
+    private void DetachDownloadHandlers()
+    {
+        if (!_trackingDownload)
+        {
+            return;
+        }
+
+        App.BackgroundDownloads.ProgressChanged -= OnBackgroundDownloadProgress;
+        App.BackgroundDownloads.Completed -= OnBackgroundDownloadCompleted;
+        _trackingDownload = false;
     }
 
     private void OnKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Escape && !_running)
+        if (e.Key == Key.Escape)
         {
             Close();
         }
-        else if (e.Key == Key.Enter && !_running)
+        else if (e.Key == Key.Enter && !App.BackgroundDownloads.IsRunning)
         {
             Download_Click(sender, new RoutedEventArgs());
         }
     }
 
-    private async void Download_Click(object sender, RoutedEventArgs e)
+    private void Download_Click(object sender, RoutedEventArgs e)
     {
-        if (_running) return;
-
         var url = UrlBox.Text?.Trim();
-        if (string.IsNullOrWhiteSpace(url))
+        if (!App.BackgroundDownloads.TryStart(_playlist, url ?? string.Empty, out var error))
         {
-            DownloadStatus.Text = "Paste a link first.";
+            DownloadStatus.Text = error ?? "Could not start download.";
             return;
         }
 
-        var dest = App.Playlists.EnsurePlaylistFolder(_playlist.Name);
-        var existingFiles = Directory.Exists(dest)
-            ? new HashSet<string>(Directory.EnumerateFiles(dest), StringComparer.OrdinalIgnoreCase)
-            : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        _trackingDownload = true;
+        App.BackgroundDownloads.ProgressChanged += OnBackgroundDownloadProgress;
+        App.BackgroundDownloads.Completed += OnBackgroundDownloadCompleted;
 
-        _running = true;
         DownloadButton.IsEnabled = false;
         UrlBox.IsEnabled = false;
         DownloadProgress.Visibility = Visibility.Visible;
@@ -62,98 +72,103 @@ public partial class DownloadUrlWindow : Window
         ProgressDetailRow.Visibility = Visibility.Collapsed;
         DownloadCountText.Text = string.Empty;
         DownloadSongText.Text = string.Empty;
+        BackgroundHint.Visibility = Visibility.Visible;
         DownloadStatus.Text = "Preparing...";
+    }
 
-        var progress = new Progress<DownloadProgressUpdate>(p =>
+    private void OnBackgroundDownloadProgress(object? sender, BackgroundDownloadProgressEventArgs e)
+    {
+        if (!string.Equals(e.PlaylistName, _playlist.Name, StringComparison.OrdinalIgnoreCase))
         {
-            if (!IsLoaded) return;
-
-            if (p.Percent >= 0)
-            {
-                DownloadProgress.Value = p.Percent;
-            }
-
-            if (!string.IsNullOrWhiteSpace(p.CurrentSong))
-            {
-                DownloadSongText.Text = p.CurrentSong;
-            }
-
-            if (!string.IsNullOrWhiteSpace(p.Message))
-            {
-                if (IsPlaylistProgressMessage(p.Message))
-                {
-                    ProgressDetailRow.Visibility = Visibility.Visible;
-                    DownloadCountText.Text = p.Message;
-                    DownloadStatus.Text = string.Empty;
-                }
-                else if (!string.IsNullOrWhiteSpace(p.CurrentSong)
-                         && string.Equals(p.Message, "Downloading...", StringComparison.OrdinalIgnoreCase))
-                {
-                    ProgressDetailRow.Visibility = Visibility.Visible;
-                    DownloadCountText.Text = p.Message;
-                    DownloadStatus.Text = string.Empty;
-                }
-                else
-                {
-                    DownloadStatus.Text = p.Message;
-                }
-            }
-        });
-
-        try
-        {
-            await App.Tools.EnsureToolsAsync(progress).ConfigureAwait(true);
-            DownloadStatus.Text = "Downloading...";
-            var result = await App.Downloader.DownloadAsync(url, dest, progress, CancellationToken.None)
-                .ConfigureAwait(true);
-            if (result.Success)
-            {
-                AnyDownloaded = true;
-
-                var downloadedOrder = result.DownloadedPathsInOrder?.ToList();
-                if (downloadedOrder is null || downloadedOrder.Count == 0)
-                {
-                    downloadedOrder = await Task.Run(() => Directory.EnumerateFiles(dest)
-                        .Where(PlaylistManager.IsAudioFile)
-                        .Where(f => !existingFiles.Contains(f))
-                        .OrderBy(f => File.GetLastWriteTimeUtc(f))
-                        .ToList()).ConfigureAwait(true);
-                }
-
-                if (downloadedOrder.Count > 0)
-                {
-                    App.PlaylistOrders.MergeDownloadOrder(_playlist.Name, downloadedOrder);
-                }
-
-                App.Playlists.ReloadTracks(_playlist);
-
-                DownloadStatus.Text = "Done.";
-                DownloadCountText.Text = string.Empty;
-                DownloadSongText.Text = string.Empty;
-                ProgressDetailRow.Visibility = Visibility.Collapsed;
-                DownloadProgress.Value = 100;
-                App.Settings.Current.LastDownloadPlaylist = _playlist.Name;
-                App.Settings.Save();
-                UrlBox.Text = string.Empty;
-            }
-            else
-            {
-                var userMsg = string.IsNullOrWhiteSpace(result.Error)
-                    ? "Download failed."
-                    : result.Error;
-                DownloadStatus.Text = userMsg;
-            }
+            return;
         }
-        catch (Exception ex)
+
+        if (!IsLoaded)
         {
-            DownloadStatus.Text = ex.Message;
+            return;
         }
-        finally
+
+        var p = e.Update;
+        if (p.Percent >= 0)
         {
-            _running = false;
-            DownloadButton.IsEnabled = true;
-            UrlBox.IsEnabled = true;
+            DownloadProgress.Value = p.Percent;
         }
+
+        if (!string.IsNullOrWhiteSpace(p.CurrentSong))
+        {
+            DownloadSongText.Text = p.CurrentSong;
+        }
+
+        if (string.IsNullOrWhiteSpace(p.Message))
+        {
+            return;
+        }
+
+        if (IsPlaylistProgressMessage(p.Message))
+        {
+            ProgressDetailRow.Visibility = Visibility.Visible;
+            DownloadCountText.Text = p.Message;
+            DownloadStatus.Text = string.Empty;
+        }
+        else if (!string.IsNullOrWhiteSpace(p.CurrentSong)
+                 && string.Equals(p.Message, "Downloading...", StringComparison.OrdinalIgnoreCase))
+        {
+            ProgressDetailRow.Visibility = Visibility.Visible;
+            DownloadCountText.Text = p.Message;
+            DownloadStatus.Text = string.Empty;
+        }
+        else if (string.Equals(p.Message, "Preparing...", StringComparison.OrdinalIgnoreCase)
+                 || string.Equals(p.Message, "Downloading...", StringComparison.OrdinalIgnoreCase))
+        {
+            DownloadStatus.Text = p.Message;
+        }
+        else
+        {
+            DownloadStatus.Text = p.Message;
+        }
+    }
+
+    private void OnBackgroundDownloadCompleted(object? sender, BackgroundDownloadCompletedEventArgs e)
+    {
+        if (!string.Equals(e.PlaylistName, _playlist.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (!IsLoaded)
+        {
+            return;
+        }
+
+        HandleDownloadFinished(e.Success, e.Success ? "Done." : e.Error ?? "Download failed.");
+    }
+
+    private void HandleDownloadFinished(bool success, string message)
+    {
+        if (success)
+        {
+            AnyDownloaded = true;
+            DownloadStatus.Text = "Done.";
+            DownloadCountText.Text = string.Empty;
+            DownloadSongText.Text = string.Empty;
+            ProgressDetailRow.Visibility = Visibility.Collapsed;
+            DownloadProgress.Value = 100;
+            UrlBox.Text = string.Empty;
+        }
+        else
+        {
+            DownloadStatus.Text = message;
+        }
+
+        BackgroundHint.Visibility = Visibility.Collapsed;
+        ResetInputs();
+    }
+
+    private void ResetInputs()
+    {
+        DownloadButton.IsEnabled = true;
+        UrlBox.IsEnabled = true;
+        DetachDownloadHandlers();
     }
 
     private void Close_Click(object sender, RoutedEventArgs e)
@@ -163,7 +178,7 @@ public partial class DownloadUrlWindow : Window
 
     private void YoutubeCookiesSetup_Click(object sender, RoutedEventArgs e)
     {
-        if (_running) return;
+        if (App.BackgroundDownloads.IsRunning) return;
         OpenYoutubeCookiesRequested = true;
         Close();
     }

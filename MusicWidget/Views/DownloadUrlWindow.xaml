@@ -56,7 +56,7 @@
         </StackPanel>
         <Button Grid.Column="1"
                 Style="{StaticResource IconGhostButton}"
-                ToolTip="Close"
+                ToolTip="Close (download continues in dashboard)"
                 Click="Close_Click">
           <Path Data="{StaticResource Icon.Close}"
                 Fill="{StaticResource Brush.TextDim}"
@@ -130,6 +130,14 @@
                  FontSize="10"
                  TextWrapping="Wrap"
                  Margin="0,0,0,10"/>
+
+      <TextBlock x:Name="BackgroundHint"
+                 Text="You can close this window. The download continues in the dashboard."
+                 Foreground="{StaticResource Brush.TextDim}"
+                 FontSize="10"
+                 TextWrapping="Wrap"
+                 Margin="0,0,0,8"
+                 Visibility="Collapsed"/>
 
       <TextBox x:Name="UrlBox"
                Style="{StaticResource DarkTextBox}"
