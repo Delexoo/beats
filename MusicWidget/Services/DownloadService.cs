@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -9,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using MusicWidget;
+using MusicWidget.Models;
 
 namespace MusicWidget.Services;
 
@@ -359,6 +361,123 @@ public sealed class DownloadService
         }
 
         return new DownloadResult(false, friendly, blob);
+    }
+
+    private static IReadOnlyList<string> BeautifyDownloadedPaths(IReadOnlyList<string> paths)
+    {
+        if (paths.Count == 0)
+        {
+            return paths;
+        }
+
+        var result = new List<string>(paths.Count);
+        foreach (var path in paths)
+        {
+            result.Add(BeautifyDownloadedFile(path));
+        }
+
+        return result;
+    }
+
+    private static string BeautifyDownloadedFile(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+        {
+            return filePath;
+        }
+
+        var dir = Path.GetDirectoryName(filePath)!;
+        var ext = Path.GetExtension(filePath);
+        var baseName = Path.GetFileNameWithoutExtension(filePath);
+        var friendly = TrackNameFormatter.SanitizeFileName(baseName);
+
+        string resolvedPath;
+        if (string.Equals(baseName, friendly, StringComparison.OrdinalIgnoreCase))
+        {
+            resolvedPath = filePath;
+        }
+        else
+        {
+            var target = Path.Combine(dir, friendly + ext);
+            target = EnsureUniqueFilePath(target);
+            try
+            {
+                File.Move(filePath, target);
+                resolvedPath = target;
+            }
+            catch (Exception ex)
+            {
+                CrashLog.Write(ex, "DownloadService.BeautifyDownloadedFile");
+                resolvedPath = filePath;
+                friendly = TrackNameFormatter.Beautify(baseName);
+            }
+        }
+
+        WriteTagsFromFriendlyName(resolvedPath, friendly);
+        return resolvedPath;
+    }
+
+    private static string EnsureUniqueFilePath(string path)
+    {
+        if (!File.Exists(path))
+        {
+            return path;
+        }
+
+        var dir = Path.GetDirectoryName(path)!;
+        var name = Path.GetFileNameWithoutExtension(path);
+        var ext = Path.GetExtension(path);
+        for (var i = 2; i < 100; i++)
+        {
+            var candidate = Path.Combine(dir, $"{name} ({i}){ext}");
+            if (!File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return path;
+    }
+
+    private static void WriteTagsFromFriendlyName(string path, string friendlyName)
+    {
+        try
+        {
+            using var tagFile = TagLib.File.Create(path);
+            var hasTitle = !string.IsNullOrWhiteSpace(tagFile.Tag.Title);
+            var hasArtist = tagFile.Tag.Performers is { Length: > 0 }
+                && !string.IsNullOrWhiteSpace(tagFile.Tag.Performers[0]);
+
+            if (hasTitle && hasArtist)
+            {
+                tagFile.Tag.Title = TrackNameFormatter.Beautify(tagFile.Tag.Title);
+                tagFile.Save();
+                return;
+            }
+
+            if (TrackNameFormatter.TryParseArtistTitle(friendlyName, out var artist, out var title))
+            {
+                if (!hasTitle)
+                {
+                    tagFile.Tag.Title = title;
+                }
+
+                if (!hasArtist)
+                {
+                    tagFile.Tag.Performers = [artist];
+                }
+            }
+            else if (!hasTitle)
+            {
+                tagFile.Tag.Title = friendlyName;
+            }
+
+            tagFile.Save();
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "DownloadService.WriteTagsFromFriendlyName");
+        }
     }
 
     private static string FormatAttemptLog(string attemptName, IReadOnlyList<string> extraArgs, DownloadResult r)
@@ -783,7 +902,7 @@ public sealed class DownloadService
         psi.ArgumentList.Add("--sleep-requests");
         psi.ArgumentList.Add(sleepRequestsSeconds.ToString(
             System.Globalization.CultureInfo.InvariantCulture));
-        psi.ArgumentList.Add("--restrict-filenames");
+        psi.ArgumentList.Add("--embed-metadata");
         psi.ArgumentList.Add("--retries");
         psi.ArgumentList.Add("3");
         psi.ArgumentList.Add("--fragment-retries");
@@ -841,7 +960,8 @@ public sealed class DownloadService
             var exitCode = await tcs.Task;
             if (exitCode == 0)
             {
-                return new DownloadResult(true, null, null, aggregate.CompletedPaths);
+                var paths = BeautifyDownloadedPaths(aggregate.CompletedPaths);
+                return new DownloadResult(true, null, null, paths);
             }
 
             return new DownloadResult(false,
@@ -859,7 +979,7 @@ public sealed class DownloadService
         IProgress<DownloadProgressUpdate>? progress,
         CancellationToken ct)
     {
-        var outTemplate = System.IO.Path.Combine(destFolder, "{title}.{output-ext}");
+        var outTemplate = System.IO.Path.Combine(destFolder, "{artist} - {title}.{output-ext}");
 
         var psi = new ProcessStartInfo
         {
@@ -925,7 +1045,8 @@ public sealed class DownloadService
             if (exitCode == 0)
             {
                 progress?.Report(new DownloadProgressUpdate(100, "Done."));
-                return new DownloadResult(true, null, null, aggregate.CompletedPaths);
+                var paths = BeautifyDownloadedPaths(aggregate.CompletedPaths);
+                return new DownloadResult(true, null, null, paths);
             }
 
             var error = logLines.LastOrDefault(l =>
@@ -1545,7 +1666,7 @@ public sealed class DownloadService
                 return false;
             }
 
-            _currentSongTitle = name;
+            _currentSongTitle = TrackNameFormatter.Beautify(name);
             return true;
         }
 

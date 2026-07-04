@@ -79,7 +79,7 @@
           </Grid>
         </Border>
         <TextBlock Grid.Column="1"
-                   Text="{Binding DisplayName}"
+                   Text="{Binding FriendlyDisplayName}"
                    VerticalAlignment="Center"
                    TextTrimming="CharacterEllipsis"
                    Margin="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomThickness}, ConverterParameter='0,0,6,0'}"/>

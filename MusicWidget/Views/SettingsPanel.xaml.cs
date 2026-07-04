@@ -371,7 +371,7 @@ public partial class SettingsPanel : UserControl
             return;
         }
 
-        var title = !string.IsNullOrWhiteSpace(t.Title) ? t.Title : t.DisplayName;
+        var title = !string.IsNullOrWhiteSpace(t.Title) ? t.Title : t.FriendlyDisplayName;
         NowPlayingTitle.Text = title ?? string.Empty;
         NowPlayingArtist.Text = !string.IsNullOrWhiteSpace(t.Artist) ? t.Artist : "Unknown artist";
         NowPlayingInitials.Text = t.Initials;
@@ -1879,7 +1879,7 @@ public partial class SettingsPanel : UserControl
         }
 
         var confirm = ModernMessageBox.Confirm(
-            $"Delete \"{t.DisplayName}\" from \"{pl.Name}\"?\n\nThe file will be removed from disk.",
+            $"Delete \"{t.FriendlyDisplayName}\" from \"{pl.Name}\"?\n\nThe file will be removed from disk.",
             "Delete song",
             ModernMessageBox.Severity.Warning);
         if (!confirm) return;

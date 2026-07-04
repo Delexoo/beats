@@ -17,6 +17,9 @@ public sealed class Track : INotifyPropertyChanged
     public string FileName => Path.GetFileName(FilePath);
     public string DisplayName => Path.GetFileNameWithoutExtension(FilePath);
 
+    /// <summary>Human-friendly track label derived from the file name when tags are missing.</summary>
+    public string FriendlyDisplayName => TrackNameFormatter.Beautify(DisplayName);
+
     public ImageSource? ArtworkSource
     {
         get => _artworkSource;
@@ -61,7 +64,7 @@ public sealed class Track : INotifyPropertyChanged
         }
     }
 
-    public string Initials => ComputeInitials(_title ?? DisplayName);
+    public string Initials => ComputeInitials(_title ?? FriendlyDisplayName);
 
     public bool IsLiked
     {

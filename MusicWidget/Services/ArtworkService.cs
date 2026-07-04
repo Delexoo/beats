@@ -74,6 +74,23 @@ public sealed class ArtworkService
                 // Reading tags is best-effort; some files don't have any.
             }
 
+            if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(artist))
+            {
+                if (TrackNameFormatter.TryParseArtistTitle(track.DisplayName, out var parsedArtist, out var parsedTitle))
+                {
+                    title = parsedTitle;
+                    artist = parsedArtist;
+                }
+                else
+                {
+                    title = track.FriendlyDisplayName;
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(title))
+            {
+                title = TrackNameFormatter.Beautify(title);
+            }
+
             UpdateTrackTagsOnUi(track, title, artist);
 
             byte[]? bytes = embedded;
@@ -119,8 +136,15 @@ public sealed class ArtworkService
 
         void Apply()
         {
-            if (!string.IsNullOrWhiteSpace(title)) track.Title = title;
-            if (!string.IsNullOrWhiteSpace(artist)) track.Artist = artist;
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                track.Title = title;
+            }
+
+            if (!string.IsNullOrWhiteSpace(artist))
+            {
+                track.Artist = artist;
+            }
         }
 
         if (dispatcher.CheckAccess()) Apply();
@@ -184,19 +208,12 @@ public sealed class ArtworkService
         }
         else
         {
-            sb.Append(SanitizeFilename(track.DisplayName));
+            sb.Append(track.FriendlyDisplayName);
         }
         return sb.ToString().Trim();
     }
 
-    private static string SanitizeFilename(string name)
-    {
-        var trimmed = name
-            .Replace('_', ' ')
-            .Replace('.', ' ');
-
-        return trimmed;
-    }
+    private static string SanitizeFilename(string name) => TrackNameFormatter.Beautify(name);
 
     private static ImageSource? LoadBitmap(string path)
     {
