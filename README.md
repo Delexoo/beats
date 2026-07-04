@@ -177,7 +177,8 @@ On first download, Beats silently fetches `yt-dlp`, `ffmpeg`, and (for Spotify) 
 - **Social & audio sites** - TikTok, SoundCloud, Instagram Reels audio, and any site yt-dlp supports
 - **Progress tracking** - live percentage and item counts during batch downloads
 - **YouTube cookies (optional)** - import a Netscape `cookies.txt` when downloads are blocked or rate-limited
-- **Smart URL cleanup** - strips tracking parameters from YouTube, Instagram, TikTok, and other social links
+- **Smart URL cleanup** - strips tracking parameters from YouTube, Instagram, TikTok, and other social links; normalizes Instagram reel/share/profile URLs and unwraps `l.instagram.com` redirects
+- **Instagram fallbacks** - embed pages, mobile client headers, direct media discovery, and YouTube search for audio-only pages
 
 </details>
 
@@ -235,9 +236,9 @@ On first download, Beats silently fetches `yt-dlp`, `ffmpeg`, and (for Spotify) 
 |---|---|---|
 | **YouTube** | yt-dlp | Videos, playlists, channels; optional cookies for restricted content |
 | **Spotify** | spotDL | Tracks, albums, playlists with metadata |
-| **TikTok** | yt-dlp | Short links (`vm.tiktok.com`, etc.) auto-resolved |
+| **Instagram** | yt-dlp | Reels, posts, IGTV, and share links; embed + mobile client fallbacks; audio pages search YouTube; optional cookies for login-only links |
+| **TikTok** | yt-dlp | Short links auto-resolved; mobile/app API fallbacks |
 | **SoundCloud** | yt-dlp | Tracks and sets |
-| **Instagram** | yt-dlp | Reels audio URLs supported |
 
 </details>
 
@@ -526,13 +527,47 @@ Copyright © 2026 [Delexo](https://delexo.store) | [@Delexoo on GitHub](https://
 
 ## Acknowledgments
 
-Beats builds on excellent open-source tools:
+Beats builds on excellent open-source projects. Thank you to the authors, maintainers, and contributors of each project below.
 
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) - web media extraction
-- [spotDL](https://github.com/spotDL/spotify-downloader) - Spotify downloads
-- [ffmpeg](https://ffmpeg.org/) - audio transcoding
-- [LibVLC / LibVLCSharp](https://github.com/videolan/libvlcsharp) - playback engine
-- [TagLib#](https://github.com/mono/taglib-sharp) - audio metadata
+**Core download and playback**
+
+| Project | Role in Beats |
+|---|---|
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Primary web media extraction engine (YouTube, Instagram, TikTok, and 1,000+ sites) |
+| [spotDL](https://github.com/spotDL/spotify-downloader) | Spotify track, album, and playlist downloads with metadata |
+| [ffmpeg](https://ffmpeg.org/) | Audio transcoding and muxing |
+| [LibVLC / LibVLCSharp](https://github.com/videolan/libvlcsharp) | Local playback engine |
+| [TagLib#](https://github.com/mono/taglib-sharp) | Album art and audio metadata |
+
+**Instagram download references**
+
+Reliability patterns (URL cleanup, headers, embed fallbacks, and page metadata) were informed by:
+
+- [instaloader](https://github.com/instaloader/instaloader) - Instagram metadata and session-aware media tooling
+- [InstaDownload](https://github.com/Orang-Studio/InstaDownload) - lightweight public reel downloads on device
+- [Instagram-reels-downloader](https://github.com/Okramjimmy/Instagram-reels-downloader) - reel URL handling and extraction approaches
+- [reclip](https://github.com/averygan/reclip) - yt-dlp-based multi-site downloader UI
+
+**TikTok download references**
+
+- [tiktok-downloader](https://github.com/w3kp/tiktok-downloader) - TikTok link handling patterns
+- [tiktok-to-ytdlp](https://github.com/dinoosauro/tiktok-to-ytdlp) - TikTok URL normalization for yt-dlp
+
+**Spotify and multi-platform download references**
+
+- [spotify-dl](https://github.com/SwapnilSoni1999/spotify-dl) - Spotify download workflows
+- [spud](https://github.com/LUIDevo/spud) - Spotify playlist tooling with yt-dlp
+- [Meloetta](https://github.com/Lacrymosaa/Meloetta) - spotDL GUI patterns
+- [spotwrap](https://github.com/Didiloy/spotwrap) - spotDL desktop wrapper
+- [Spotifyte](https://github.com/rohankishore/Spotifyte) - spotDL desktop integration
+- [zotify](https://github.com/zotify-dev/zotify) - Spotify download tooling
+- [OnTheSpot](https://github.com/ots-downloader/onthespot) - multi-service music downloader
+- [SpotiFlyer](https://github.com/Shabinder/SpotiFlyer) - multi-platform music downloader
+- [savify](https://github.com/LaurenceRawlings/savify) - Spotify-to-local-file workflows
+
+**Web and API wrapper references**
+
+- [yt-dlp-web](https://github.com/brenard/yt-dlp-web) - yt-dlp as a web service
 
 <div align="center">
 

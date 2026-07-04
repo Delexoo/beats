@@ -16,10 +16,12 @@ public sealed class AudioPlayer : IDisposable
     private List<Track> _queue = new();
     private int _index = -1;
     private Track? _currentTrack;
+    private Media? _loadedMedia;
     private bool _loopCurrent;
     private bool _shuffle;
     private bool _disposed;
     private long _resumeMsAfterUserPause = -1;
+    private int _trackEndAdvanceScheduled;
     private static readonly Random _random = new();
 
     public event EventHandler? PlayStateChanged;
@@ -60,8 +62,8 @@ public sealed class AudioPlayer : IDisposable
         _player.EndReached += OnEndReached;
         _player.Playing += (_, _) => PlayStateChanged?.Invoke(this, EventArgs.Empty);
         _player.Paused += (_, _) => PlayStateChanged?.Invoke(this, EventArgs.Empty);
-        _player.Stopped += (_, _) => PlayStateChanged?.Invoke(this, EventArgs.Empty);
-        _player.TimeChanged += (_, _) => PositionChanged?.Invoke(this, EventArgs.Empty);
+        _player.Stopped += OnStopped;
+        _player.TimeChanged += OnTimeChanged;
 
         _loopCurrent = App.Settings.Current.LoopCurrent;
         _shuffle = App.Settings.Current.Shuffle;
@@ -134,8 +136,22 @@ public sealed class AudioPlayer : IDisposable
             }
 
             _currentTrack = track;
-            using var media = new Media(_libVlc, new Uri(track.FilePath));
-            _player.Play(media);
+            Interlocked.Exchange(ref _trackEndAdvanceScheduled, 0);
+
+            if (resumePositionMs < 0)
+            {
+                _player.Stop();
+                _loadedMedia?.Dispose();
+                _loadedMedia = null;
+            }
+
+            _loadedMedia = new Media(_libVlc, new Uri(track.FilePath));
+            if (!_player.Play(_loadedMedia))
+            {
+                _loadedMedia.Dispose();
+                _loadedMedia = null;
+                return;
+            }
 
             if (resumePositionMs >= 0)
             {
@@ -285,32 +301,102 @@ public sealed class AudioPlayer : IDisposable
         ShuffleChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    private void OnTimeChanged(object? sender, MediaPlayerTimeChangedEventArgs e)
+    {
+        PositionChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnStopped(object? sender, EventArgs e)
+    {
+        PlayStateChanged?.Invoke(this, EventArgs.Empty);
+
+        // Fallback when EndReached does not fire (some formats/codecs on Windows).
+        if (_resumeMsAfterUserPause >= 0 || _currentTrack is null)
+        {
+            return;
+        }
+
+        var length = _player.Length;
+        var time = _player.Time;
+        if (length > 0 && time >= length - 500)
+        {
+            ScheduleTrackEndAdvance();
+        }
+    }
+
     private void OnEndReached(object? sender, EventArgs e)
     {
         // LibVLC requires changing media on a separate thread from EndReached.
+        ScheduleTrackEndAdvance();
+    }
+
+    private void ScheduleTrackEndAdvance()
+    {
+        if (Interlocked.CompareExchange(ref _trackEndAdvanceScheduled, 1, 0) != 0)
+        {
+            return;
+        }
+
         ThreadPool.QueueUserWorkItem(_ =>
         {
             if (_disposed)
             {
+                Interlocked.Exchange(ref _trackEndAdvanceScheduled, 0);
                 return;
             }
 
             try
             {
+                _player.Stop();
+
                 if (_loopCurrent && _currentTrack is not null)
                 {
                     Play(_currentTrack);
                 }
                 else
                 {
-                    Next();
+                    AdvanceQueueAfterTrackEnd();
                 }
             }
             catch (Exception ex)
             {
-                CrashLog.Write(ex, "AudioPlayer.OnEndReached");
+                CrashLog.Write(ex, "AudioPlayer.ScheduleTrackEndAdvance");
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _trackEndAdvanceScheduled, 0);
             }
         });
+    }
+
+    private void AdvanceQueueAfterTrackEnd()
+    {
+        if (_queue.Count == 0)
+        {
+            if (TryAutoSelectFirstTrack(out var first))
+            {
+                Play(first);
+            }
+
+            return;
+        }
+
+        if (_shuffle && _queue.Count > 1)
+        {
+            var next = _random.Next(_queue.Count - 1);
+            if (next >= _index)
+            {
+                next++;
+            }
+
+            _index = next;
+        }
+        else
+        {
+            _index = (_index + 1) % _queue.Count;
+        }
+
+        Play(_queue[_index]);
     }
 
     private bool TryAutoSelectFirstTrack(out Track track)
@@ -336,6 +422,10 @@ public sealed class AudioPlayer : IDisposable
         {
             _player.Stop();
             _player.EndReached -= OnEndReached;
+            _player.TimeChanged -= OnTimeChanged;
+            _player.Stopped -= OnStopped;
+            _loadedMedia?.Dispose();
+            _loadedMedia = null;
             _player.Dispose();
             _libVlc.Dispose();
         }

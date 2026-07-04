@@ -32,8 +32,8 @@ public sealed class AppSettings
     public string? LastDownloadPlaylist { get; set; }
 
     /// <summary>
-    /// Optional Netscape-format cookies file for yt-dlp (YouTube). Export with a browser
-    /// extension per yt-dlp wiki — avoids "cookie database locked" when Edge/Chrome stay open.
+    /// Optional Netscape-format cookies file for yt-dlp and spotDL (YouTube, Instagram, and other sites).
+    /// Export with a browser extension per yt-dlp wiki.
     /// </summary>
     public string? YoutubeCookiesFilePath { get; set; }
 

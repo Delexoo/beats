@@ -1082,11 +1082,11 @@
                         VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                  <TextBlock Text="YouTube cookies"
+                  <TextBlock Text="Download cookies"
                              Foreground="{StaticResource Brush.Text}"
                              FontWeight="SemiBold"
                              FontSize="13"/>
-                  <TextBlock Text="Optional cookies.txt when downloads are blocked."
+                  <TextBlock Text="Optional cookies.txt for YouTube, Instagram, and blocked links."
                              Foreground="{StaticResource Brush.TextDim}"
                              FontSize="11"
                              Margin="0,2,0,0"/>
@@ -1583,7 +1583,7 @@
                   Width="15" Height="15"/>
           </Button>
           <TextBlock Grid.Column="1"
-                     Text="YouTube cookies"
+                     Text="Download cookies"
                      Style="{StaticResource PageTitle}"
                      Margin="8,0,0,0"/>
         </Grid>
@@ -1596,12 +1596,12 @@
                 Padding="22,20,22,20">
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
-              <TextBlock Text="When YouTube says &quot;sign in&quot; or Edge/Chrome won't release cookies"
+              <TextBlock Text="When YouTube or Instagram asks you to sign in, export a cookies file and browse to it below."
                          Foreground="{StaticResource Brush.Text}"
                          FontWeight="SemiBold"
                          FontSize="15"
                          TextWrapping="Wrap"/>
-              <TextBlock Text="Export a Netscape-format cookies.txt while logged into YouTube (browser extension recommended — see yt-dlp wiki below). Beats passes it to yt-dlp on every download so the browser can stay closed."
+              <TextBlock Text="Export a Netscape-format cookies.txt while logged into YouTube or Instagram (browser extension recommended; see yt-dlp wiki below). Beats passes it to yt-dlp and spotDL on every download."
                          Foreground="{StaticResource Brush.TextDim}"
                          FontSize="12"
                          Margin="0,8,0,16"

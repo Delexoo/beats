@@ -706,7 +706,7 @@ public partial class SettingsPanel : UserControl
     private void RefreshYoutubeCookiesPathUi()
     {
         YoutubeCookiesPathBox.Text = string.IsNullOrWhiteSpace(App.Settings.Current.YoutubeCookiesFilePath)
-            ? "(none — use Browse to pick cookies.txt)"
+            ? "(none - use Browse to pick cookies.txt)"
             : App.Settings.Current.YoutubeCookiesFilePath;
     }
 

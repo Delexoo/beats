@@ -69,8 +69,59 @@ public sealed class DownloadService
         @"^/reels/audio/(?<id>\d+)/?",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+    private static readonly Regex InstagramMediaPathRegex = new(
+        @"^/(?<kind>reels?|p|tv)/(?<id>[^/]+)/?",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    private static readonly Regex InstagramShareReelRegex = new(
+        @"^/share/reel/(?<id>[^/]+)/?",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    private static readonly Regex InstagramProfileReelRegex = new(
+        @"^/[^/]+/reels?/(?<id>[^/]+)/?",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    private static readonly Regex InstagramOgVideoRegex = new(
+        @"og:video(?::secure_url)?""\s+content=""([^""]+)""",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+    private static readonly Regex InstagramVideoUrlJsonRegex = new(
+        @"""video_url""\s*:\s*""(?<url>https:\\/\\/[^""]+)""",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
     private const string BrowserUserAgent =
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+
+    /// <summary>Extra headers that help yt-dlp fetch public Instagram reels (see community downloader patterns).</summary>
+    private static readonly string[] InstagramYtDlpExtraArgs =
+    [
+        "--user-agent", BrowserUserAgent,
+        "--add-header", "Referer:https://www.instagram.com/",
+        "--add-header", "Origin:https://www.instagram.com",
+    ];
+
+    /// <summary>Mobile Instagram client headers (instaloader / InstaDownload-style public reel access).</summary>
+    private static readonly string[] InstagramMobileYtDlpExtraArgs =
+    [
+        "--add-header", "Referer:https://www.instagram.com/",
+        "--add-header", "Origin:https://www.instagram.com",
+        "--add-header",
+        "User-Agent:Instagram 339.0.0.12.95 (iPhone16,1; iOS 18_2; en_US; en-US; scale=3.00; 1179x2556) AppleWebKit/420+",
+    ];
+
+    private static readonly (string Label, string[] ExtraArgs)[] InstagramExtractorStrategies =
+    [
+        ("instagram app_id", MergeExtraArgs(InstagramYtDlpExtraArgs,
+            "--extractor-args", "instagram:app_id=124024574287414")),
+        ("instagram mobile app_id", MergeExtraArgs(InstagramMobileYtDlpExtraArgs,
+            "--extractor-args", "instagram:app_id=124024574287414")),
+    ];
+
+    private static readonly (string Label, string[] ExtraArgs)[] TikTokExtractorStrategies =
+    [
+        ("tiktok mobile API", ["--extractor-args", "tiktok:api=mobile"]),
+        ("tiktok app API", ["--extractor-args", "tiktok:api=app"]),
+    ];
 
     /// <summary>
     /// Non-cookie player / API strategies when YouTube blocks or rate-limits the first attempt.
@@ -158,11 +209,12 @@ public sealed class DownloadService
         }
 
         // YouTube: android_vr often works without a PO token for stream URLs (yt-dlp wiki).
-        // Social sites use a lighter first pass (faster, fewer pointless delays).
-        var firstExtra = IsYouTubeExtractorInput(input)
-            ? new[] { "--extractor-args", "youtube:player_client=android_vr" }
-            : Array.Empty<string>();
-        var firstSleep = IsYouTubeExtractorInput(input) ? 0.85 : 0.3;
+        // Instagram: canonical reel URL + referer headers on the first pass.
+        var firstExtra = BuildFirstPassExtraArgs(input, url);
+        var firstSleep = IsYouTubeExtractorInput(input) ? 0.85
+            : IsInstagramUrl(url) ? 0.65
+            : IsTikTokUrl(url) ? 0.55
+            : 0.3;
         var firstAttempt = await RunYtDlpAsync(input, destFolder, firstExtra, progress, ct,
             sleepRequestsSeconds: firstSleep);
         if (firstAttempt.Success || ct.IsCancellationRequested)
@@ -172,12 +224,55 @@ public sealed class DownloadService
 
         var attemptLog = new List<string>
         {
-            FormatAttemptLog(
-                firstExtra.Length == 0 ? "first (plain)" : "first (android_vr)",
-                firstExtra,
-                firstAttempt),
+            FormatAttemptLog(DescribeFirstPassAttempt(firstExtra), firstExtra, firstAttempt),
         };
         DownloadResult lastResult = firstAttempt;
+
+        if (IsInstagramUrl(url) && !ct.IsCancellationRequested)
+        {
+            lastResult = await RunInstagramFallbacksAsync(
+                url, input, instagramAudioSearch, destFolder, lastResult, attemptLog, progress, ct);
+            if (lastResult.Success)
+            {
+                return lastResult;
+            }
+
+            if (IsInstagramAudioUrl(url) && LooksLikeUnsupportedUrl(lastResult.Error))
+            {
+                return new DownloadResult(
+                    false,
+                    "Instagram audio pages are not direct video links. Open a reel that uses this sound, " +
+                    "tap Share, Copy link, and paste that reel URL (instagram.com/reel/...) instead.",
+                    string.Join(Environment.NewLine + Environment.NewLine, attemptLog));
+            }
+
+            if (LooksLikeInstagramLoginRequired(lastResult.Error))
+            {
+                return new DownloadResult(
+                    false,
+                    "Instagram asked you to sign in or blocked this link. Export a cookies.txt file while logged " +
+                    "into Instagram (Dashboard settings, same file used for YouTube) and try again. Public reels " +
+                    "usually work without login.",
+                    string.Join(Environment.NewLine + Environment.NewLine, attemptLog));
+            }
+
+            if (!LooksLikeYouTubeBotBlock(lastResult.Error))
+            {
+                return lastResult;
+            }
+        }
+
+        if (IsTikTokUrl(url) && !ct.IsCancellationRequested)
+        {
+            lastResult = await RunTikTokFallbacksAsync(
+                url, input, destFolder, lastResult, attemptLog, progress, ct);
+            if (lastResult.Success)
+            {
+                return lastResult;
+            }
+
+            return lastResult;
+        }
 
         if (IsInstagramAudioUrl(url) && LooksLikeUnsupportedUrl(lastResult.Error))
         {
@@ -185,28 +280,25 @@ public sealed class DownloadService
             {
                 ct.ThrowIfCancellationRequested();
                 progress?.Report(new DownloadProgressUpdate(8,
-                    "Instagram audio page — searching YouTube for the closest match..."));
+                    "Instagram audio page - searching YouTube for the closest match..."));
                 lastResult = await RunYtDlpAsync(instagramAudioSearch, destFolder, Array.Empty<string>(), progress, ct,
                     sleepRequestsSeconds: 0.35);
-                attemptLog.Add(FormatAttemptLog("instagram audio → ytsearch", Array.Empty<string>(), lastResult));
+                attemptLog.Add(FormatAttemptLog("instagram audio -> ytsearch", Array.Empty<string>(), lastResult));
                 if (lastResult.Success)
                 {
                     return lastResult;
                 }
             }
+
+            return new DownloadResult(
+                false,
+                "Instagram audio pages are not direct video links. Open a reel that uses this sound, " +
+                "tap Share, Copy link, and paste that reel URL (instagram.com/reel/...) instead.",
+                string.Join(Environment.NewLine + Environment.NewLine, attemptLog));
         }
 
         if (!LooksLikeYouTubeBotBlock(lastResult.Error))
         {
-            if (IsInstagramAudioUrl(url) && LooksLikeUnsupportedUrl(lastResult.Error))
-            {
-                return new DownloadResult(
-                    false,
-                    "Instagram audio pages are not direct video links. Open a reel that uses this sound, " +
-                    "tap Share → Copy link, and paste that reel URL (instagram.com/reel/...) instead.",
-                    string.Join(Environment.NewLine + Environment.NewLine, attemptLog));
-            }
-
             return lastResult;
         }
 
@@ -276,6 +368,380 @@ public sealed class DownloadService
         return $"[{attemptName}{extra}]\n{body ?? "(no captured output)"}";
     }
 
+    private static string[] BuildFirstPassExtraArgs(string input, string originalUrl)
+    {
+        if (IsYouTubeExtractorInput(input))
+        {
+            return ["--extractor-args", "youtube:player_client=android_vr"];
+        }
+
+        if (IsInstagramUrl(originalUrl))
+        {
+            return InstagramYtDlpExtraArgs;
+        }
+
+        if (IsTikTokUrl(originalUrl))
+        {
+            return ["--user-agent", BrowserUserAgent];
+        }
+
+        return Array.Empty<string>();
+    }
+
+    private static string DescribeFirstPassAttempt(IReadOnlyList<string> extraArgs)
+    {
+        if (extraArgs.Count == 0)
+        {
+            return "first (plain)";
+        }
+
+        if (extraArgs.Any(a => a.Contains("youtube:player_client=android_vr", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "first (android_vr)";
+        }
+
+        if (extraArgs.Any(a => a.Contains("instagram.com", StringComparison.OrdinalIgnoreCase)))
+        {
+            return "first (instagram headers)";
+        }
+
+        return "first";
+    }
+
+    private async Task<DownloadResult> RunInstagramFallbacksAsync(
+        string url,
+        string input,
+        string? instagramAudioSearch,
+        string destFolder,
+        DownloadResult lastResult,
+        List<string> attemptLog,
+        IProgress<DownloadProgressUpdate>? progress,
+        CancellationToken ct)
+    {
+        if (TryCanonicalizeInstagramMediaUrl(url, out var canonical) &&
+            !string.Equals(canonical, input, StringComparison.OrdinalIgnoreCase))
+        {
+            ct.ThrowIfCancellationRequested();
+            progress?.Report(new DownloadProgressUpdate(8, "Retrying with a canonical Instagram reel link..."));
+            lastResult = await RunYtDlpAsync(canonical, destFolder, InstagramYtDlpExtraArgs, progress, ct,
+                sleepRequestsSeconds: 0.85);
+            attemptLog.Add(FormatAttemptLog("instagram canonical URL", InstagramYtDlpExtraArgs, lastResult));
+            if (lastResult.Success)
+            {
+                return lastResult;
+            }
+        }
+
+        if (TryGetInstagramEmbedUrl(url, out var embedUrl))
+        {
+            ct.ThrowIfCancellationRequested();
+            progress?.Report(new DownloadProgressUpdate(8, "Retrying Instagram via embed page..."));
+            lastResult = await RunYtDlpAsync(embedUrl, destFolder, InstagramYtDlpExtraArgs, progress, ct,
+                sleepRequestsSeconds: 0.75);
+            attemptLog.Add(FormatAttemptLog("instagram embed URL", InstagramYtDlpExtraArgs, lastResult));
+            if (lastResult.Success)
+            {
+                return lastResult;
+            }
+        }
+
+        foreach (var (label, extraArgs) in InstagramExtractorStrategies)
+        {
+            ct.ThrowIfCancellationRequested();
+            progress?.Report(new DownloadProgressUpdate(8, $"Retrying Instagram ({label})..."));
+            var target = TryCanonicalizeInstagramMediaUrl(url, out var canon) ? canon : input;
+            lastResult = await RunYtDlpAsync(target, destFolder, extraArgs, progress, ct,
+                sleepRequestsSeconds: 1.0);
+            attemptLog.Add(FormatAttemptLog(label, extraArgs, lastResult));
+            if (lastResult.Success)
+            {
+                return lastResult;
+            }
+        }
+
+        ct.ThrowIfCancellationRequested();
+        progress?.Report(new DownloadProgressUpdate(8, "Retrying Instagram with a slower request pace..."));
+        lastResult = await RunYtDlpAsync(input, destFolder, InstagramYtDlpExtraArgs, progress, ct,
+            sleepRequestsSeconds: 1.25);
+        attemptLog.Add(FormatAttemptLog("instagram slow retry", InstagramYtDlpExtraArgs, lastResult));
+        if (lastResult.Success)
+        {
+            return lastResult;
+        }
+
+        var directMedia = await TryResolveInstagramMediaUrlFromPageAsync(url, ct);
+        if (!string.IsNullOrWhiteSpace(directMedia))
+        {
+            ct.ThrowIfCancellationRequested();
+            progress?.Report(new DownloadProgressUpdate(8, "Found a direct media link; extracting audio..."));
+            lastResult = await RunYtDlpAsync(directMedia, destFolder, InstagramYtDlpExtraArgs, progress, ct,
+                sleepRequestsSeconds: 0.35);
+            attemptLog.Add(FormatAttemptLog("instagram direct media URL", InstagramYtDlpExtraArgs, lastResult));
+            if (lastResult.Success)
+            {
+                return lastResult;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(instagramAudioSearch))
+        {
+            ct.ThrowIfCancellationRequested();
+            progress?.Report(new DownloadProgressUpdate(8,
+                "Instagram audio page - searching YouTube for the closest match..."));
+            lastResult = await RunYtDlpAsync(instagramAudioSearch, destFolder, Array.Empty<string>(), progress, ct,
+                sleepRequestsSeconds: 0.35);
+            attemptLog.Add(FormatAttemptLog("instagram audio -> ytsearch", Array.Empty<string>(), lastResult));
+        }
+
+        return lastResult;
+    }
+
+    private async Task<DownloadResult> RunTikTokFallbacksAsync(
+        string url,
+        string input,
+        string destFolder,
+        DownloadResult lastResult,
+        List<string> attemptLog,
+        IProgress<DownloadProgressUpdate>? progress,
+        CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        progress?.Report(new DownloadProgressUpdate(8, "Retrying TikTok with a slower request pace..."));
+        lastResult = await RunYtDlpAsync(input, destFolder, Array.Empty<string>(), progress, ct,
+            sleepRequestsSeconds: 1.1);
+        attemptLog.Add(FormatAttemptLog("tiktok slow retry", Array.Empty<string>(), lastResult));
+        if (lastResult.Success)
+        {
+            return lastResult;
+        }
+
+        foreach (var (label, extraArgs) in TikTokExtractorStrategies)
+        {
+            ct.ThrowIfCancellationRequested();
+            progress?.Report(new DownloadProgressUpdate(8, $"Retrying TikTok ({label})..."));
+            lastResult = await RunYtDlpAsync(input, destFolder, extraArgs, progress, ct,
+                sleepRequestsSeconds: 0.9);
+            attemptLog.Add(FormatAttemptLog(label, extraArgs, lastResult));
+            if (lastResult.Success)
+            {
+                return lastResult;
+            }
+        }
+
+        return lastResult;
+    }
+
+    private static string[] MergeExtraArgs(IReadOnlyList<string> baseArgs, params string[] extra) =>
+        baseArgs.Concat(extra).ToArray();
+
+    private static void AppendCookiesArgs(ProcessStartInfo psi)
+    {
+        var path = App.Settings.Current.YoutubeCookiesFilePath;
+        if (string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path))
+        {
+            return;
+        }
+
+        psi.ArgumentList.Add("--cookies");
+        psi.ArgumentList.Add(path);
+    }
+
+    private static void AppendSpotDlCookiesArgs(ProcessStartInfo psi)
+    {
+        var path = App.Settings.Current.YoutubeCookiesFilePath;
+        if (string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path))
+        {
+            return;
+        }
+
+        psi.ArgumentList.Add("--cookie-file");
+        psi.ArgumentList.Add(path);
+    }
+
+    private static bool IsInstagramUrl(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri)
+        && uri.IdnHost.Contains("instagram.com", StringComparison.OrdinalIgnoreCase);
+
+    private static bool LooksLikeInstagramLoginRequired(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+        {
+            return false;
+        }
+
+        return error.Contains("login", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("rate-limit", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("rate limit", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("cookies", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("HTTP Error 403", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("HTTP Error 401", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("Private", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("not available", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryCanonicalizeInstagramMediaUrl(string url, out string canonical)
+    {
+        canonical = url;
+        if (IsInstagramAudioUrl(url))
+        {
+            return false;
+        }
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        if (!uri.IdnHost.Contains("instagram.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        string? id = null;
+        var segment = "reel";
+
+        var shareMatch = InstagramShareReelRegex.Match(uri.AbsolutePath);
+        if (shareMatch.Success)
+        {
+            id = shareMatch.Groups["id"].Value;
+        }
+        else
+        {
+            var profileMatch = InstagramProfileReelRegex.Match(uri.AbsolutePath);
+            if (profileMatch.Success)
+            {
+                id = profileMatch.Groups["id"].Value;
+            }
+            else
+            {
+                var match = InstagramMediaPathRegex.Match(uri.AbsolutePath);
+                if (!match.Success)
+                {
+                    return false;
+                }
+
+                var kind = match.Groups["kind"].Value.ToLowerInvariant();
+                id = match.Groups["id"].Value;
+                segment = kind switch
+                {
+                    "reels" => "reel",
+                    "reel" => "reel",
+                    "p" => "p",
+                    "tv" => "tv",
+                    _ => "reel",
+                };
+            }
+        }
+
+        if (string.IsNullOrEmpty(id))
+        {
+            return false;
+        }
+
+        canonical = $"https://www.instagram.com/{segment}/{id}/";
+        return true;
+    }
+
+    private static bool TryGetInstagramEmbedUrl(string url, out string embedUrl)
+    {
+        embedUrl = url;
+        if (!TryCanonicalizeInstagramMediaUrl(url, out var canonical))
+        {
+            return false;
+        }
+
+        if (!Uri.TryCreate(canonical, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        var parts = uri.AbsolutePath.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 2)
+        {
+            return false;
+        }
+
+        embedUrl = $"https://www.instagram.com/{parts[0]}/{parts[1]}/embed/captioned/";
+        return true;
+    }
+
+    private static async Task<string?> TryResolveInstagramMediaUrlFromPageAsync(string url, CancellationToken ct)
+    {
+        var pageUrl = TryCanonicalizeInstagramMediaUrl(url, out var canonical) ? canonical : url;
+
+        try
+        {
+            using var http = new HttpClient();
+            http.Timeout = TimeSpan.FromSeconds(25);
+            http.DefaultRequestHeaders.UserAgent.ParseAdd(BrowserUserAgent);
+            http.DefaultRequestHeaders.TryAddWithoutValidation("Referer", "https://www.instagram.com/");
+            http.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml");
+
+            var html = await http.GetStringAsync(pageUrl, ct);
+
+            var og = InstagramOgVideoRegex.Match(html);
+            if (og.Success)
+            {
+                var direct = System.Net.WebUtility.HtmlDecode(og.Groups[1].Value.Trim());
+                if (direct.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                {
+                    return direct;
+                }
+            }
+
+            var json = InstagramVideoUrlJsonRegex.Match(html);
+            if (json.Success)
+            {
+                var direct = UnescapeInstagramJsonUrl(json.Groups["url"].Value);
+                if (direct.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                {
+                    return direct;
+                }
+            }
+        }
+        catch
+        {
+            /* page scrape is best-effort */
+        }
+
+        return null;
+    }
+
+    private static string UnescapeInstagramJsonUrl(string raw) =>
+        raw.Replace("\\/", "/", StringComparison.Ordinal)
+            .Replace("\\u0026", "&", StringComparison.Ordinal)
+            .Replace("\\u003d", "=", StringComparison.Ordinal);
+
+    private static bool IsTikTokUrl(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri)
+        && (uri.IdnHost.Contains("tiktok.com", StringComparison.OrdinalIgnoreCase)
+            || uri.IdnHost.Equals("t.co", StringComparison.OrdinalIgnoreCase));
+
+    private static string? TryResolveInstagramRedirect(Uri uri)
+    {
+        if (!uri.IdnHost.Equals("l.instagram.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        foreach (var segment in uri.Query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (!segment.StartsWith("u=", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var encoded = segment[2..];
+            var decoded = Uri.UnescapeDataString(encoded);
+            if (Uri.TryCreate(decoded, UriKind.Absolute, out _))
+            {
+                return decoded;
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>
     /// One yt-dlp run with a given set of extra args. Extracted so the
     /// fallback loop in <see cref="DownloadAsync"/> stays readable.
@@ -322,6 +788,7 @@ public sealed class DownloadService
         psi.ArgumentList.Add("3");
         psi.ArgumentList.Add("--fragment-retries");
         psi.ArgumentList.Add("3");
+        AppendCookiesArgs(psi);
         foreach (var arg in extraArgs)
         {
             psi.ArgumentList.Add(arg);
@@ -416,6 +883,7 @@ public sealed class DownloadService
         psi.ArgumentList.Add("128k");
         psi.ArgumentList.Add("--threads");
         psi.ArgumentList.Add("4");
+        AppendSpotDlCookiesArgs(psi);
 
         using var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
@@ -707,6 +1175,12 @@ public sealed class DownloadService
 
         if (IsSocialMediaHost(host))
         {
+            if (host.Contains("instagram.com", StringComparison.OrdinalIgnoreCase)
+                && TryCanonicalizeInstagramMediaUrl(s, out var canonical))
+            {
+                return canonical;
+            }
+
             return StripSocialTrackingQuery(uri);
         }
 
@@ -780,6 +1254,16 @@ public sealed class DownloadService
             return url;
         }
 
+        var instagramRedirect = TryResolveInstagramRedirect(uri);
+        if (!string.IsNullOrWhiteSpace(instagramRedirect))
+        {
+            url = NormalizeDownloadInput(instagramRedirect);
+            if (!Uri.TryCreate(url, UriKind.Absolute, out uri))
+            {
+                return url;
+            }
+        }
+
         var host = uri.IdnHost;
         if (!host.Equals("vm.tiktok.com", StringComparison.OrdinalIgnoreCase)
             && !host.Equals("vt.tiktok.com", StringComparison.OrdinalIgnoreCase)
@@ -788,7 +1272,10 @@ public sealed class DownloadService
             && !host.Equals("www.tiktok.com", StringComparison.OrdinalIgnoreCase)
             && !host.Contains("tiktok", StringComparison.OrdinalIgnoreCase)
             && !host.Equals("t.co", StringComparison.OrdinalIgnoreCase)
-            && !host.Equals("bit.ly", StringComparison.OrdinalIgnoreCase))
+            && !host.Equals("bit.ly", StringComparison.OrdinalIgnoreCase)
+            && !host.Equals("l.instagram.com", StringComparison.OrdinalIgnoreCase)
+            && !(host.Contains("instagram.com", StringComparison.OrdinalIgnoreCase)
+                 && uri.AbsolutePath.StartsWith("/share/", StringComparison.OrdinalIgnoreCase)))
         {
             return url;
         }

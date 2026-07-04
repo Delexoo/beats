@@ -873,10 +873,17 @@
         <ul class="list">
           <li><strong>YouTube</strong> - videos, playlists, channels</li>
           <li><strong>Spotify</strong> - tracks, albums, playlists</li>
-          <li><strong>TikTok, SoundCloud, Instagram</strong> - and 1,000+ sites via yt-dlp</li>
+          <li><strong>TikTok, SoundCloud, Instagram</strong> - reels, posts, and IGTV via yt-dlp; audio pages search YouTube for a match</li>
         </ul>
 
         <p>Playlists must be <strong>public or unlisted</strong>. Private playlists cannot be downloaded.</p>
+
+        <h3>Instagram tips</h3>
+        <ul class="list">
+          <li>Paste a <strong>reel link</strong> (<code>instagram.com/reel/...</code>), not an audio-only page</li>
+          <li>Share links from the Instagram app are cleaned automatically</li>
+          <li>If Instagram asks you to sign in, export <code>cookies.txt</code> (see <a href="#youtube-cookies">cookies setup</a>)</li>
+        </ul>
       </section>
 
       <section id="playback">
@@ -941,15 +948,15 @@
           <span class="section-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </span>
-          <h2>YouTube cookies</h2>
+          <h2>Download cookies</h2>
         </div>
-        <p class="lead">Optional fix for sign-in or bot-check errors.</p>
-        <p>Export a Netscape-format <code>cookies.txt</code> while logged into YouTube, then point Beats at it.</p>
+        <p class="lead">Optional fix for YouTube bot-checks and Instagram login prompts.</p>
+        <p>Export a Netscape-format <code>cookies.txt</code> while logged into YouTube or Instagram, then point Beats at it.</p>
 
         <h3>Step 1 - Export</h3>
         <ul class="list">
           <li>Install a cookie export extension (<a href="https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies" target="_blank" rel="noopener">yt-dlp wiki</a>)</li>
-          <li>Export cookies for <code>youtube.com</code> while logged in</li>
+          <li>Export cookies for <code>youtube.com</code> and/or <code>instagram.com</code> while logged in</li>
           <li>Save as <code>cookies.txt</code> in Documents or similar</li>
         </ul>
 
@@ -1003,8 +1010,8 @@
         </div>
         <p class="lead">Common fixes.</p>
 
-        <h3>YouTube bot-check error</h3>
-        <p>Set up <a href="#youtube-cookies">YouTube cookies</a>. Beats also retries with multiple yt-dlp clients.</p>
+        <h3>YouTube or Instagram blocked</h3>
+        <p>Set up <a href="#youtube-cookies">download cookies</a>. Beats also retries with multiple yt-dlp clients for YouTube.</p>
 
         <h3>Hotkeys don't work</h3>
         <p>Another app may use the same combo. Use the chevron tab or on-screen buttons.</p>
