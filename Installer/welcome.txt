@@ -1,6 +1,6 @@
 Welcome to Beats
 
-This installer will set up Beats on your PC — a floating desktop music player
+This installer will set up Beats on your PC, a floating desktop music player
 for Windows 10 and 11.
 
 What you get:
@@ -12,7 +12,7 @@ No account is required. Beats runs locally on your machine.
 
 Before you continue, you will be asked to read and accept our Terms of
 Service and Privacy Policy. By installing Beats, you confirm that Delexo
-created the software only — we are not affiliated with any music platform
+created the software only. We are not affiliated with any music platform
 and you are responsible for how you use downloaded or imported content.
 
 Need help? Visit:

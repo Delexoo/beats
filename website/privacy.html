@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy - Beats</title>
+  <meta name="description" content="Privacy Policy for Beats, the floating desktop music player for Windows." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #111111;
+      --text-muted: #6b7280;
+      --text-faint: #9ca3af;
+      --border: #e5e7eb;
+      --surface: #f3f4f6;
+      --header-h: 60px;
+      --content-max: 720px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--text-muted); text-decoration: none; }
+    a:hover { color: var(--text); text-decoration: underline; }
+    a:visited { color: var(--text-muted); }
+
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: var(--header-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      font-family: "Anton", sans-serif;
+      font-size: 1.25rem;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .brand:hover, .brand:visited { color: var(--text); text-decoration: none; }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 0.875rem;
+    }
+
+    .nav a { color: var(--text-muted); text-decoration: none; }
+    .nav a:hover { color: var(--text); text-decoration: none; }
+    .nav a.active { color: var(--text); font-weight: 500; }
+
+    .page {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    h1 {
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+
+    .updated {
+      color: var(--text-faint);
+      font-size: 0.875rem;
+      margin-bottom: 32px;
+    }
+
+    h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 32px 0 12px;
+    }
+
+    p { color: var(--text-muted); margin-bottom: 12px; }
+
+    ul {
+      margin: 0 0 16px 1.25rem;
+      color: var(--text-muted);
+    }
+
+    li { margin-bottom: 6px; }
+
+    code {
+      font-family: ui-monospace, "Cascadia Code", monospace;
+      font-size: 0.8125rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--text);
+    }
+
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 24px;
+      text-align: center;
+      font-size: 0.8125rem;
+      color: var(--text-faint);
+    }
+
+    .footer a { color: var(--text-muted); text-decoration: none; }
+    .footer a:hover { color: var(--text); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <a class="brand" href="./">Beats.</a>
+    <nav class="nav" aria-label="Site">
+      <a href="./">Home</a>
+      <a href="help.html">Help</a>
+      <a href="terms.html">Terms</a>
+      <a href="privacy.html" class="active">Privacy</a>
+      <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: July 2026</p>
+
+    <p>Delexo ("we", "us") respects your privacy. This policy explains what Beats collects, stores, and does with information when you use the desktop app.</p>
+
+    <h2>1. Summary</h2>
+    <p>Beats is a local-first application. It runs on your PC and keeps your music on your disk. We do not operate a Beats account system, cloud library, or analytics service tied to your identity.</p>
+
+    <h2>2. Information stored on your device</h2>
+    <p>Beats may store the following on your computer:</p>
+    <ul>
+      <li>Application settings (volume, window layout, preferences) in <code>%APPDATA%\Beats\settings.json</code></li>
+      <li>Liked songs and saved collections as local JSON files</li>
+      <li>Playlist folders you create under your Music directory</li>
+      <li>Cached album artwork in <code>%APPDATA%\Beats\artwork\</code></li>
+      <li>Download tools (yt-dlp, ffmpeg, spotDL) in <code>%APPDATA%\Beats\tools\</code></li>
+      <li>Optional crash logs in <code>%APPDATA%\Beats\</code> if the app encounters an error</li>
+    </ul>
+    <p>We do not automatically upload this data to Delexo servers.</p>
+
+    <h2>3. Information we do not collect</h2>
+    <p>When you use Beats, we do not require:</p>
+    <ul>
+      <li>Your name, email address, or phone number;</li>
+      <li>Payment information (Beats is free);</li>
+      <li>A Beats login or registration.</li>
+    </ul>
+    <p>The installer does not send us personal data when you download or install Beats from our website or GitHub.</p>
+
+    <h2>4. Network activity</h2>
+    <p>Beats may connect to the internet when you:</p>
+    <ul>
+      <li>Download audio from a URL you provide;</li>
+      <li>Fetch album artwork or metadata for local files;</li>
+      <li>Download or update yt-dlp, ffmpeg, or spotDL on first use;</li>
+      <li>Open help links in your browser to our website or GitHub.</li>
+    </ul>
+    <p>Those requests go directly from your PC to the relevant services (for example, YouTube or Spotify via third-party tools). We do not receive the contents of your downloads.</p>
+    <p>If you configure a YouTube cookies file, it stays on your device and is used only by yt-dlp during downloads you initiate. We do not receive that file.</p>
+
+    <h2>5. Third-party services</h2>
+    <p>Beats is not affiliated with YouTube, Spotify, TikTok, SoundCloud, or any other platform. When you use the download feature, third-party tools and remote services may process URLs and network data according to their own policies. You are responsible for reviewing those policies.</p>
+
+    <h2>6. Children</h2>
+    <p>Beats is not directed at children under 13. We do not knowingly collect personal information from children.</p>
+
+    <h2>7. Data retention and deletion</h2>
+    <p>All Beats data lives on your machine. You can delete it at any time by removing folders under <code>%APPDATA%\Beats\</code> and your playlist directories. Uninstalling Beats does not automatically delete your music or settings.</p>
+
+    <h2>8. Changes to this policy</h2>
+    <p>We may update this Privacy Policy occasionally. The current version is always available on this page and in your installation folder at <code>Legal\privacy.txt</code>.</p>
+
+    <h2>9. Contact</h2>
+    <p>Privacy questions:</p>
+    <p><a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">github.com/Delexoo/beats</a><br />
+    <a href="help.html">delexoo.github.io/beats/help.html</a><br />
+    <a href="https://delexo.store" target="_blank" rel="noopener">delexo.store</a></p>
+    <p>See also our <a href="terms.html">Terms of Service</a>.</p>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; Delexo | <a href="./">Home</a> | <a href="help.html">Help</a> | <a href="terms.html">Terms</a> | <a href="privacy.html">Privacy</a> | <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a></p>
+  </footer>
+
+</body>
+</html>

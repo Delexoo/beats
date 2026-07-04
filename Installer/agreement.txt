@@ -1,7 +1,7 @@
-BEATS — TERMS OF SERVICE AND PRIVACY POLICY
+BEATS - TERMS OF SERVICE AND PRIVACY POLICY
 Last updated: July 2026
 
-IMPORTANT — PLEASE READ CAREFULLY
+IMPORTANT: PLEASE READ CAREFULLY
 
 By selecting "I agree" in the installer, you confirm that you have read and
 accept both the Terms of Service (Part A) and the Privacy Policy (Part B)
@@ -15,7 +15,7 @@ law and the terms of any service you use.
 
 
 ================================================================================
-PART A — TERMS OF SERVICE
+PART A - TERMS OF SERVICE
 ================================================================================
 
 1. WHO WE ARE
@@ -126,7 +126,7 @@ update constitutes acceptance of the revised Terms.
 
 
 ================================================================================
-PART B — PRIVACY POLICY
+PART B - PRIVACY POLICY
 ================================================================================
 
 1. SUMMARY

@@ -1,4 +1,4 @@
-BEATS — PRIVACY POLICY
+BEATS - PRIVACY POLICY
 Last updated: July 2026
 
 Delexo ("we", "us") respects your privacy. This policy explains what Beats
@@ -80,8 +80,8 @@ Uninstalling Beats does not automatically delete your music or settings.
 8. CHANGES TO THIS POLICY
 
 We may update this Privacy Policy occasionally. The copy installed with Beats
-is available at Legal\privacy.txt in your installation folder and on our
-website.
+is available at Legal\privacy.txt in your installation folder and at
+  https://delexoo.github.io/beats/privacy.html
 
 
 9. CONTACT
