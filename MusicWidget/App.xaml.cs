@@ -101,6 +101,8 @@ public partial class App : Application
 
             widget.Show();
             toggle.Show();
+
+            _ = Updates.TryAutoUpdateOnStartupAsync();
         }
         catch (Exception ex)
         {

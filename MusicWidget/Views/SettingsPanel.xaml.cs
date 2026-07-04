@@ -114,7 +114,7 @@ public partial class SettingsPanel : UserControl
         App.SavedSongs.Changed += OnSavedSongsChanged;
         App.BackgroundDownloads.ProgressChanged += OnBackgroundDownloadProgress;
         App.BackgroundDownloads.Completed += OnBackgroundDownloadCompleted;
-        _ = CheckForUpdatesAsync(showUpToDateMessage: false);
+        _ = SyncUpdateButtonFromServiceAsync();
         Unloaded += OnUnloaded;
     }
 
@@ -1960,9 +1960,33 @@ public partial class SettingsPanel : UserControl
 
     // ----- Donate -----
 
+    private async Task SyncUpdateButtonFromServiceAsync()
+    {
+        if (!_isPanelActive)
+        {
+            return;
+        }
+
+        if (App.Updates.IsAutoUpdateRunning)
+        {
+            SetUpdateButtonCheckingState();
+            return;
+        }
+
+        if (App.Updates.LastCheckResult is not null)
+        {
+            _pendingUpdate = App.Updates.LastCheckResult;
+            ApplyUpdateButtonState(_pendingUpdate);
+            return;
+        }
+
+        await CheckForUpdatesAsync(showUpToDateMessage: false);
+    }
+
     private async Task CheckForUpdatesAsync(bool showUpToDateMessage)
     {
-        if (_updateCheckInFlight || _updateInstallInFlight || !_isPanelActive)
+        if (_updateCheckInFlight || _updateInstallInFlight || !_isPanelActive
+            || App.Updates.IsAutoUpdateRunning)
         {
             return;
         }
@@ -2128,11 +2152,14 @@ public partial class SettingsPanel : UserControl
                 });
             });
 
-            var installerPath = await App.Updates
-                .DownloadInstallerAsync(update.DownloadUrl, progress)
-                .ConfigureAwait(true);
+            if (!await App.Updates
+                    .DownloadAndInstallAsync(update, progress, silentInstall: false)
+                    .ConfigureAwait(true))
+            {
+                ModernMessageBox.ShowWarning("Could not download the update.");
+                return;
+            }
 
-            UpdateService.LaunchInstaller(installerPath);
             ExitApp_Click(this, new RoutedEventArgs());
         }
         catch (Exception ex)

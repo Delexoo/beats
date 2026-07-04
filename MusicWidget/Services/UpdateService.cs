@@ -4,6 +4,8 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
+using System.Windows;
 
 namespace MusicWidget.Services;
 
@@ -12,12 +14,19 @@ public sealed class UpdateService
     public const string InstallerAssetName = "Beats-Setup-x64.exe";
 
     private static readonly HttpClient Http = CreateClient();
+    private static readonly HttpClient DownloadHttp = CreateDownloadClient();
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
     };
 
+    private readonly SemaphoreSlim _gate = new(1, 1);
+
     public string CurrentVersion { get; } = GetCurrentVersion();
+
+    public UpdateCheckResult? LastCheckResult { get; private set; }
+
+    public bool IsAutoUpdateRunning { get; private set; }
 
     public static string GetCurrentVersion()
     {
@@ -25,7 +34,83 @@ public sealed class UpdateService
         return version is null ? "0.0.0" : $"{version.Major}.{version.Minor}.{version.Build}";
     }
 
+    /// <summary>
+    /// Checks GitHub Releases on startup and silently downloads/installs when a newer build exists.
+    /// </summary>
+    public async Task<bool> TryAutoUpdateOnStartupAsync(CancellationToken ct = default)
+    {
+        await _gate.WaitAsync(ct).ConfigureAwait(false);
+        IsAutoUpdateRunning = true;
+
+        try
+        {
+            var result = await FetchLatestReleaseAsync(ct).ConfigureAwait(false);
+            LastCheckResult = result;
+
+            if (result?.IsUpdateAvailable != true || string.IsNullOrWhiteSpace(result.DownloadUrl))
+            {
+                return false;
+            }
+
+            var installerPath = await DownloadInstallerAsync(result.DownloadUrl, null, ct)
+                .ConfigureAwait(false);
+            LaunchInstaller(installerPath, silent: true);
+            UiDispatcher.BeginInvokeSafe(ShutdownApplicationForUpdate);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "UpdateService.TryAutoUpdateOnStartupAsync");
+            return false;
+        }
+        finally
+        {
+            IsAutoUpdateRunning = false;
+            _gate.Release();
+        }
+    }
+
     public async Task<UpdateCheckResult?> CheckForUpdateAsync(CancellationToken ct = default)
+    {
+        await _gate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            var result = await FetchLatestReleaseAsync(ct).ConfigureAwait(false);
+            LastCheckResult = result;
+            return result;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public async Task<bool> DownloadAndInstallAsync(
+        UpdateCheckResult update,
+        IProgress<double>? progress = null,
+        bool silentInstall = false,
+        CancellationToken ct = default)
+    {
+        if (!update.IsUpdateAvailable || string.IsNullOrWhiteSpace(update.DownloadUrl))
+        {
+            return false;
+        }
+
+        await _gate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            var installerPath = await DownloadInstallerAsync(update.DownloadUrl, progress, ct)
+                .ConfigureAwait(false);
+            LaunchInstaller(installerPath, silentInstall);
+            return true;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private async Task<UpdateCheckResult?> FetchLatestReleaseAsync(CancellationToken ct)
     {
         var url =
             $"https://api.github.com/repos/{AppBranding.GitHubOwner}/{AppBranding.GitHubRepo}/releases/latest";
@@ -62,7 +147,8 @@ public sealed class UpdateService
         Directory.CreateDirectory(dir);
         var path = Path.Combine(dir, InstallerAssetName);
 
-        using var response = await Http.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, ct)
+        using var response = await DownloadHttp
+            .GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, ct)
             .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
 
@@ -86,13 +172,40 @@ public sealed class UpdateService
         return path;
     }
 
-    public static void LaunchInstaller(string installerPath)
+    public static void LaunchInstaller(string installerPath, bool silent = false)
     {
+        var args = silent
+            ? "/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS"
+            : string.Empty;
+
         Process.Start(new ProcessStartInfo
         {
             FileName = installerPath,
+            Arguments = args,
             UseShellExecute = true,
         });
+    }
+
+    public static void ShutdownApplicationForUpdate()
+    {
+        try
+        {
+            foreach (var window in Application.Current.Windows.OfType<Window>().ToList())
+            {
+                try
+                {
+                    window.Close();
+                }
+                catch
+                {
+                    /* best-effort */
+                }
+            }
+        }
+        finally
+        {
+            Application.Current.Shutdown();
+        }
     }
 
     public static bool IsNewerVersion(string candidate, string current)
@@ -131,6 +244,16 @@ public sealed class UpdateService
         };
         client.DefaultRequestHeaders.UserAgent.ParseAdd(AppBranding.UserAgent);
         client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+        return client;
+    }
+
+    private static HttpClient CreateDownloadClient()
+    {
+        var client = new HttpClient
+        {
+            Timeout = TimeSpan.FromMinutes(20),
+        };
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(AppBranding.UserAgent);
         return client;
     }
 
