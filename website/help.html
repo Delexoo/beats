@@ -14,14 +14,13 @@
     :root {
       --bg: #ffffff;
       --text: #111111;
-      --muted: #6b7280;
-      --faint: #9ca3af;
+      --text-muted: #6b7280;
+      --text-faint: #9ca3af;
       --border: #e5e7eb;
-      --surface: #f9fafb;
-      --surface-2: #f3f4f6;
-      --accent: #2563eb;
-      --accent-soft: #eff6ff;
-      --dark: #161a22;
+      --surface: #f3f4f6;
+      --surface-2: #e5e7eb;
+      --pill: #161a22;
+      --pill-border: #2a3140;
       --radius: 12px;
       --header-h: 60px;
       --sidebar-w: 240px;
@@ -44,8 +43,17 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: var(--text);
+      text-decoration: underline;
+    }
+
+    a:visited { color: var(--text-muted); }
 
     /* Header */
     .header {
@@ -70,7 +78,8 @@
       text-decoration: none;
     }
 
-    .brand:hover { text-decoration: none; }
+    .brand:hover { color: var(--text); text-decoration: none; }
+    .brand:visited { color: var(--text); }
 
     .nav {
       display: flex;
@@ -80,11 +89,12 @@
     }
 
     .nav a {
-      color: var(--muted);
+      color: var(--text-muted);
       text-decoration: none;
     }
 
     .nav a:hover { color: var(--text); text-decoration: none; }
+    .nav a:visited { color: var(--text-muted); }
     .nav a.active { color: var(--text); font-weight: 500; }
 
     .btn-dl {
@@ -136,7 +146,7 @@
       font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--faint);
+      color: var(--text-faint);
       margin-bottom: 12px;
     }
 
@@ -152,7 +162,7 @@
       padding: 7px 12px;
       border-radius: 8px;
       font-size: 0.8125rem;
-      color: var(--muted);
+      color: var(--text-muted);
       text-decoration: none;
       transition: background 0.15s, color 0.15s;
     }
@@ -204,7 +214,7 @@
     }
 
     .page-hero p {
-      color: var(--muted);
+      color: var(--text-muted);
       font-size: 1rem;
       max-width: 48ch;
     }
@@ -225,7 +235,7 @@
       border: 1px solid var(--border);
       font-size: 0.75rem;
       font-weight: 500;
-      color: var(--muted);
+      color: var(--text-muted);
     }
 
     /* Quick links grid */
@@ -289,7 +299,7 @@
     }
 
     .quick-text span {
-      color: var(--muted);
+      color: var(--text-muted);
       font-size: 0.8125rem;
       line-height: 1.45;
     }
@@ -311,7 +321,7 @@
       width: 40px;
       height: 40px;
       border-radius: 10px;
-      background: var(--dark);
+      background: var(--pill);
       color: #fff;
       display: flex;
       align-items: center;
@@ -336,7 +346,7 @@
     }
 
     .lead {
-      color: var(--muted);
+      color: var(--text-muted);
       font-size: 0.9375rem;
       margin-bottom: 20px;
     }
@@ -348,7 +358,7 @@
       color: var(--text);
     }
 
-    p { margin-bottom: 12px; color: var(--muted); }
+    p { margin-bottom: 12px; color: var(--text-muted); }
     p:last-child { margin-bottom: 0; }
 
     /* Icon bullet list */
@@ -364,7 +374,7 @@
       display: flex;
       gap: 10px;
       align-items: flex-start;
-      color: var(--muted);
+      color: var(--text-muted);
       font-size: 0.9375rem;
     }
 
@@ -373,7 +383,7 @@
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: var(--accent);
+      background: var(--text);
       margin-top: 8px;
       flex-shrink: 0;
     }
@@ -408,7 +418,7 @@
       background: var(--surface);
       font-size: 0.8125rem;
       font-weight: 700;
-      color: var(--faint);
+      color: var(--text-faint);
       border-right: 1px solid var(--border);
     }
 
@@ -425,7 +435,7 @@
     }
 
     .step-body span {
-      color: var(--muted);
+      color: var(--text-muted);
       font-size: 0.875rem;
       line-height: 1.55;
     }
@@ -436,11 +446,11 @@
       gap: 12px;
       padding: 14px 16px;
       border-radius: var(--radius);
-      border: 1px solid #bfdbfe;
-      background: var(--accent-soft);
+      border: 1px solid var(--border);
+      background: var(--surface);
       margin: 20px 0;
       font-size: 0.875rem;
-      color: #1e40af;
+      color: var(--text-muted);
     }
 
     .note svg {
@@ -453,12 +463,12 @@
       margin-top: 1px;
     }
 
-    .note strong { color: #1d4ed8; }
+    .note strong { color: var(--text); }
 
     .tip {
       border-color: var(--border);
       background: var(--surface);
-      color: var(--muted);
+      color: var(--text-muted);
     }
 
     .tip strong { color: var(--text); }
@@ -495,7 +505,7 @@
 
     .key-desc {
       font-size: 0.875rem;
-      color: var(--muted);
+      color: var(--text-muted);
     }
 
     kbd {
@@ -596,7 +606,7 @@
       content: "+";
       font-size: 1.125rem;
       font-weight: 400;
-      color: var(--faint);
+      color: var(--text-faint);
     }
 
     details[open] summary::after { content: "-"; }
@@ -609,7 +619,7 @@
     .faq-body {
       padding: 14px 16px;
       font-size: 0.875rem;
-      color: var(--muted);
+      color: var(--text-muted);
     }
 
     /* Footer */
@@ -618,10 +628,16 @@
       padding: 28px 24px;
       text-align: center;
       font-size: 0.8125rem;
-      color: var(--faint);
+      color: var(--text-faint);
     }
 
-    .footer a { color: var(--muted); }
+    .footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    .footer a:hover { color: var(--text); text-decoration: none; }
+    .footer a:visited { color: var(--text-muted); }
 
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
@@ -631,9 +647,9 @@
 <body>
 
   <header class="header">
-    <a class="brand" href="index.html">Beats.</a>
+    <a class="brand" href="./">Beats.</a>
     <nav class="nav" aria-label="Site">
-      <a href="index.html">Home</a>
+      <a href="./">Home</a>
       <a href="help.html" class="active">Help</a>
       <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a>
       <a class="btn-dl" id="download-link" href="#">Download</a>
@@ -723,7 +739,7 @@
             <span class="step-num">1</span>
             <div class="step-body">
               <strong>Install Beats</strong>
-              <span>Download <code>Beats-Setup-x64.exe</code> from the <a href="index.html">home page</a> or <a href="https://github.com/Delexoo/beats/releases/latest" target="_blank" rel="noopener">GitHub Releases</a>.</span>
+              <span>Download <code>Beats-Setup-x64.exe</code> from the <a href="./">home page</a> or <a href="https://github.com/Delexoo/beats/releases/latest" target="_blank" rel="noopener">GitHub Releases</a>.</span>
             </div>
           </li>
           <li>
@@ -1041,7 +1057,7 @@
   </div>
 
   <footer class="footer">
-    <p>&copy; Delexo | <a href="index.html">Home</a> | <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a> | <a href="https://delexo.store" target="_blank" rel="noopener">delexo.store</a></p>
+    <p>&copy; Delexo | <a href="./">Home</a> | <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a> | <a href="https://delexo.store" target="_blank" rel="noopener">delexo.store</a></p>
   </footer>
 
   <script>
