@@ -798,7 +798,10 @@ public partial class SettingsPanel : UserControl
             App.Playlists.ReloadTracks(cached);
         }
 
-        if (PlaylistsList.SelectedItem is not Playlist selected) return;
+        if (PlaylistsList.SelectedItem is not Playlist selected)
+        {
+            return;
+        }
 
         if (selected.Kind == PlaylistKind.Liked)
         {
@@ -807,16 +810,30 @@ public partial class SettingsPanel : UserControl
             TracksList.ItemsSource = _likedPlaylist.Tracks;
             TracksHeader.Text = $"{_likedPlaylist.Name} Playlist";
             LoadArtworkForTracks(_likedPlaylist);
+            return;
         }
-        else if (selected.Kind == PlaylistKind.Normal &&
-                 string.Equals(selected.Name, playlistName, StringComparison.OrdinalIgnoreCase) &&
-                 cached is not null)
+
+        if (selected.Kind == PlaylistKind.Saves)
         {
+            RebuildSavedTracks();
             TracksList.ItemsSource = null;
-            TracksList.ItemsSource = cached.Tracks;
-            TracksHeader.Text = $"{cached.Name} Playlist";
-            LoadArtworkForTracks(cached);
+            TracksList.ItemsSource = _savesPlaylist.Tracks;
+            TracksHeader.Text = $"{_savesPlaylist.Name} Playlist";
+            LoadArtworkForTracks(_savesPlaylist);
+            return;
         }
+
+        if (selected.Kind != PlaylistKind.Normal
+            || !string.Equals(selected.Name, playlistName, StringComparison.OrdinalIgnoreCase)
+            || cached is null)
+        {
+            return;
+        }
+
+        TracksList.ItemsSource = null;
+        TracksList.ItemsSource = cached.Tracks;
+        TracksHeader.Text = $"{cached.Name} Playlist";
+        LoadArtworkForTracks(cached);
     }
 
     private void RefreshAll()

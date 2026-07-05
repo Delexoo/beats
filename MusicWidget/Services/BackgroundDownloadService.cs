@@ -88,6 +88,9 @@ public sealed class BackgroundDownloadService
         var existingFiles = Directory.Exists(dest)
             ? new HashSet<string>(Directory.EnumerateFiles(dest), StringComparer.OrdinalIgnoreCase)
             : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var knownAudioFiles = new HashSet<string>(existingFiles, StringComparer.OrdinalIgnoreCase);
+        using var folderPollCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var folderPollTask = PollDestinationFolderAsync(dest, playlist.Name, knownAudioFiles, folderPollCts.Token);
 
         var progress = new Progress<DownloadProgressUpdate>(p =>
         {
@@ -135,7 +138,7 @@ public sealed class BackgroundDownloadService
                     App.PlaylistOrders.MergeDownloadOrder(playlist.Name, downloadedOrder);
                 }
 
-                UiDispatcher.InvokeSafe(() => App.Playlists.ReloadTracks(playlist));
+                App.Playlists.RequestTracksRefresh(playlist.Name);
 
                 App.Settings.Current.LastDownloadPlaylist = playlist.Name;
                 App.Settings.Save();
@@ -160,6 +163,15 @@ public sealed class BackgroundDownloadService
         }
         finally
         {
+            folderPollCts.Cancel();
+            try
+            {
+                await folderPollTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+
             IsRunning = false;
             ActivePlaylistName = null;
             _gate.Release();
@@ -194,5 +206,46 @@ public sealed class BackgroundDownloadService
                 Update = update,
             });
         }, System.Windows.Threading.DispatcherPriority.Background);
+    }
+
+    /// <summary>
+    /// Watches the playlist folder for new audio files while yt-dlp runs so the dashboard
+    /// updates even when post-processor log lines are missed.
+    /// </summary>
+    private static async Task PollDestinationFolderAsync(
+        string destFolder,
+        string playlistName,
+        HashSet<string> knownFiles,
+        CancellationToken ct)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1.25));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(ct).ConfigureAwait(false))
+            {
+                if (!Directory.Exists(destFolder))
+                {
+                    continue;
+                }
+
+                var newFiles = Directory.EnumerateFiles(destFolder)
+                    .Where(f => !f.Contains(".part", StringComparison.OrdinalIgnoreCase))
+                    .Where(PlaylistManager.IsAudioFile)
+                    .Where(f => knownFiles.Add(f))
+                    .OrderBy(f => File.GetLastWriteTimeUtc(f))
+                    .ToList();
+
+                if (newFiles.Count == 0)
+                {
+                    continue;
+                }
+
+                App.PlaylistOrders.AppendToOrder(playlistName, newFiles);
+                App.Playlists.RequestTracksRefresh(playlistName);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
     }
 }

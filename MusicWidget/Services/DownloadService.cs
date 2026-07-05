@@ -940,7 +940,10 @@ public sealed class DownloadService
         proc.ErrorDataReceived += (_, args) =>
         {
             if (string.IsNullOrEmpty(args.Data)) return;
-            stderrLines.Add(args.Data);
+            var line = args.Data;
+            stderrLines.Add(line);
+            // yt-dlp writes per-item download progress to stderr; parse it for live playlist updates.
+            aggregate.OnYtDlpLine(line);
         };
 
         try
@@ -1613,11 +1616,24 @@ public sealed class DownloadService
                 return;
             }
 
-            if (line.Contains("[ExtractAudio]", StringComparison.OrdinalIgnoreCase)
+            if (line.Contains("100%", StringComparison.Ordinal)
+                && line.Contains("[download]", StringComparison.OrdinalIgnoreCase))
+            {
+                _currentSongPct = 100;
+                _pendingRefreshPlaylistTracks = true;
+                Report();
+                return;
+            }
+
+            if (line.Contains("Deleting original file", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("[ExtractAudio]", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("[ffmpeg]", StringComparison.OrdinalIgnoreCase)
                 || line.Contains("Destination:", StringComparison.OrdinalIgnoreCase))
             {
                 _currentSongPct = 100;
-                if (line.Contains("[ExtractAudio]", StringComparison.OrdinalIgnoreCase))
+                if (line.Contains("[ExtractAudio]", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("Deleting original file", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("[ffmpeg]", StringComparison.OrdinalIgnoreCase))
                 {
                     _pendingRefreshPlaylistTracks = true;
                 }
@@ -1720,7 +1736,10 @@ public sealed class DownloadService
         {
             var percent = ComputePercent();
             var now = Environment.TickCount64;
-            if (_lastReportedPercent >= 0
+            var hasTrackUpdate = _pendingRefreshPlaylistTracks
+                || !string.IsNullOrWhiteSpace(_pendingCompletedFilePath);
+            if (!hasTrackUpdate
+                && _lastReportedPercent >= 0
                 && Math.Abs(percent - _lastReportedPercent) < 0.75
                 && now - _lastReportTicks < 150)
             {

@@ -439,7 +439,7 @@ public sealed class PlaylistManager
         {
             if (!_watchDebounce.TryGetValue(playlistName, out var timer))
             {
-                timer = new System.Timers.Timer(450) { AutoReset = false };
+                timer = new System.Timers.Timer(200) { AutoReset = false };
                 timer.Elapsed += (_, _) =>
                 {
                     try
