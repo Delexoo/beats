@@ -12,17 +12,18 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry1.outputs.page_url || steps.deployment_retry2.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,5 +31,36 @@ jobs:
         with:
           path: website
 
-      - uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
         id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      - name: Wait before retry
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 45
+
+      - name: Deploy to GitHub Pages (retry 1)
+        if: steps.deployment.outcome == 'failure'
+        id: deployment_retry1
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      - name: Wait before second retry
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry1.outcome == 'failure'
+        run: sleep 45
+
+      - name: Deploy to GitHub Pages (retry 2)
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry1.outcome == 'failure'
+        id: deployment_retry2
+        uses: actions/deploy-pages@v4
+
+      - name: Verify deployment succeeded
+        if: >-
+          steps.deployment.outcome == 'failure'
+          && steps.deployment_retry1.outcome == 'failure'
+          && steps.deployment_retry2.outcome == 'failure'
+        run: |
+          echo "GitHub Pages returned: Deployment failed, try again later."
+          echo "Re-run this workflow from the Actions tab if all three attempts fail."
+          exit 1
