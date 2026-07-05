@@ -80,6 +80,7 @@ public partial class SettingsPanel : UserControl
     private int _lastNonZeroVolume = 80;
     private DispatcherTimer? _progressTimer;
     private DispatcherTimer? _backgroundDownloadHideTimer;
+    private string? _backgroundDownloadPlaylistName;
     private UpdateCheckResult? _pendingUpdate;
     private bool _updateCheckInFlight;
 
@@ -1143,25 +1144,46 @@ public partial class SettingsPanel : UserControl
         }
     }
 
-    private void RefreshAfterDownload(Playlist playlist)
+    private void RefreshAfterDownload(string playlistName)
     {
-        App.Playlists.ReloadTracks(playlist);
-
-        if (PlaylistsList.SelectedItem is Playlist selected
-            && string.Equals(selected.Name, playlist.Name, StringComparison.OrdinalIgnoreCase))
+        var cached = FindPlaylistByName(playlistName);
+        if (cached is null)
         {
-            RefreshTracks(playlist);
+            RefreshAll();
+            cached = FindPlaylistByName(playlistName);
+        }
+
+        if (cached is null)
+        {
             return;
         }
 
-        var cached = _playlistsCache?.FirstOrDefault(p =>
-            string.Equals(p.Name, playlist.Name, StringComparison.OrdinalIgnoreCase));
-        if (cached is not null
-            && PlaylistsList.SelectedItem is Playlist selectedCached
-            && string.Equals(selectedCached.Name, cached.Name, StringComparison.OrdinalIgnoreCase))
+        App.Playlists.ReloadTracks(cached);
+
+        if (PlaylistsList.SelectedItem is Playlist selected
+            && string.Equals(selected.Name, playlistName, StringComparison.OrdinalIgnoreCase))
         {
             RefreshTracks(cached);
         }
+    }
+
+    private void SelectPlaylistByName(string playlistName)
+    {
+        var cached = FindPlaylistByName(playlistName);
+        if (cached is null)
+        {
+            RefreshAll();
+            cached = FindPlaylistByName(playlistName);
+        }
+
+        if (cached is null)
+        {
+            return;
+        }
+
+        PlaylistsList.SelectedItem = cached;
+        RefreshTracks(cached);
+        App.Playlists.SetCurrentPlaylist(cached.Name);
     }
 
     private void BackgroundDownloadCancel_Click(object sender, RoutedEventArgs e)
@@ -1183,6 +1205,18 @@ public partial class SettingsPanel : UserControl
             return;
         }
 
+        if (!string.Equals(_backgroundDownloadPlaylistName, e.PlaylistName, StringComparison.OrdinalIgnoreCase))
+        {
+            _backgroundDownloadPlaylistName = e.PlaylistName;
+            SelectPlaylistByName(e.PlaylistName);
+        }
+
+        var update = e.Update;
+        if (update.RefreshPlaylistTracks || !string.IsNullOrWhiteSpace(update.CompletedFilePath))
+        {
+            RefreshAfterDownload(e.PlaylistName);
+        }
+
         BackgroundDownloadBanner.Visibility = Visibility.Visible;
         BackgroundDownloadTitle.Text = $"Downloading to \"{e.PlaylistName}\"";
         BackgroundDownloadCancelButton.IsEnabled = App.BackgroundDownloads.IsRunning;
@@ -1190,7 +1224,6 @@ public partial class SettingsPanel : UserControl
             ? Visibility.Visible
             : Visibility.Collapsed;
 
-        var update = e.Update;
         if (update.Percent >= 0)
         {
             BackgroundDownloadProgress.Value = update.Percent;
@@ -1214,6 +1247,8 @@ public partial class SettingsPanel : UserControl
             return;
         }
 
+        _backgroundDownloadPlaylistName = null;
+
         if (e.Success)
         {
             BackgroundDownloadTitle.Text = "Download complete";
@@ -1223,13 +1258,7 @@ public partial class SettingsPanel : UserControl
             BackgroundDownloadProgress.Value = 100;
             BackgroundDownloadPercent.Text = "100%";
 
-            var playlist = FindPlaylistByName(e.PlaylistName)
-                ?? App.Playlists.GetPlaylists()
-                    .FirstOrDefault(p => string.Equals(p.Name, e.PlaylistName, StringComparison.OrdinalIgnoreCase));
-            if (playlist is not null)
-            {
-                RefreshAfterDownload(playlist);
-            }
+            RefreshAfterDownload(e.PlaylistName);
         }
         else if (e.Cancelled)
         {
@@ -1285,8 +1314,9 @@ public partial class SettingsPanel : UserControl
         if (string.IsNullOrWhiteSpace(name)) return;
         try
         {
-            App.Playlists.CreatePlaylist(name);
+            var created = App.Playlists.CreatePlaylist(name);
             RefreshAll();
+            SelectPlaylistByName(created.Name);
         }
         catch (Exception ex)
         {

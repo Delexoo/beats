@@ -353,6 +353,12 @@ public sealed class PlaylistManager
     /// </summary>
     public void ReloadTracks(Playlist pl) => LoadTracks(pl);
 
+    /// <summary>
+    /// Notifies listeners that a playlist folder changed on disk (e.g. during a batch download).
+    /// </summary>
+    public void RequestTracksRefresh(string playlistName) =>
+        NotifyTracksChangedDebounced(playlistName);
+
     private void LoadTracks(Playlist pl)
     {
         pl.Tracks.Clear();

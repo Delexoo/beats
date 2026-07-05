@@ -1564,6 +1564,8 @@ public sealed class DownloadService
 
         private double _lastReportedPercent = -1;
         private long _lastReportTicks;
+        private string? _pendingCompletedFilePath;
+        private bool _pendingRefreshPlaylistTracks;
 
         public AggregateDownloadProgress(IProgress<DownloadProgressUpdate>? progress)
         {
@@ -1577,7 +1579,13 @@ public sealed class DownloadService
             var item = YtDlpItemRegex.Match(line);
             if (item.Success)
             {
-                _currentTrackIndex = int.Parse(item.Groups["cur"].Value) - 1;
+                var nextIndex = int.Parse(item.Groups["cur"].Value) - 1;
+                if (nextIndex > _currentTrackIndex)
+                {
+                    _pendingRefreshPlaylistTracks = true;
+                }
+
+                _currentTrackIndex = nextIndex;
                 _totalTracks = int.Parse(item.Groups["tot"].Value);
                 _currentSongPct = 0;
                 Report();
@@ -1609,6 +1617,11 @@ public sealed class DownloadService
                 || line.Contains("Destination:", StringComparison.OrdinalIgnoreCase))
             {
                 _currentSongPct = 100;
+                if (line.Contains("[ExtractAudio]", StringComparison.OrdinalIgnoreCase))
+                {
+                    _pendingRefreshPlaylistTracks = true;
+                }
+
                 TryParseYtDlpSongTitle(line);
                 Report();
             }
@@ -1621,7 +1634,13 @@ public sealed class DownloadService
             var complete = SpotDlCompleteRegex.Match(line);
             if (complete.Success)
             {
-                _completedTracks = int.Parse(complete.Groups["done"].Value);
+                var done = int.Parse(complete.Groups["done"].Value);
+                if (done > _completedTracks)
+                {
+                    _pendingRefreshPlaylistTracks = true;
+                }
+
+                _completedTracks = done;
                 _totalTracks = int.Parse(complete.Groups["total"].Value);
                 _currentSongPct = 0;
                 Report();
@@ -1641,6 +1660,7 @@ public sealed class DownloadService
             {
                 _completedTracks++;
                 _currentSongPct = 0;
+                _pendingRefreshPlaylistTracks = true;
                 Report();
             }
         }
@@ -1673,8 +1693,12 @@ public sealed class DownloadService
         private void RecordCompletedPath(string filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath)) return;
+            if (!PlaylistManager.IsAudioFile(filePath)) return;
+
             _completedPaths.RemoveAll(p => string.Equals(p, filePath, StringComparison.OrdinalIgnoreCase));
             _completedPaths.Add(filePath);
+            _pendingCompletedFilePath = filePath;
+            _pendingRefreshPlaylistTracks = true;
         }
 
         private void TryParseSpotDlSongTitle(string line)
@@ -1705,10 +1729,18 @@ public sealed class DownloadService
 
             _lastReportedPercent = percent;
             _lastReportTicks = now;
+
+            var completedPath = _pendingCompletedFilePath;
+            var refreshTracks = _pendingRefreshPlaylistTracks;
+            _pendingCompletedFilePath = null;
+            _pendingRefreshPlaylistTracks = false;
+
             _progress?.Report(new DownloadProgressUpdate(
                 percent,
                 FormatMessage(),
-                _currentSongTitle));
+                _currentSongTitle,
+                completedPath,
+                refreshTracks));
         }
 
         private double ComputePercent()

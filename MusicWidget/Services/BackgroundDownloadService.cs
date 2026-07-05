@@ -90,7 +90,19 @@ public sealed class BackgroundDownloadService
             : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         var progress = new Progress<DownloadProgressUpdate>(p =>
-            RaiseProgress(playlist.Name, p));
+        {
+            if (!string.IsNullOrWhiteSpace(p.CompletedFilePath))
+            {
+                App.PlaylistOrders.AppendToOrder(playlist.Name, [p.CompletedFilePath]);
+            }
+
+            if (p.RefreshPlaylistTracks || !string.IsNullOrWhiteSpace(p.CompletedFilePath))
+            {
+                App.Playlists.RequestTracksRefresh(playlist.Name);
+            }
+
+            RaiseProgress(playlist.Name, p);
+        });
 
         var success = false;
         var cancelled = false;
