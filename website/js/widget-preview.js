@@ -50,6 +50,13 @@
     applyPosition(wr.left - screenRect.left, wr.top - screenRect.top);
   }
 
+  function initPosition() {
+    readScreenRect();
+    var w = wrap.offsetWidth;
+    var h = wrap.offsetHeight;
+    applyPosition(screen.clientWidth * 0.5 - w * 0.5, screen.clientHeight * 0.42 - h * 0.5);
+  }
+
   function slideOffTarget(left, top) {
     var w = wrap.offsetWidth;
     var h = wrap.offsetHeight;
@@ -190,5 +197,9 @@
     if (visibleX === null || visibleY === null) return;
     if (isHidden) return;
     applyPosition(visibleX, visibleY);
+  });
+
+  window.requestAnimationFrame(function () {
+    window.requestAnimationFrame(initPosition);
   });
 })();

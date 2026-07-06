@@ -51,6 +51,7 @@
 
   if (!isMobile()) {
     viewport.addEventListener("wheel", function (e) {
+      if (e.target.closest(".preview, .desktop-sim")) return;
       if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
       e.preventDefault();
       if (locked) return;

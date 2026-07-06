@@ -13,8 +13,12 @@
   var pillArtist = document.getElementById("pill-artist");
   var beatsPill = document.querySelector(".beats-pill");
   if (!beatsPill || !pillInfo || !pillTitle || !pillArtist) return;
+
   var currentIndex = 0;
-  var fadeMs = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 280;
+  var fadeMs = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220;
+  var cycleMs = 6000;
+  var timer = null;
+  var paused = false;
 
   function pickNextIndex() {
     var next = currentIndex;
@@ -25,12 +29,12 @@
   }
 
   function updateAria() {
-    if (!beatsPill) return;
     var t = tracks[currentIndex];
     beatsPill.setAttribute("aria-label", "Beats player - " + t.title + " by " + t.artist);
   }
 
   function cycleTrack() {
+    if (paused) return;
     var nextIndex = pickNextIndex();
     function apply() {
       currentIndex = nextIndex;
@@ -39,11 +43,23 @@
       pillInfo.classList.remove("is-changing");
       updateAria();
     }
-    if (fadeMs === 0) { apply(); return; }
+    if (fadeMs === 0) {
+      apply();
+      return;
+    }
     pillInfo.classList.add("is-changing");
     window.setTimeout(apply, fadeMs);
   }
 
+  function setPaused(next) {
+    paused = next;
+  }
+
+  beatsPill.addEventListener("mouseenter", function () { setPaused(true); });
+  beatsPill.addEventListener("mouseleave", function () { setPaused(false); });
+  beatsPill.addEventListener("focusin", function () { setPaused(true); });
+  beatsPill.addEventListener("focusout", function () { setPaused(false); });
+
   updateAria();
-  window.setInterval(cycleTrack, 3000);
+  timer = window.setInterval(cycleTrack, cycleMs);
 })();
