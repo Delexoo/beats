@@ -201,7 +201,7 @@ body {
   width: 100%;
   max-width: var(--max-w);
   margin: 0 auto;
-  padding: 0 clamp(20px, 4vw, 32px) 56px;
+  padding: 24px clamp(20px, 4vw, 32px) 48px;
 }
 
 .shell-panel > .hero-full {
@@ -233,7 +233,7 @@ body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
   gap: 56px;
-  align-items: start;
+  align-items: center;
   width: 100%;
 }
 
@@ -291,10 +291,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  align-self: start;
-  position: sticky;
-  top: 50%;
-  transform: translateY(-50%);
+  align-self: center;
 }
 
 .hero-copy {
