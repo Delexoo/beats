@@ -126,23 +126,10 @@ public sealed class DownloadService
     ];
 
     /// <summary>
-    /// Non-cookie player / API strategies when YouTube blocks or rate-limits the first attempt.
-    /// Order follows yt-dlp wiki guidance (e.g. clients that avoid PO tokens where possible).
+    /// Single alternate client stack when nightly yt-dlp's default client fails on a public video.
     /// </summary>
-    private static readonly (string Label, string[] ExtraArgs)[] ClientFallbackStrategies =
-    {
-        ("the embedded web player", new[] { "--extractor-args", "youtube:player_client=web_embedded" }),
-        ("the Safari-style web client (HLS)", new[] { "--extractor-args", "youtube:player_client=web_safari" }),
-        ("the iOS app client", new[] { "--extractor-args", "youtube:player_client=ios" }),
-        ("the TV client", new[] { "--extractor-args", "youtube:player_client=tv" }),
-        ("the simplified TV client", new[] { "--extractor-args", "youtube:player_client=tv_simply" }),
-        ("the mobile web player", new[] { "--extractor-args", "youtube:player_client=mweb" }),
-        ("the mobile web player (lighter webpage)", new[] { "--extractor-args", "youtube:player_client=mweb;player_skip=webpage" }),
-        ("the Android app client", new[] { "--extractor-args", "youtube:player_client=android" }),
-        ("Android and web clients together", new[] { "--extractor-args", "youtube:player_client=android,web" }),
-        ("the desktop web player", new[] { "--extractor-args", "youtube:player_client=web" }),
-        ("the default player client stack", new[] { "--extractor-args", "youtube:player_client=default" }),
-    };
+    private static readonly string[] YouTubeRetryExtraArgs =
+        ["--extractor-args", "youtube:player_client=tv_embedded,web_safari"];
 
     private readonly ToolBootstrapper _tools;
 
@@ -210,11 +197,14 @@ public sealed class DownloadService
             // Not a valid URI; pass-through to yt-dlp which can handle search strings.
         }
 
-        // YouTube: android_vr often works without a PO token for stream URLs (yt-dlp wiki).
+        if (IsYouTubeDownload(url, input))
+        {
+            return await DownloadYouTubeAsync(input, destFolder, progress, ct);
+        }
+
         // Instagram: canonical reel URL + referer headers on the first pass.
         var firstExtra = BuildFirstPassExtraArgs(input, url);
-        var firstSleep = IsYouTubeExtractorInput(input) ? 0.85
-            : IsInstagramUrl(url) ? 0.65
+        var firstSleep = IsInstagramUrl(url) ? 0.65
             : IsTikTokUrl(url) ? 0.55
             : 0.3;
         var firstAttempt = await RunYtDlpAsync(input, destFolder, firstExtra, progress, ct,
@@ -258,7 +248,7 @@ public sealed class DownloadService
                     string.Join(Environment.NewLine + Environment.NewLine, attemptLog));
             }
 
-            if (!LooksLikeYouTubeBotBlock(lastResult.Error))
+            if (!LooksLikeRetryableYouTubeError(lastResult.Error))
             {
                 return lastResult;
             }
@@ -299,60 +289,51 @@ public sealed class DownloadService
                 string.Join(Environment.NewLine + Environment.NewLine, attemptLog));
         }
 
-        if (!LooksLikeYouTubeBotBlock(lastResult.Error))
+        return lastResult;
+    }
+
+    /// <summary>
+    /// YouTube downloads use nightly yt-dlp defaults first, then one targeted retry.
+    /// Avoids cycling through many client mirrors that slow downloads and confuse users.
+    /// </summary>
+    private async Task<DownloadResult> DownloadYouTubeAsync(
+        string input,
+        string destFolder,
+        IProgress<DownloadProgressUpdate>? progress,
+        CancellationToken ct)
+    {
+        progress?.Report(new DownloadProgressUpdate(5, "Downloading from YouTube..."));
+
+        var attemptLog = new List<string>();
+
+        var first = await RunYtDlpAsync(
+            input, destFolder, Array.Empty<string>(), progress, ct, sleepRequestsSeconds: 0.5);
+        attemptLog.Add(FormatAttemptLog("youtube", Array.Empty<string>(), first));
+        if (first.Success || ct.IsCancellationRequested)
         {
-            return lastResult;
+            return first;
         }
 
-        foreach (var (label, extraArgs) in ClientFallbackStrategies)
+        if (!LooksLikeRetryableYouTubeError(first.Error))
         {
-            ct.ThrowIfCancellationRequested();
-            progress?.Report(new DownloadProgressUpdate(8,
-                $"YouTube asked us to verify; retrying with {label}..."));
-
-            lastResult = await RunYtDlpAsync(input, destFolder, extraArgs, progress, ct, sleepRequestsSeconds: 1.5);
-            attemptLog.Add(FormatAttemptLog(label, extraArgs, lastResult));
-            if (lastResult.Success)
-            {
-                return lastResult;
-            }
-
-            if (!LooksLikeYouTubeBotBlock(lastResult.Error))
-            {
-                return lastResult;
-            }
+            return first;
         }
 
-        // Alternate front-ends (Invidious-style); order tries stable public hosts first.
-        foreach (var (invLabel, invidiousUrl) in EnumerateInvidiousCandidates(url))
+        ct.ThrowIfCancellationRequested();
+        progress?.Report(new DownloadProgressUpdate(8, "Retrying download once..."));
+
+        var second = await RunYtDlpAsync(
+            input, destFolder, YouTubeRetryExtraArgs, progress, ct, sleepRequestsSeconds: 1.0);
+        attemptLog.Add(FormatAttemptLog("youtube retry", YouTubeRetryExtraArgs, second));
+        if (second.Success)
         {
-            ct.ThrowIfCancellationRequested();
-            progress?.Report(new DownloadProgressUpdate(9,
-                $"Trying public mirror ({invLabel})..."));
-
-            lastResult = await RunYtDlpAsync(invidiousUrl, destFolder, Array.Empty<string>(), progress, ct,
-                sleepRequestsSeconds: 2.5);
-            attemptLog.Add(FormatAttemptLog(
-                $"{invLabel} ({invidiousUrl})",
-                Array.Empty<string>(),
-                lastResult));
-            if (lastResult.Success)
-            {
-                return lastResult;
-            }
-
-            if (!LooksLikeYouTubeBotBlock(lastResult.Error) &&
-                !LooksLikeInvidiousUnavailable(lastResult.Error))
-            {
-                return lastResult;
-            }
+            return second;
         }
 
-        // Everything failed: friendly UI text + full per-attempt yt-dlp capture for support.
-        var friendly =
-            "YouTube blocked automated access, asked for verification, or rate-limited this PC. " +
-            "Make sure the video or playlist is public or unlisted, then try again in a few minutes. " +
-            "Private or login-only links cannot be downloaded without signing in on the web.";
+        var friendly = HasYoutubeCookies()
+            ? "YouTube blocked or rate-limited this download. Confirm the link is public or unlisted, wait a few minutes, and try again."
+            : "YouTube blocked this download. In the Beats dashboard open Download cookies, add a cookies.txt file from your browser while logged into YouTube, then try again.";
+
         var blob = "yt-dlp executable: " + _tools.YtDlpPath + "\n\n"
                    + string.Join("\n\n----------\n\n", attemptLog);
         if (blob.Length > 120_000)
@@ -361,6 +342,28 @@ public sealed class DownloadService
         }
 
         return new DownloadResult(false, friendly, blob);
+    }
+
+    private static bool IsYouTubeDownload(string originalUrl, string input)
+    {
+        if (input.StartsWith("ytsearch", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (IsYouTubeExtractorInput(input))
+        {
+            return true;
+        }
+
+        return Uri.TryCreate(originalUrl, UriKind.Absolute, out var uri)
+               && IsYouTubeHost(uri.IdnHost);
+    }
+
+    private static bool HasYoutubeCookies()
+    {
+        var path = App.Settings.Current.YoutubeCookiesFilePath;
+        return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
     }
 
     private static IReadOnlyList<string> BeautifyDownloadedPaths(IReadOnlyList<string> paths)
@@ -489,11 +492,6 @@ public sealed class DownloadService
 
     private static string[] BuildFirstPassExtraArgs(string input, string originalUrl)
     {
-        if (IsYouTubeExtractorInput(input))
-        {
-            return ["--extractor-args", "youtube:player_client=android_vr"];
-        }
-
         if (IsInstagramUrl(originalUrl))
         {
             return InstagramYtDlpExtraArgs;
@@ -512,11 +510,6 @@ public sealed class DownloadService
         if (extraArgs.Count == 0)
         {
             return "first (plain)";
-        }
-
-        if (extraArgs.Any(a => a.Contains("youtube:player_client=android_vr", StringComparison.OrdinalIgnoreCase)))
-        {
-            return "first (android_vr)";
         }
 
         if (extraArgs.Any(a => a.Contains("instagram.com", StringComparison.OrdinalIgnoreCase)))
@@ -942,7 +935,7 @@ public sealed class DownloadService
             if (string.IsNullOrEmpty(args.Data)) return;
             var line = args.Data;
             stderrLines.Add(line);
-            // yt-dlp writes per-item download progress to stderr; parse it for live playlist updates.
+            // yt-dlp writes per-item download progress to stderr.
             aggregate.OnYtDlpLine(line);
         };
 
@@ -1119,7 +1112,7 @@ public sealed class DownloadService
         return s.Length > 16_000 ? s[..16_000] + "\n... (truncated per attempt)" : s;
     }
 
-    private static bool LooksLikeYouTubeBotBlock(string? error)
+    private static bool LooksLikeRetryableYouTubeError(string? error)
     {
         if (string.IsNullOrWhiteSpace(error)) return false;
         return error.Contains("Sign in to confirm", StringComparison.OrdinalIgnoreCase)
@@ -1132,73 +1125,9 @@ public sealed class DownloadService
             || error.Contains("po_token", StringComparison.OrdinalIgnoreCase)
             || error.Contains("PO Token", StringComparison.OrdinalIgnoreCase)
             || error.Contains("HTTP Error 403", StringComparison.OrdinalIgnoreCase)
+            || error.Contains("HTTP Error 429", StringComparison.OrdinalIgnoreCase)
             || (error.Contains("403", StringComparison.OrdinalIgnoreCase)
                 && error.Contains("youtube", StringComparison.OrdinalIgnoreCase));
-    }
-
-    /// <summary>
-    /// Invidious instances often return transient HTTP errors; keep trying other paths.
-    /// </summary>
-    private static bool LooksLikeInvidiousUnavailable(string? error)
-    {
-        if (string.IsNullOrWhiteSpace(error)) return false;
-        return error.Contains("502", StringComparison.OrdinalIgnoreCase)
-            || error.Contains("503", StringComparison.OrdinalIgnoreCase)
-            || error.Contains("504", StringComparison.OrdinalIgnoreCase)
-            || error.Contains("Unable to connect", StringComparison.OrdinalIgnoreCase)
-            || error.Contains("Connection refused", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static IEnumerable<(string Label, string Url)> EnumerateInvidiousCandidates(string normalizedUrl)
-    {
-        if (!TryGetYouTubeWatchVideoId(normalizedUrl, out var id) || id is not { Length: >= 6 })
-        {
-            yield break;
-        }
-
-        var e = Uri.EscapeDataString(id);
-        yield return ("yewtu.be", "https://yewtu.be/watch?v=" + e);
-        yield return ("redirect.invidious.io", "https://redirect.invidious.io/watch?v=" + e);
-    }
-    private static bool TryGetYouTubeWatchVideoId(string normalizedUrl, out string? id)
-    {
-        id = null;
-        if (!Uri.TryCreate(normalizedUrl, UriKind.Absolute, out var uri))
-        {
-            return false;
-        }
-
-        if (!IsYouTubeHost(uri.IdnHost))
-        {
-            return false;
-        }
-
-        var path = uri.AbsolutePath;
-        if (path.StartsWith("/shorts/", StringComparison.OrdinalIgnoreCase))
-        {
-            var seg = path["/shorts/".Length..].Trim('/');
-            var cut = seg.IndexOfAny(['/', '?', '#']);
-            id = cut < 0 ? seg : seg[..cut];
-            return !string.IsNullOrWhiteSpace(id);
-        }
-
-        var query = uri.Query;
-        if (string.IsNullOrEmpty(query))
-        {
-            return false;
-        }
-
-        foreach (var segment in query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries))
-        {
-            var eq = segment.IndexOf('=');
-            if (eq < 0) continue;
-            var key = Uri.UnescapeDataString(segment[..eq]);
-            if (!key.Equals("v", StringComparison.OrdinalIgnoreCase)) continue;
-            id = Uri.UnescapeDataString(segment[(eq + 1)..]);
-            return !string.IsNullOrWhiteSpace(id);
-        }
-
-        return false;
     }
 
     private static bool IsYouTubeExtractorInput(string value)
@@ -1567,8 +1496,6 @@ public sealed class DownloadService
 
         private double _lastReportedPercent = -1;
         private long _lastReportTicks;
-        private string? _pendingCompletedFilePath;
-        private bool _pendingRefreshPlaylistTracks;
 
         public AggregateDownloadProgress(IProgress<DownloadProgressUpdate>? progress)
         {
@@ -1582,13 +1509,7 @@ public sealed class DownloadService
             var item = YtDlpItemRegex.Match(line);
             if (item.Success)
             {
-                var nextIndex = int.Parse(item.Groups["cur"].Value) - 1;
-                if (nextIndex > _currentTrackIndex)
-                {
-                    _pendingRefreshPlaylistTracks = true;
-                }
-
-                _currentTrackIndex = nextIndex;
+                _currentTrackIndex = int.Parse(item.Groups["cur"].Value) - 1;
                 _totalTracks = int.Parse(item.Groups["tot"].Value);
                 _currentSongPct = 0;
                 Report();
@@ -1616,28 +1537,10 @@ public sealed class DownloadService
                 return;
             }
 
-            if (line.Contains("100%", StringComparison.Ordinal)
-                && line.Contains("[download]", StringComparison.OrdinalIgnoreCase))
-            {
-                _currentSongPct = 100;
-                _pendingRefreshPlaylistTracks = true;
-                Report();
-                return;
-            }
-
-            if (line.Contains("Deleting original file", StringComparison.OrdinalIgnoreCase)
-                || line.Contains("[ExtractAudio]", StringComparison.OrdinalIgnoreCase)
-                || line.Contains("[ffmpeg]", StringComparison.OrdinalIgnoreCase)
+            if (line.Contains("[ExtractAudio]", StringComparison.OrdinalIgnoreCase)
                 || line.Contains("Destination:", StringComparison.OrdinalIgnoreCase))
             {
                 _currentSongPct = 100;
-                if (line.Contains("[ExtractAudio]", StringComparison.OrdinalIgnoreCase)
-                    || line.Contains("Deleting original file", StringComparison.OrdinalIgnoreCase)
-                    || line.Contains("[ffmpeg]", StringComparison.OrdinalIgnoreCase))
-                {
-                    _pendingRefreshPlaylistTracks = true;
-                }
-
                 TryParseYtDlpSongTitle(line);
                 Report();
             }
@@ -1650,13 +1553,7 @@ public sealed class DownloadService
             var complete = SpotDlCompleteRegex.Match(line);
             if (complete.Success)
             {
-                var done = int.Parse(complete.Groups["done"].Value);
-                if (done > _completedTracks)
-                {
-                    _pendingRefreshPlaylistTracks = true;
-                }
-
-                _completedTracks = done;
+                _completedTracks = int.Parse(complete.Groups["done"].Value);
                 _totalTracks = int.Parse(complete.Groups["total"].Value);
                 _currentSongPct = 0;
                 Report();
@@ -1676,7 +1573,6 @@ public sealed class DownloadService
             {
                 _completedTracks++;
                 _currentSongPct = 0;
-                _pendingRefreshPlaylistTracks = true;
                 Report();
             }
         }
@@ -1709,12 +1605,8 @@ public sealed class DownloadService
         private void RecordCompletedPath(string filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath)) return;
-            if (!PlaylistManager.IsAudioFile(filePath)) return;
-
             _completedPaths.RemoveAll(p => string.Equals(p, filePath, StringComparison.OrdinalIgnoreCase));
             _completedPaths.Add(filePath);
-            _pendingCompletedFilePath = filePath;
-            _pendingRefreshPlaylistTracks = true;
         }
 
         private void TryParseSpotDlSongTitle(string line)
@@ -1736,10 +1628,7 @@ public sealed class DownloadService
         {
             var percent = ComputePercent();
             var now = Environment.TickCount64;
-            var hasTrackUpdate = _pendingRefreshPlaylistTracks
-                || !string.IsNullOrWhiteSpace(_pendingCompletedFilePath);
-            if (!hasTrackUpdate
-                && _lastReportedPercent >= 0
+            if (_lastReportedPercent >= 0
                 && Math.Abs(percent - _lastReportedPercent) < 0.75
                 && now - _lastReportTicks < 150)
             {
@@ -1748,18 +1637,10 @@ public sealed class DownloadService
 
             _lastReportedPercent = percent;
             _lastReportTicks = now;
-
-            var completedPath = _pendingCompletedFilePath;
-            var refreshTracks = _pendingRefreshPlaylistTracks;
-            _pendingCompletedFilePath = null;
-            _pendingRefreshPlaylistTracks = false;
-
             _progress?.Report(new DownloadProgressUpdate(
                 percent,
                 FormatMessage(),
-                _currentSongTitle,
-                completedPath,
-                refreshTracks));
+                _currentSongTitle));
         }
 
         private double ComputePercent()
