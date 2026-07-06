@@ -233,7 +233,7 @@ body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
   gap: 56px;
-  align-items: center;
+  align-items: start;
   width: 100%;
 }
 
@@ -291,7 +291,10 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  align-self: center;
+  align-self: start;
+  position: sticky;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .hero-copy {
@@ -561,7 +564,7 @@ h1 {
 .desktop-sim {
   width: 100%;
   border-radius: 14px;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.12);
   background: #000;
@@ -570,7 +573,8 @@ h1 {
 .desktop-screen {
   position: relative;
   aspect-ratio: 16 / 10;
-  background: url("assets/Windows11.jpg") center / cover no-repeat;
+  background: url("../assets/Windows11.jpg") center / cover no-repeat;
+  overflow: visible;
 }
 
 .desktop-hide-tab {
@@ -666,6 +670,7 @@ h1 {
 }
 
 .beats-pill {
+  position: relative;
   display: inline-flex;
   align-items: center;
   background: var(--pill);
@@ -685,25 +690,25 @@ h1 {
 }
 
 .pill-hover-controls {
+  position: absolute;
+  right: 100%;
+  top: 50%;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: 0;
+  width: calc(24px * var(--scale));
+  margin-right: calc(6px * var(--scale));
   opacity: 0;
-  overflow: hidden;
-  flex-shrink: 0;
-  margin-right: 0;
-  transition:
-    width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.22s ease,
-    margin-right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  transform: translateY(-50%) translateX(6px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
 }
 
 .beats-pill:hover .pill-hover-controls,
 .beats-pill:focus-within .pill-hover-controls {
-  width: calc(24px * var(--scale));
   opacity: 1;
-  margin-right: calc(6px * var(--scale));
+  pointer-events: auto;
+  transform: translateY(-50%) translateX(0);
 }
 
 .pill-core { display: flex; align-items: center; flex-shrink: 0; }
@@ -750,7 +755,6 @@ h1 {
 .pill-info.is-changing .pill-title,
 .pill-info.is-changing .pill-artist {
   opacity: 0;
-  transform: translateY(5px);
 }
 
 .pill-title {

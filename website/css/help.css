@@ -526,9 +526,7 @@ kbd {
   overflow: hidden;
 }
 
-.platform img { width: 100%; height: 100%; object-fit: contain; }
-.platform.spotify { background: #1db954; }
-.platform.tiktok { background: #010101; }
+.platform img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
 .platform.soundcloud { background: #ff5500; }
 .platform svg { width: 18px; height: 18px; fill: #fff; }
 
