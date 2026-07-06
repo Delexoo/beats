@@ -67,7 +67,7 @@ public sealed class ToolBootstrapper
             if (File.Exists(YtDlpPath))
             {
                 var age = DateTime.UtcNow - File.GetLastWriteTimeUtc(YtDlpPath);
-                if (age > TimeSpan.FromDays(3))
+                if (age > TimeSpan.FromDays(1))
                 {
                     progress?.Report(new DownloadProgressUpdate(0,
                         "Refreshing yt-dlp nightly (latest YouTube fixes)..."));

@@ -126,10 +126,21 @@ public sealed class DownloadService
     ];
 
     /// <summary>
-    /// Single alternate client stack when nightly yt-dlp's default client fails on a public video.
+    /// Primary YouTube client stack — works on most public videos without login.
+    /// </summary>
+    private static readonly string[] YouTubePrimaryExtraArgs =
+        ["--extractor-args", "youtube:player_client=tv_embedded,web_embedded"];
+
+    /// <summary>
+    /// Alternate client stack when the primary pass is blocked or rate-limited.
     /// </summary>
     private static readonly string[] YouTubeRetryExtraArgs =
-        ["--extractor-args", "youtube:player_client=tv_embedded,web_safari"];
+        ["--extractor-args", "youtube:player_client=web_safari,ios"];
+
+    /// <summary>Windows browsers tried for session-aware downloads (yt-dlp --cookies-from-browser).</summary>
+    private static readonly string[] BrowserCookieSources = ["edge", "chrome"];
+
+    private record struct YtDlpAttempt(string Label, string[] ExtraArgs, string? CookiesFromBrowser = null);
 
     private readonly ToolBootstrapper _tools;
 
@@ -202,68 +213,126 @@ public sealed class DownloadService
             return await DownloadYouTubeAsync(input, destFolder, progress, ct);
         }
 
-        // Instagram: canonical reel URL + referer headers on the first pass.
-        var firstExtra = BuildFirstPassExtraArgs(input, url);
-        var firstSleep = IsInstagramUrl(url) ? 0.65
-            : IsTikTokUrl(url) ? 0.55
-            : 0.3;
-        var firstAttempt = await RunYtDlpAsync(input, destFolder, firstExtra, progress, ct,
-            sleepRequestsSeconds: firstSleep);
-        if (firstAttempt.Success || ct.IsCancellationRequested)
+        if (IsInstagramUrl(url))
         {
-            return firstAttempt;
+            return await DownloadInstagramAsync(
+                url, input, instagramAudioSearch, destFolder, progress, ct);
         }
 
-        var attemptLog = new List<string>
+        if (IsTikTokUrl(url))
         {
-            FormatAttemptLog(DescribeFirstPassAttempt(firstExtra), firstExtra, firstAttempt),
-        };
-        DownloadResult lastResult = firstAttempt;
+            return await DownloadTikTokAsync(input, destFolder, progress, ct);
+        }
 
-        if (IsInstagramUrl(url) && !ct.IsCancellationRequested)
+        progress?.Report(new DownloadProgressUpdate(5, "Downloading..."));
+        return await RunYtDlpAsync(input, destFolder, Array.Empty<string>(), progress, ct,
+            sleepRequestsSeconds: 0.4);
+    }
+
+    private async Task<DownloadResult> DownloadYouTubeAsync(
+        string input,
+        string destFolder,
+        IProgress<DownloadProgressUpdate>? progress,
+        CancellationToken ct)
+    {
+        progress?.Report(new DownloadProgressUpdate(5, "Downloading from YouTube..."));
+
+        var attemptLog = new List<string>();
+        foreach (var attempt in BuildYouTubeAttempts())
         {
-            lastResult = await RunInstagramFallbacksAsync(
-                url, input, instagramAudioSearch, destFolder, lastResult, attemptLog, progress, ct);
-            if (lastResult.Success)
+            ct.ThrowIfCancellationRequested();
+            if (attemptLog.Count > 0)
             {
-                return lastResult;
+                progress?.Report(new DownloadProgressUpdate(8, attempt.Label + "..."));
             }
 
-            if (IsInstagramAudioUrl(url) && LooksLikeUnsupportedUrl(lastResult.Error))
+            var result = await RunYtDlpAsync(
+                input,
+                destFolder,
+                attempt.ExtraArgs,
+                progress,
+                ct,
+                sleepRequestsSeconds: attempt.CookiesFromBrowser is null ? 0.5 : 0.65,
+                cookiesFromBrowser: attempt.CookiesFromBrowser,
+                skipCookiesFile: attempt.CookiesFromBrowser is not null);
+            attemptLog.Add(FormatAttemptLog(attempt.Label, attempt.ExtraArgs, result));
+            if (result.Success)
             {
-                return new DownloadResult(
-                    false,
-                    "Instagram audio pages are not direct video links. Open a reel that uses this sound, " +
-                    "tap Share, Copy link, and paste that reel URL (instagram.com/reel/...) instead.",
-                    string.Join(Environment.NewLine + Environment.NewLine, attemptLog));
+                return result;
             }
 
-            if (LooksLikeInstagramLoginRequired(lastResult.Error))
+            if (!LooksLikeRetryableYouTubeError(result.Error))
             {
-                return new DownloadResult(
-                    false,
-                    "Instagram asked you to sign in or blocked this link. Export a cookies.txt file while logged " +
-                    "into Instagram (Dashboard settings, same file used for YouTube) and try again. Public reels " +
-                    "usually work without login.",
-                    string.Join(Environment.NewLine + Environment.NewLine, attemptLog));
-            }
-
-            if (!LooksLikeRetryableYouTubeError(lastResult.Error))
-            {
-                return lastResult;
+                return result;
             }
         }
 
-        if (IsTikTokUrl(url) && !ct.IsCancellationRequested)
-        {
-            lastResult = await RunTikTokFallbacksAsync(
-                url, input, destFolder, lastResult, attemptLog, progress, ct);
-            if (lastResult.Success)
-            {
-                return lastResult;
-            }
+        var friendly = HasYoutubeCookies()
+            ? "YouTube blocked or rate-limited this download. Confirm the link is public or unlisted, stay signed into YouTube in Edge or Chrome, wait a few minutes, and try again."
+            : "YouTube blocked this download. Sign into YouTube in Edge or Chrome on this PC and try again — Beats reads that login automatically. You can also add a cookies.txt file under Download cookies in the dashboard.";
 
+        return BuildFailedResult(friendly, attemptLog);
+    }
+
+    private async Task<DownloadResult> DownloadInstagramAsync(
+        string url,
+        string input,
+        string? instagramAudioSearch,
+        string destFolder,
+        IProgress<DownloadProgressUpdate>? progress,
+        CancellationToken ct)
+    {
+        progress?.Report(new DownloadProgressUpdate(5, "Downloading from Instagram..."));
+
+        var attemptLog = new List<string>();
+        var lastResult = await RunYtDlpAsync(
+            input, destFolder, InstagramYtDlpExtraArgs, progress, ct, sleepRequestsSeconds: 0.65);
+        attemptLog.Add(FormatAttemptLog("instagram", InstagramYtDlpExtraArgs, lastResult));
+        if (lastResult.Success || ct.IsCancellationRequested)
+        {
             return lastResult;
+        }
+
+        lastResult = await RunInstagramFallbacksAsync(
+            url, input, instagramAudioSearch, destFolder, lastResult, attemptLog, progress, ct);
+        if (lastResult.Success)
+        {
+            return lastResult;
+        }
+
+        if (LooksLikeInstagramLoginRequired(lastResult.Error))
+        {
+            foreach (var browser in BrowserCookieSources)
+            {
+                ct.ThrowIfCancellationRequested();
+                progress?.Report(new DownloadProgressUpdate(8,
+                    $"Retrying Instagram with your {browser} login..."));
+
+                var browserAttempt = await RunYtDlpAsync(
+                    input,
+                    destFolder,
+                    InstagramYtDlpExtraArgs,
+                    progress,
+                    ct,
+                    sleepRequestsSeconds: 0.75,
+                    cookiesFromBrowser: browser,
+                    skipCookiesFile: true);
+                attemptLog.Add(FormatAttemptLog($"instagram ({browser} login)", InstagramYtDlpExtraArgs, browserAttempt));
+                if (browserAttempt.Success)
+                {
+                    return browserAttempt;
+                }
+
+                if (LooksLikeBrowserCookiesUnavailable(browserAttempt.Error))
+                {
+                    continue;
+                }
+            }
+
+            return new DownloadResult(
+                false,
+                "Instagram asked you to sign in or blocked this link. Stay logged into Instagram in Edge or Chrome, or export a cookies.txt file in Dashboard → Download cookies.",
+                string.Join(Environment.NewLine + Environment.NewLine, attemptLog));
         }
 
         if (IsInstagramAudioUrl(url) && LooksLikeUnsupportedUrl(lastResult.Error))
@@ -284,56 +353,94 @@ public sealed class DownloadService
 
             return new DownloadResult(
                 false,
-                "Instagram audio pages are not direct video links. Open a reel that uses this sound, " +
-                "tap Share, Copy link, and paste that reel URL (instagram.com/reel/...) instead.",
+                "Instagram audio pages are not direct video links. Open a reel that uses this sound, tap Share, Copy link, and paste that reel URL (instagram.com/reel/...) instead.",
                 string.Join(Environment.NewLine + Environment.NewLine, attemptLog));
         }
 
         return lastResult;
     }
 
-    /// <summary>
-    /// YouTube downloads use nightly yt-dlp defaults first, then one targeted retry.
-    /// Avoids cycling through many client mirrors that slow downloads and confuse users.
-    /// </summary>
-    private async Task<DownloadResult> DownloadYouTubeAsync(
+    private async Task<DownloadResult> DownloadTikTokAsync(
         string input,
         string destFolder,
         IProgress<DownloadProgressUpdate>? progress,
         CancellationToken ct)
     {
-        progress?.Report(new DownloadProgressUpdate(5, "Downloading from YouTube..."));
+        input = NormalizeTikTokUrl(input);
+        progress?.Report(new DownloadProgressUpdate(5, "Downloading from TikTok..."));
 
         var attemptLog = new List<string>();
+        var tikTokHeaders = new[] { "--user-agent", BrowserUserAgent };
 
         var first = await RunYtDlpAsync(
-            input, destFolder, Array.Empty<string>(), progress, ct, sleepRequestsSeconds: 0.5);
-        attemptLog.Add(FormatAttemptLog("youtube", Array.Empty<string>(), first));
+            input, destFolder, TikTokExtractorStrategies[0].ExtraArgs, progress, ct, sleepRequestsSeconds: 0.55);
+        attemptLog.Add(FormatAttemptLog(TikTokExtractorStrategies[0].Label, TikTokExtractorStrategies[0].ExtraArgs, first));
         if (first.Success || ct.IsCancellationRequested)
         {
             return first;
         }
 
-        if (!LooksLikeRetryableYouTubeError(first.Error))
+        var lastResult = await RunTikTokFallbacksAsync(
+            input, input, destFolder, first, attemptLog, progress, ct);
+        if (lastResult.Success)
         {
-            return first;
+            return lastResult;
         }
 
-        ct.ThrowIfCancellationRequested();
-        progress?.Report(new DownloadProgressUpdate(8, "Retrying download once..."));
-
-        var second = await RunYtDlpAsync(
-            input, destFolder, YouTubeRetryExtraArgs, progress, ct, sleepRequestsSeconds: 1.0);
-        attemptLog.Add(FormatAttemptLog("youtube retry", YouTubeRetryExtraArgs, second));
-        if (second.Success)
+        foreach (var browser in BrowserCookieSources)
         {
-            return second;
+            ct.ThrowIfCancellationRequested();
+            progress?.Report(new DownloadProgressUpdate(8,
+                $"Retrying TikTok with your {browser} login..."));
+
+            var browserAttempt = await RunYtDlpAsync(
+                input,
+                destFolder,
+                tikTokHeaders,
+                progress,
+                ct,
+                sleepRequestsSeconds: 0.75,
+                cookiesFromBrowser: browser,
+                skipCookiesFile: true);
+            attemptLog.Add(FormatAttemptLog($"tiktok ({browser} login)", tikTokHeaders, browserAttempt));
+            if (browserAttempt.Success)
+            {
+                return browserAttempt;
+            }
+
+            if (LooksLikeBrowserCookiesUnavailable(browserAttempt.Error))
+            {
+                continue;
+            }
         }
 
-        var friendly = HasYoutubeCookies()
-            ? "YouTube blocked or rate-limited this download. Confirm the link is public or unlisted, wait a few minutes, and try again."
-            : "YouTube blocked this download. In the Beats dashboard open Download cookies, add a cookies.txt file from your browser while logged into YouTube, then try again.";
+        return lastResult;
+    }
 
+    private IEnumerable<YtDlpAttempt> BuildYouTubeAttempts()
+    {
+        if (HasYoutubeCookies())
+        {
+            yield return new YtDlpAttempt("youtube (saved cookies)", YouTubePrimaryExtraArgs);
+        }
+
+        foreach (var browser in BrowserCookieSources)
+        {
+            yield return new YtDlpAttempt(
+                $"youtube ({browser} login)",
+                YouTubePrimaryExtraArgs,
+                browser);
+        }
+
+        yield return new YtDlpAttempt("youtube", YouTubePrimaryExtraArgs);
+        yield return new YtDlpAttempt("youtube alternate client", YouTubeRetryExtraArgs);
+        yield return new YtDlpAttempt(
+            "youtube android_vr",
+            ["--extractor-args", "youtube:player_client=android_vr"]);
+    }
+
+    private DownloadResult BuildFailedResult(string friendly, List<string> attemptLog)
+    {
         var blob = "yt-dlp executable: " + _tools.YtDlpPath + "\n\n"
                    + string.Join("\n\n----------\n\n", attemptLog);
         if (blob.Length > 120_000)
@@ -490,34 +597,36 @@ public sealed class DownloadService
         return $"[{attemptName}{extra}]\n{body ?? "(no captured output)"}";
     }
 
-    private static string[] BuildFirstPassExtraArgs(string input, string originalUrl)
+    private static string NormalizeTikTokUrl(string url)
     {
-        if (IsInstagramUrl(originalUrl))
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)
+            || !uri.Host.Contains("tiktok.com", StringComparison.OrdinalIgnoreCase))
         {
-            return InstagramYtDlpExtraArgs;
+            return url;
         }
 
-        if (IsTikTokUrl(originalUrl))
+        url = StripSocialTrackingQuery(uri);
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out uri))
         {
-            return ["--user-agent", BrowserUserAgent];
+            return url;
         }
 
-        return Array.Empty<string>();
-    }
-
-    private static string DescribeFirstPassAttempt(IReadOnlyList<string> extraArgs)
-    {
-        if (extraArgs.Count == 0)
+        var path = uri.AbsolutePath;
+        if (string.IsNullOrEmpty(path))
         {
-            return "first (plain)";
+            path = "/";
+        }
+        else if (!path.EndsWith('/'))
+        {
+            path += "/";
         }
 
-        if (extraArgs.Any(a => a.Contains("instagram.com", StringComparison.OrdinalIgnoreCase)))
-        {
-            return "first (instagram headers)";
-        }
+        var host = uri.Host.Contains("tiktok.com", StringComparison.OrdinalIgnoreCase)
+            ? "www.tiktok.com"
+            : uri.IdnHost;
 
-        return "first";
+        return uri.GetLeftPart(UriPartial.Scheme) + "//" + host + path + uri.Query;
     }
 
     private async Task<DownloadResult> RunInstagramFallbacksAsync(
@@ -864,7 +973,9 @@ public sealed class DownloadService
         IReadOnlyList<string> extraArgs,
         IProgress<DownloadProgressUpdate>? progress,
         CancellationToken ct,
-        double sleepRequestsSeconds = 0.85)
+        double sleepRequestsSeconds = 0.85,
+        string? cookiesFromBrowser = null,
+        bool skipCookiesFile = false)
     {
         var outTemplate = System.IO.Path.Combine(destFolder, "%(title)s.%(ext)s");
 
@@ -889,8 +1000,14 @@ public sealed class DownloadService
         {
             psi.ArgumentList.Add("--no-playlist");
         }
+        else
+        {
+            psi.ArgumentList.Add("--ignore-errors");
+        }
 
         psi.ArgumentList.Add("--newline");
+        psi.ArgumentList.Add("--extractor-retries");
+        psi.ArgumentList.Add("3");
         // Slower extraction reduces rate-limit / bot triggers on busy IPs (see yt-dlp wiki).
         psi.ArgumentList.Add("--sleep-requests");
         psi.ArgumentList.Add(sleepRequestsSeconds.ToString(
@@ -900,7 +1017,15 @@ public sealed class DownloadService
         psi.ArgumentList.Add("3");
         psi.ArgumentList.Add("--fragment-retries");
         psi.ArgumentList.Add("3");
-        AppendCookiesArgs(psi);
+        if (!string.IsNullOrWhiteSpace(cookiesFromBrowser))
+        {
+            psi.ArgumentList.Add("--cookies-from-browser");
+            psi.ArgumentList.Add(cookiesFromBrowser);
+        }
+        else if (!skipCookiesFile)
+        {
+            AppendCookiesArgs(psi);
+        }
         foreach (var arg in extraArgs)
         {
             psi.ArgumentList.Add(arg);
@@ -988,6 +1113,7 @@ public sealed class DownloadService
         };
         psi.Environment["PATH"] = _tools.ToolsDirectory + System.IO.Path.PathSeparator
             + (Environment.GetEnvironmentVariable("PATH") ?? string.Empty);
+        psi.Environment["YTDLP"] = _tools.YtDlpPath;
 
         psi.ArgumentList.Add("download");
         psi.ArgumentList.Add(spotifyUrl);
@@ -1128,6 +1254,20 @@ public sealed class DownloadService
             || error.Contains("HTTP Error 429", StringComparison.OrdinalIgnoreCase)
             || (error.Contains("403", StringComparison.OrdinalIgnoreCase)
                 && error.Contains("youtube", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool LooksLikeBrowserCookiesUnavailable(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error))
+        {
+            return false;
+        }
+
+        return error.Contains("could not find", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("no such browser", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("unsupported browser", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("Failed to decrypt", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("browser is not installed", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsYouTubeExtractorInput(string value)
@@ -1496,6 +1636,8 @@ public sealed class DownloadService
 
         private double _lastReportedPercent = -1;
         private long _lastReportTicks;
+        private string? _pendingCompletedFilePath;
+        private bool _pendingRefreshPlaylistTracks;
 
         public AggregateDownloadProgress(IProgress<DownloadProgressUpdate>? progress)
         {
@@ -1509,7 +1651,13 @@ public sealed class DownloadService
             var item = YtDlpItemRegex.Match(line);
             if (item.Success)
             {
-                _currentTrackIndex = int.Parse(item.Groups["cur"].Value) - 1;
+                var nextIndex = int.Parse(item.Groups["cur"].Value) - 1;
+                if (nextIndex > _currentTrackIndex)
+                {
+                    _pendingRefreshPlaylistTracks = true;
+                }
+
+                _currentTrackIndex = nextIndex;
                 _totalTracks = int.Parse(item.Groups["tot"].Value);
                 _currentSongPct = 0;
                 Report();
@@ -1537,10 +1685,28 @@ public sealed class DownloadService
                 return;
             }
 
-            if (line.Contains("[ExtractAudio]", StringComparison.OrdinalIgnoreCase)
+            if (line.Contains("100%", StringComparison.Ordinal)
+                && line.Contains("[download]", StringComparison.OrdinalIgnoreCase))
+            {
+                _currentSongPct = 100;
+                _pendingRefreshPlaylistTracks = true;
+                Report();
+                return;
+            }
+
+            if (line.Contains("Deleting original file", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("[ExtractAudio]", StringComparison.OrdinalIgnoreCase)
+                || line.Contains("[ffmpeg]", StringComparison.OrdinalIgnoreCase)
                 || line.Contains("Destination:", StringComparison.OrdinalIgnoreCase))
             {
                 _currentSongPct = 100;
+                if (line.Contains("[ExtractAudio]", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("Deleting original file", StringComparison.OrdinalIgnoreCase)
+                    || line.Contains("[ffmpeg]", StringComparison.OrdinalIgnoreCase))
+                {
+                    _pendingRefreshPlaylistTracks = true;
+                }
+
                 TryParseYtDlpSongTitle(line);
                 Report();
             }
@@ -1553,7 +1719,13 @@ public sealed class DownloadService
             var complete = SpotDlCompleteRegex.Match(line);
             if (complete.Success)
             {
-                _completedTracks = int.Parse(complete.Groups["done"].Value);
+                var done = int.Parse(complete.Groups["done"].Value);
+                if (done > _completedTracks)
+                {
+                    _pendingRefreshPlaylistTracks = true;
+                }
+
+                _completedTracks = done;
                 _totalTracks = int.Parse(complete.Groups["total"].Value);
                 _currentSongPct = 0;
                 Report();
@@ -1573,6 +1745,7 @@ public sealed class DownloadService
             {
                 _completedTracks++;
                 _currentSongPct = 0;
+                _pendingRefreshPlaylistTracks = true;
                 Report();
             }
         }
@@ -1605,8 +1778,12 @@ public sealed class DownloadService
         private void RecordCompletedPath(string filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath)) return;
+            if (!PlaylistManager.IsAudioFile(filePath)) return;
+
             _completedPaths.RemoveAll(p => string.Equals(p, filePath, StringComparison.OrdinalIgnoreCase));
             _completedPaths.Add(filePath);
+            _pendingCompletedFilePath = filePath;
+            _pendingRefreshPlaylistTracks = true;
         }
 
         private void TryParseSpotDlSongTitle(string line)
@@ -1628,7 +1805,10 @@ public sealed class DownloadService
         {
             var percent = ComputePercent();
             var now = Environment.TickCount64;
-            if (_lastReportedPercent >= 0
+            var hasTrackUpdate = _pendingRefreshPlaylistTracks
+                || !string.IsNullOrWhiteSpace(_pendingCompletedFilePath);
+            if (!hasTrackUpdate
+                && _lastReportedPercent >= 0
                 && Math.Abs(percent - _lastReportedPercent) < 0.75
                 && now - _lastReportTicks < 150)
             {
@@ -1637,10 +1817,18 @@ public sealed class DownloadService
 
             _lastReportedPercent = percent;
             _lastReportTicks = now;
+
+            var completedPath = _pendingCompletedFilePath;
+            var refreshTracks = _pendingRefreshPlaylistTracks;
+            _pendingCompletedFilePath = null;
+            _pendingRefreshPlaylistTracks = false;
+
             _progress?.Report(new DownloadProgressUpdate(
                 percent,
                 FormatMessage(),
-                _currentSongTitle));
+                _currentSongTitle,
+                completedPath,
+                refreshTracks));
         }
 
         private double ComputePercent()
