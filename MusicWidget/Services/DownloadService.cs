@@ -166,7 +166,7 @@ public sealed class DownloadService
 
         if (IsSpotifyUrl(url))
         {
-            progress?.Report(new DownloadProgressUpdate(2, "Preparing Spotify downloader (spotDL)..."));
+            progress?.Report(DownloadProgressUpdate.Status("Preparing Spotify downloader (spotDL)..."));
             await _tools.EnsureSpotDlAsync(progress, ct);
             if (_tools.IsSpotDlReady)
             {
@@ -176,7 +176,7 @@ public sealed class DownloadService
                     return spotResult;
                 }
 
-                progress?.Report(new DownloadProgressUpdate(8,
+                progress?.Report(DownloadProgressUpdate.Status(
                     "spotDL could not finish; trying YouTube search fallback..."));
             }
         }
@@ -187,18 +187,17 @@ public sealed class DownloadService
             var uri = new Uri(url);
             if (uri.Host.Contains("spotify.com", StringComparison.OrdinalIgnoreCase))
             {
-                progress?.Report(new DownloadProgressUpdate(5,
-                    "Reading Spotify metadata..."));
+                progress?.Report(DownloadProgressUpdate.Status("Reading Spotify metadata..."));
                 var title = await TryResolveSpotifyTitleAsync(url, ct);
                 if (!string.IsNullOrWhiteSpace(title))
                 {
                     input = $"ytsearch1:{title}";
-                    progress?.Report(new DownloadProgressUpdate(10,
+                    progress?.Report(DownloadProgressUpdate.Status(
                         $"Spotify track resolved: {title}. Searching YouTube..."));
                 }
                 else
                 {
-                    progress?.Report(new DownloadProgressUpdate(10,
+                    progress?.Report(DownloadProgressUpdate.Status(
                         "Could not read Spotify metadata; trying yt-dlp directly..."));
                 }
             }
@@ -224,7 +223,7 @@ public sealed class DownloadService
             return await DownloadTikTokAsync(input, destFolder, progress, ct);
         }
 
-        progress?.Report(new DownloadProgressUpdate(5, "Downloading..."));
+        progress?.Report(DownloadProgressUpdate.Status("Downloading..."));
         return await RunYtDlpAsync(input, destFolder, Array.Empty<string>(), progress, ct,
             sleepRequestsSeconds: 0.4);
     }
@@ -235,7 +234,7 @@ public sealed class DownloadService
         IProgress<DownloadProgressUpdate>? progress,
         CancellationToken ct)
     {
-        progress?.Report(new DownloadProgressUpdate(5, "Downloading from YouTube..."));
+        progress?.Report(DownloadProgressUpdate.Status("Downloading from YouTube..."));
 
         var attemptLog = new List<string>();
         foreach (var attempt in BuildYouTubeAttempts())
@@ -243,7 +242,7 @@ public sealed class DownloadService
             ct.ThrowIfCancellationRequested();
             if (attemptLog.Count > 0)
             {
-                progress?.Report(new DownloadProgressUpdate(8, attempt.Label + "..."));
+                progress?.Report(DownloadProgressUpdate.Status(attempt.Label + "..."));
             }
 
             var result = await RunYtDlpAsync(
@@ -300,7 +299,7 @@ public sealed class DownloadService
         IProgress<DownloadProgressUpdate>? progress,
         CancellationToken ct)
     {
-        progress?.Report(new DownloadProgressUpdate(5, "Downloading from Instagram..."));
+        progress?.Report(DownloadProgressUpdate.Status("Downloading from Instagram..."));
 
         var attemptLog = new List<string>();
         var lastResult = await RunYtDlpAsync(
@@ -323,7 +322,7 @@ public sealed class DownloadService
             foreach (var browser in BrowserCookieSources)
             {
                 ct.ThrowIfCancellationRequested();
-                progress?.Report(new DownloadProgressUpdate(8,
+                progress?.Report(DownloadProgressUpdate.Status(
                     $"Retrying Instagram with your {browser} login..."));
 
                 var browserAttempt = await RunYtDlpAsync(
@@ -358,7 +357,7 @@ public sealed class DownloadService
             if (!string.IsNullOrWhiteSpace(instagramAudioSearch))
             {
                 ct.ThrowIfCancellationRequested();
-                progress?.Report(new DownloadProgressUpdate(8,
+                progress?.Report(DownloadProgressUpdate.Status(
                     "Instagram audio page - searching YouTube for the closest match..."));
                 lastResult = await RunYtDlpAsync(instagramAudioSearch, destFolder, Array.Empty<string>(), progress, ct,
                     sleepRequestsSeconds: 0.35);
@@ -385,7 +384,7 @@ public sealed class DownloadService
         CancellationToken ct)
     {
         input = NormalizeTikTokUrl(input);
-        progress?.Report(new DownloadProgressUpdate(5, "Downloading from TikTok..."));
+        progress?.Report(DownloadProgressUpdate.Status("Downloading from TikTok..."));
 
         var attemptLog = new List<string>();
         var tikTokHeaders = new[] { "--user-agent", BrowserUserAgent };
@@ -408,7 +407,7 @@ public sealed class DownloadService
         foreach (var browser in BrowserCookieSources)
         {
             ct.ThrowIfCancellationRequested();
-            progress?.Report(new DownloadProgressUpdate(8,
+            progress?.Report(DownloadProgressUpdate.Status(
                 $"Retrying TikTok with your {browser} login..."));
 
             var browserAttempt = await RunYtDlpAsync(
@@ -661,7 +660,7 @@ public sealed class DownloadService
             !string.Equals(canonical, input, StringComparison.OrdinalIgnoreCase))
         {
             ct.ThrowIfCancellationRequested();
-            progress?.Report(new DownloadProgressUpdate(8, "Retrying with a canonical Instagram reel link..."));
+            progress?.Report(DownloadProgressUpdate.Status("Retrying with a canonical Instagram reel link..."));
             lastResult = await RunYtDlpAsync(canonical, destFolder, InstagramYtDlpExtraArgs, progress, ct,
                 sleepRequestsSeconds: 0.85);
             attemptLog.Add(FormatAttemptLog("instagram canonical URL", InstagramYtDlpExtraArgs, lastResult));
@@ -674,7 +673,7 @@ public sealed class DownloadService
         if (TryGetInstagramEmbedUrl(url, out var embedUrl))
         {
             ct.ThrowIfCancellationRequested();
-            progress?.Report(new DownloadProgressUpdate(8, "Retrying Instagram via embed page..."));
+            progress?.Report(DownloadProgressUpdate.Status("Retrying Instagram via embed page..."));
             lastResult = await RunYtDlpAsync(embedUrl, destFolder, InstagramYtDlpExtraArgs, progress, ct,
                 sleepRequestsSeconds: 0.75);
             attemptLog.Add(FormatAttemptLog("instagram embed URL", InstagramYtDlpExtraArgs, lastResult));
@@ -687,7 +686,7 @@ public sealed class DownloadService
         foreach (var (label, extraArgs) in InstagramExtractorStrategies)
         {
             ct.ThrowIfCancellationRequested();
-            progress?.Report(new DownloadProgressUpdate(8, $"Retrying Instagram ({label})..."));
+            progress?.Report(DownloadProgressUpdate.Status($"Retrying Instagram ({label})..."));
             var target = TryCanonicalizeInstagramMediaUrl(url, out var canon) ? canon : input;
             lastResult = await RunYtDlpAsync(target, destFolder, extraArgs, progress, ct,
                 sleepRequestsSeconds: 1.0);
@@ -699,7 +698,7 @@ public sealed class DownloadService
         }
 
         ct.ThrowIfCancellationRequested();
-        progress?.Report(new DownloadProgressUpdate(8, "Retrying Instagram with a slower request pace..."));
+        progress?.Report(DownloadProgressUpdate.Status("Retrying Instagram with a slower request pace..."));
         lastResult = await RunYtDlpAsync(input, destFolder, InstagramYtDlpExtraArgs, progress, ct,
             sleepRequestsSeconds: 1.25);
         attemptLog.Add(FormatAttemptLog("instagram slow retry", InstagramYtDlpExtraArgs, lastResult));
@@ -712,7 +711,7 @@ public sealed class DownloadService
         if (!string.IsNullOrWhiteSpace(directMedia))
         {
             ct.ThrowIfCancellationRequested();
-            progress?.Report(new DownloadProgressUpdate(8, "Found a direct media link; extracting audio..."));
+            progress?.Report(DownloadProgressUpdate.Status("Found a direct media link; extracting audio..."));
             lastResult = await RunYtDlpAsync(directMedia, destFolder, InstagramYtDlpExtraArgs, progress, ct,
                 sleepRequestsSeconds: 0.35);
             attemptLog.Add(FormatAttemptLog("instagram direct media URL", InstagramYtDlpExtraArgs, lastResult));
@@ -725,7 +724,7 @@ public sealed class DownloadService
         if (!string.IsNullOrWhiteSpace(instagramAudioSearch))
         {
             ct.ThrowIfCancellationRequested();
-            progress?.Report(new DownloadProgressUpdate(8,
+            progress?.Report(DownloadProgressUpdate.Status(
                 "Instagram audio page - searching YouTube for the closest match..."));
             lastResult = await RunYtDlpAsync(instagramAudioSearch, destFolder, Array.Empty<string>(), progress, ct,
                 sleepRequestsSeconds: 0.35);
@@ -745,7 +744,7 @@ public sealed class DownloadService
         CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
-        progress?.Report(new DownloadProgressUpdate(8, "Retrying TikTok with a slower request pace..."));
+        progress?.Report(DownloadProgressUpdate.Status("Retrying TikTok with a slower request pace..."));
         lastResult = await RunYtDlpAsync(input, destFolder, Array.Empty<string>(), progress, ct,
             sleepRequestsSeconds: 1.1);
         attemptLog.Add(FormatAttemptLog("tiktok slow retry", Array.Empty<string>(), lastResult));
@@ -757,7 +756,7 @@ public sealed class DownloadService
         foreach (var (label, extraArgs) in TikTokExtractorStrategies)
         {
             ct.ThrowIfCancellationRequested();
-            progress?.Report(new DownloadProgressUpdate(8, $"Retrying TikTok ({label})..."));
+            progress?.Report(DownloadProgressUpdate.Status($"Retrying TikTok ({label})..."));
             lastResult = await RunYtDlpAsync(input, destFolder, extraArgs, progress, ct,
                 sleepRequestsSeconds: 0.9);
             attemptLog.Add(FormatAttemptLog(label, extraArgs, lastResult));
@@ -1688,11 +1687,11 @@ public sealed class DownloadService
                 if (nextIndex > _currentTrackIndex)
                 {
                     _pendingRefreshPlaylistTracks = true;
+                    _currentSongPct = 0;
                 }
 
                 _currentTrackIndex = nextIndex;
                 _totalTracks = int.Parse(item.Groups["tot"].Value);
-                _currentSongPct = 0;
                 Report();
                 return;
             }
@@ -1837,6 +1836,11 @@ public sealed class DownloadService
         private void Report()
         {
             var percent = ComputePercent();
+            if (_totalTracks <= 1 && _lastReportedPercent >= 0)
+            {
+                percent = Math.Max(percent, _lastReportedPercent);
+            }
+
             var now = Environment.TickCount64;
             var hasTrackUpdate = _pendingRefreshPlaylistTracks
                 || !string.IsNullOrWhiteSpace(_pendingCompletedFilePath);

@@ -30,6 +30,7 @@ public sealed class BackgroundDownloadService
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
     private CancellationTokenSource? _cts;
+    private double _peakPercent;
 
     public bool IsRunning { get; private set; }
     public string? ActivePlaylistName { get; private set; }
@@ -78,6 +79,7 @@ public sealed class BackgroundDownloadService
         _cts = new CancellationTokenSource();
         IsRunning = true;
         ActivePlaylistName = playlist.Name;
+        _peakPercent = 0;
         _ = RunAsync(playlist, trimmed, _cts.Token);
         return true;
     }
@@ -116,7 +118,8 @@ public sealed class BackgroundDownloadService
         {
             Report(playlist.Name, new DownloadProgressUpdate(0, "Preparing..."));
             await App.Tools.EnsureToolsAsync(progress, ct).ConfigureAwait(false);
-            Report(playlist.Name, new DownloadProgressUpdate(5, "Downloading..."));
+            _peakPercent = 0;
+            Report(playlist.Name, DownloadProgressUpdate.Status("Downloading..."));
 
             var result = await App.Downloader.DownloadAsync(url, dest, progress, ct).ConfigureAwait(false);
             if (result.Success)
@@ -198,6 +201,22 @@ public sealed class BackgroundDownloadService
 
     private void RaiseProgress(string playlistName, DownloadProgressUpdate update)
     {
+        if (update.Percent >= 0)
+        {
+            if (update.Percent >= 100)
+            {
+                _peakPercent = 100;
+            }
+            else if (update.Percent < _peakPercent)
+            {
+                update = update with { Percent = _peakPercent };
+            }
+            else
+            {
+                _peakPercent = update.Percent;
+            }
+        }
+
         UiDispatcher.BeginInvokeSafe(() =>
         {
             ProgressChanged?.Invoke(this, new BackgroundDownloadProgressEventArgs
