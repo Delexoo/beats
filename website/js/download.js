@@ -81,18 +81,22 @@
   ]).then(function (results) {
     var local = results[0];
     var api = results[1];
-    var useVersion = local && local.version ? local.version : null;
+    var localVer = local && local.version ? local.version : null;
+    var downloadVersion = localVer;
 
     if (api && api.tag_name) {
       var apiVer = api.tag_name.replace(/^v/i, "");
-      if (!useVersion || !isNewerVersion(useVersion, api.tag_name)) {
-        useVersion = apiVer;
+      if (localVer && isNewerVersion(localVer, api.tag_name)) {
+        // version.json is ahead of the latest GitHub release — avoid a 404.
+        downloadVersion = apiVer;
+      } else if (!downloadVersion) {
+        downloadVersion = apiVer;
       }
     }
 
-    if (useVersion) {
-      wireDownload(releaseDownloadUrl(useVersion));
-      if (api && api.tag_name && useVersion === api.tag_name.replace(/^v/i, "")) {
+    if (downloadVersion) {
+      wireDownload(releaseDownloadUrl(downloadVersion));
+      if (api && api.tag_name && downloadVersion === api.tag_name.replace(/^v/i, "")) {
         var meta = formatReleaseMeta(api);
         if (meta) setVersionMeta(meta);
       } else if (local) {

@@ -37,11 +37,19 @@
   ]).then(function (results) {
     var local = results[0];
     var api = results[1];
-    var useVersion = local && local.version ? local.version : null;
-    if (api && api.tag_name && (!useVersion || !isNewerVersion(useVersion, api.tag_name))) {
-      useVersion = api.tag_name.replace(/^v/i, "");
+    var localVer = local && local.version ? local.version : null;
+    var downloadVersion = localVer;
+
+    if (api && api.tag_name) {
+      var apiVer = api.tag_name.replace(/^v/i, "");
+      if (localVer && isNewerVersion(localVer, api.tag_name)) {
+        downloadVersion = apiVer;
+      } else if (!downloadVersion) {
+        downloadVersion = apiVer;
+      }
     }
-    setDownloadUrl(useVersion);
+
+    setDownloadUrl(downloadVersion);
   });
 
   var links = document.querySelectorAll(".toc a");
