@@ -667,7 +667,6 @@ h1 {
 }
 
 .beats-pill {
-  position: relative;
   display: inline-flex;
   align-items: center;
   background: var(--pill);
@@ -676,36 +675,40 @@ h1 {
   padding: calc(8px * var(--scale)) calc(10px * var(--scale)) calc(8px * var(--scale)) calc(8px * var(--scale));
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.12);
   max-width: 100%;
+  overflow: hidden;
   cursor: default;
   user-select: none;
   transition: box-shadow 0.25s ease;
 }
 
 .beats-pill:hover,
-.beats-pill:focus-within {
+.beats-pill:focus-within,
+.beats-pill.is-expanded {
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28), 0 3px 10px rgba(0, 0, 0, 0.14);
 }
 
 .pill-hover-controls {
-  position: absolute;
-  right: 100%;
-  top: 50%;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  width: calc(24px * var(--scale));
-  margin-right: calc(6px * var(--scale));
+  gap: calc(4px * var(--scale));
+  width: 0;
+  min-width: 0;
   opacity: 0;
-  pointer-events: none;
-  transform: translateY(-50%) translateX(6px);
-  transition: opacity 0.22s ease, transform 0.22s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-right: 0;
+  transition:
+    width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.22s ease,
+    margin-right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .beats-pill:hover .pill-hover-controls,
-.beats-pill:focus-within .pill-hover-controls {
+.beats-pill:focus-within .pill-hover-controls,
+.beats-pill.is-expanded .pill-hover-controls {
+  width: calc(24px * var(--scale));
   opacity: 1;
-  pointer-events: auto;
-  transform: translateY(-50%) translateX(0);
+  margin-right: calc(6px * var(--scale));
 }
 
 .pill-core { display: flex; align-items: center; flex-shrink: 0; }
@@ -785,7 +788,36 @@ h1 {
   border-radius: 50%;
   color: var(--pill-icon);
   flex-shrink: 0;
+  padding: 0;
   pointer-events: none;
+}
+
+.pill-controls .ctrl {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.beats-pill.is-expanded .pill-hover-controls .ctrl,
+.beats-pill:hover .pill-hover-controls .ctrl,
+.beats-pill:focus-within .pill-hover-controls .ctrl {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.ctrl-loop.is-active {
+  background: var(--pill-icon);
+}
+
+.ctrl-loop.is-active img {
+  filter: brightness(0) invert(1);
+}
+
+.ctrl:hover {
+  filter: brightness(0.96);
+}
+
+.ctrl:active {
+  transform: scale(0.96);
 }
 
 .ctrl-util { width: calc(24px * var(--scale)); height: calc(24px * var(--scale)); }

@@ -11,7 +11,7 @@
   var pillInfo = document.getElementById("pill-info");
   var pillTitle = document.getElementById("pill-title");
   var pillArtist = document.getElementById("pill-artist");
-  var beatsPill = document.querySelector(".beats-pill");
+  var beatsPill = document.getElementById("beats-pill");
   if (!beatsPill || !pillInfo || !pillTitle || !pillArtist) return;
 
   var currentIndex = 0;
