@@ -77,7 +77,6 @@ public partial class SettingsPanel : UserControl
     private bool _suppressVolumeChanged;
     private bool _suppressProgressChanged;
     private bool _suppressKeepWidgetExpandedChanged;
-    private bool _suppressAudioEnhancementChanged;
     private int _lastNonZeroVolume = 80;
     private DispatcherTimer? _progressTimer;
     private DispatcherTimer? _backgroundDownloadHideTimer;
@@ -279,7 +278,6 @@ public partial class SettingsPanel : UserControl
         UpdateFooterVolumeIcon();
         UpdateFooterLikeIcon();
         UpdateFooterSaveIcon();
-        InitializeFooterAudioEnhancements();
         UpdateFooterProgress();
         UpdateNowPlayingFooter();
     }
@@ -608,26 +606,6 @@ public partial class SettingsPanel : UserControl
         App.Settings.Save();
 
         UpdateFooterVolumeIcon();
-    }
-
-    private void InitializeFooterAudioEnhancements()
-    {
-        _suppressAudioEnhancementChanged = true;
-        FooterBassBoostToggle.IsChecked = App.Settings.Current.BassBoost;
-        FooterEnhancedAudioToggle.IsChecked = App.Settings.Current.EnhancedAudio;
-        _suppressAudioEnhancementChanged = false;
-    }
-
-    private void FooterBassBoostToggle_Click(object sender, RoutedEventArgs e)
-    {
-        if (_suppressAudioEnhancementChanged) return;
-        App.Player.SetBassBoost(FooterBassBoostToggle.IsChecked == true);
-    }
-
-    private void FooterEnhancedAudioToggle_Click(object sender, RoutedEventArgs e)
-    {
-        if (_suppressAudioEnhancementChanged) return;
-        App.Player.SetEnhancedAudio(FooterEnhancedAudioToggle.IsChecked == true);
     }
 
     // ===== Reset layout =====

@@ -953,38 +953,6 @@
                         ToolTip="Volume"/>
               </StackPanel>
               <Grid Margin="0,6,0,0"
-                    HorizontalAlignment="Right">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto"/>
-                  <ColumnDefinition Width="Auto"/>
-                  <ColumnDefinition Width="14"/>
-                  <ColumnDefinition Width="Auto"/>
-                  <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0"
-                           Text="Bass boost"
-                           Foreground="{StaticResource Brush.TextDim}"
-                           FontSize="10"
-                           VerticalAlignment="Center"
-                           Margin="0,0,6,0"/>
-                <ToggleButton x:Name="FooterBassBoostToggle"
-                              Grid.Column="1"
-                              Style="{StaticResource ToggleSwitch}"
-                              ToolTip="Boost low frequencies"
-                              Click="FooterBassBoostToggle_Click"/>
-                <TextBlock Grid.Column="3"
-                           Text="Enhanced"
-                           Foreground="{StaticResource Brush.TextDim}"
-                           FontSize="10"
-                           VerticalAlignment="Center"
-                           Margin="0,0,6,0"/>
-                <ToggleButton x:Name="FooterEnhancedAudioToggle"
-                              Grid.Column="4"
-                              Style="{StaticResource ToggleSwitch}"
-                              ToolTip="Boost clarity and detail"
-                              Click="FooterEnhancedAudioToggle_Click"/>
-              </Grid>
-              <Grid Margin="0,8,0,0"
                     HorizontalAlignment="Stretch"
                     MinWidth="200"
                     Width="220">
