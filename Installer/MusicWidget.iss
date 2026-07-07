@@ -18,8 +18,8 @@
 
 #define MyAppName "Beats"
 #define MyAppPublisher "Delexo"
-#define MyAppURL "https://delexoo.github.io/beats/"
-#define MyAppSupportURL "https://delexoo.github.io/beats/help.html"
+#define MyAppStoreURL "https://delexo.store"
+#define MyAppHelpURL "https://delexoo.github.io/beats/help.html"
 #define MyAppUpdatesURL "https://github.com/Delexoo/beats/releases"
 #define MyAppExeName "Beats.exe"
 
@@ -30,9 +30,11 @@ AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppCopyright=Copyright (C) {#MyAppPublisher} 2026
-AppPublisherURL={#MyAppURL}
-AppSupportURL={#MyAppSupportURL}
+AppPublisherURL={#MyAppStoreURL}
+AppSupportURL={#MyAppHelpURL}
 AppUpdatesURL={#MyAppUpdatesURL}
+AppContact={#MyAppStoreURL}
+AppComments=Published by {#MyAppPublisher}. Visit {#MyAppStoreURL} for support and more products.
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
@@ -60,17 +62,18 @@ InfoBeforeFile=welcome.txt
 VersionInfoVersion={#MyAppVersion}.0
 VersionInfoProductVersion={#MyAppVersion}
 VersionInfoCompany={#MyAppPublisher}
-VersionInfoDescription={#MyAppName} installer for Windows (64-bit)
+VersionInfoDescription={#MyAppName} installer for Windows (64-bit), published by {#MyAppPublisher}
 VersionInfoProductName={#MyAppName}
 VersionInfoCopyright=Copyright (C) {#MyAppPublisher} 2026
+VersionInfoTextVersion={#MyAppPublisher} | {#MyAppStoreURL}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
-english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nBeats is a free floating desktop music player for Windows. You must accept the Terms of Service and Privacy Policy on the next page before setup can continue.
+english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nBeats is a free floating desktop music player for Windows, published by Delexo. You must accept the Terms of Service and Privacy Policy on the next page before setup can continue.%n%nPublisher: Delexo%nWebsite: https://delexo.store
 english.LicenseLabel=Terms of Service && Privacy Policy
-english.LicenseLabel3=I agree to the Terms of Service and Privacy Policy. I understand that Delexo created Beats only, is not affiliated with YouTube, Spotify, or other platforms, and that I am solely responsible for any music or content I use with this application.
+english.LicenseLabel3=I agree to the Terms of Service and Privacy Policy. I understand that Delexo (https://delexo.store) created Beats only, is not affiliated with YouTube, Spotify, or other platforms, and that I am solely responsible for any music or content I use with this application.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -87,7 +90,8 @@ Source: "..\LICENSE"; DestDir: "{app}\Legal"; DestName: "MIT-License.txt"; Flags
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\Assets\AppIcon.ico"
-Name: "{group}\Help && manual"; Filename: "{#MyAppSupportURL}"; IconFilename: "{app}\Assets\AppIcon.ico"
+Name: "{group}\Help && manual"; Filename: "{#MyAppHelpURL}"; IconFilename: "{app}\Assets\AppIcon.ico"
+Name: "{group}\Delexo — delexo.store"; Filename: "{#MyAppStoreURL}"; IconFilename: "{app}\Assets\AppIcon.ico"
 Name: "{group}\Terms of Service"; Filename: "notepad.exe"; Parameters: """{app}\Legal\terms.txt"""
 Name: "{group}\Privacy Policy"; Filename: "notepad.exe"; Parameters: """{app}\Legal\privacy.txt"""
 Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"; IconFilename: "{app}\Assets\AppIcon.ico"

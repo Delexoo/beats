@@ -1,5 +1,8 @@
 Welcome to Beats
 
+Publisher: Delexo
+Website:  https://delexo.store
+
 This installer will set up Beats on your PC, a floating desktop music player
 for Windows 10 and 11.
 
@@ -15,7 +18,8 @@ Service and Privacy Policy. By installing Beats, you confirm that Delexo
 created the software only. We are not affiliated with any music platform
 and you are responsible for how you use downloaded or imported content.
 
-Need help? Visit:
+Need help?
+  https://delexo.store
   https://delexoo.github.io/beats/help.html
   https://github.com/Delexoo/beats
 

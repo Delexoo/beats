@@ -9,6 +9,8 @@ public static class AppBranding
     public const string DefaultPlaylistsFolderName = "Beats";
     public const string UserAgent = "Beats/2.2.6";
     public const string HelpPageUrl = "https://delexoo.github.io/beats/help.html";
+    public const string PublisherName = "Delexo";
+    public const string StoreUrl = "https://delexo.store";
     public const string GitHubOwner = "Delexoo";
     public const string GitHubRepo = "beats";
     public const string GitHubProfileUrl = "https://github.com/Delexoo";

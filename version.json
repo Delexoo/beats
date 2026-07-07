@@ -1,5 +1,5 @@
-{
-  "version": "2.2.12",
-  "asset": "Beats-Setup-x64.exe",
-  "sizeMb": 69.8
+﻿{
+    "asset":  "Beats-Setup-x64.exe",
+    "version":  "2.2.13",
+    "sizeMb":  69.7
 }
