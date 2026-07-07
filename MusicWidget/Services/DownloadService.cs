@@ -261,17 +261,35 @@ public sealed class DownloadService
                 return result;
             }
 
-            if (!LooksLikeRetryableYouTubeError(result.Error))
+            if (attempt.CookiesFromBrowser is not null && LooksLikeBrowserCookiesUnavailable(result))
+            {
+                continue;
+            }
+
+            if (!LooksLikeRetryableYouTubeError(result.Error)
+                && !LooksLikeRetryableYouTubeError(result.TechnicalDetail))
             {
                 return result;
             }
         }
 
-        var friendly = HasYoutubeCookies()
+        return BuildFailedResult(BuildYouTubeFailureMessage(attemptLog), attemptLog);
+    }
+
+    private static string BuildYouTubeFailureMessage(List<string> attemptLog)
+    {
+        var blob = string.Join('\n', attemptLog);
+        if (blob.Contains("dpapi", StringComparison.OrdinalIgnoreCase)
+            || blob.Contains("failed to decrypt", StringComparison.OrdinalIgnoreCase))
+        {
+            return HasYoutubeCookies()
+                ? "YouTube blocked this download and Beats could not refresh cookies from your browser. Re-export cookies.txt in Dashboard → Download cookies, wait a few minutes, and try again."
+                : "Beats could not read login cookies from Edge or Chrome (Windows blocked decryption). Export a cookies.txt file in Dashboard → Download cookies, then try again.";
+        }
+
+        return HasYoutubeCookies()
             ? "YouTube blocked or rate-limited this download. Confirm the link is public or unlisted, stay signed into YouTube in Edge or Chrome, wait a few minutes, and try again."
             : "YouTube blocked this download. Sign into YouTube in Edge or Chrome on this PC and try again — Beats reads that login automatically. You can also add a cookies.txt file under Download cookies in the dashboard.";
-
-        return BuildFailedResult(friendly, attemptLog);
     }
 
     private async Task<DownloadResult> DownloadInstagramAsync(
@@ -323,7 +341,7 @@ public sealed class DownloadService
                     return browserAttempt;
                 }
 
-                if (LooksLikeBrowserCookiesUnavailable(browserAttempt.Error))
+                if (LooksLikeBrowserCookiesUnavailable(browserAttempt))
                 {
                     continue;
                 }
@@ -408,7 +426,7 @@ public sealed class DownloadService
                 return browserAttempt;
             }
 
-            if (LooksLikeBrowserCookiesUnavailable(browserAttempt.Error))
+            if (LooksLikeBrowserCookiesUnavailable(browserAttempt))
             {
                 continue;
             }
@@ -424,6 +442,12 @@ public sealed class DownloadService
             yield return new YtDlpAttempt("youtube (saved cookies)", YouTubePrimaryExtraArgs);
         }
 
+        yield return new YtDlpAttempt("youtube", YouTubePrimaryExtraArgs);
+        yield return new YtDlpAttempt("youtube alternate client", YouTubeRetryExtraArgs);
+        yield return new YtDlpAttempt(
+            "youtube android_vr",
+            ["--extractor-args", "youtube:player_client=android_vr"]);
+
         foreach (var browser in BrowserCookieSources)
         {
             yield return new YtDlpAttempt(
@@ -431,12 +455,6 @@ public sealed class DownloadService
                 YouTubePrimaryExtraArgs,
                 browser);
         }
-
-        yield return new YtDlpAttempt("youtube", YouTubePrimaryExtraArgs);
-        yield return new YtDlpAttempt("youtube alternate client", YouTubeRetryExtraArgs);
-        yield return new YtDlpAttempt(
-            "youtube android_vr",
-            ["--extractor-args", "youtube:player_client=android_vr"]);
     }
 
     private DownloadResult BuildFailedResult(string friendly, List<string> attemptLog)
@@ -1256,6 +1274,10 @@ public sealed class DownloadService
                 && error.Contains("youtube", StringComparison.OrdinalIgnoreCase));
     }
 
+    private static bool LooksLikeBrowserCookiesUnavailable(DownloadResult result) =>
+        LooksLikeBrowserCookiesUnavailable(result.Error)
+        || LooksLikeBrowserCookiesUnavailable(result.TechnicalDetail);
+
     private static bool LooksLikeBrowserCookiesUnavailable(string? error)
     {
         if (string.IsNullOrWhiteSpace(error))
@@ -1267,7 +1289,10 @@ public sealed class DownloadService
                || error.Contains("no such browser", StringComparison.OrdinalIgnoreCase)
                || error.Contains("unsupported browser", StringComparison.OrdinalIgnoreCase)
                || error.Contains("Failed to decrypt", StringComparison.OrdinalIgnoreCase)
-               || error.Contains("browser is not installed", StringComparison.OrdinalIgnoreCase);
+               || error.Contains("failed to decrypt", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("dpapi", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("browser is not installed", StringComparison.OrdinalIgnoreCase)
+               || error.Contains("Could not read browser cookies", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsYouTubeExtractorInput(string value)
@@ -1294,6 +1319,14 @@ public sealed class DownloadService
 
     private static string SummarizeError(IReadOnlyList<string> stderrLines, int exitCode)
     {
+        var browserCookieFailure = stderrLines.LastOrDefault(l =>
+            l.Contains("failed to decrypt", StringComparison.OrdinalIgnoreCase)
+            || l.Contains("dpapi", StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(browserCookieFailure))
+        {
+            return "Could not read browser cookies. Export cookies.txt in Dashboard → Download cookies.";
+        }
+
         // Pull the most useful line (usually starting with ERROR:) or fall back to the last line.
         var error = stderrLines
             .Where(l => l.Contains("ERROR:", StringComparison.OrdinalIgnoreCase))
