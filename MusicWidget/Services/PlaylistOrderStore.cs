@@ -13,6 +13,7 @@ namespace MusicWidget.Services;
 public sealed class PlaylistOrderStore
 {
     private readonly string _path;
+    private readonly object _lock = new();
     private readonly Dictionary<string, List<string>> _orders = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -27,37 +28,48 @@ public sealed class PlaylistOrderStore
 
     public void Load()
     {
-        try
+        lock (_lock)
         {
-            if (!File.Exists(_path)) return;
-            var json = File.ReadAllText(_path);
-            var loaded = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json, JsonOptions);
-            if (loaded is null) return;
-
-            _orders.Clear();
-            foreach (var (name, paths) in loaded)
+            try
             {
-                if (string.IsNullOrWhiteSpace(name) || paths is null) continue;
-                _orders[name] = Deduplicate(paths);
+                if (!File.Exists(_path)) return;
+                var json = File.ReadAllText(_path);
+                var loaded = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json, JsonOptions);
+                if (loaded is null) return;
+
+                _orders.Clear();
+                foreach (var (name, paths) in loaded)
+                {
+                    if (string.IsNullOrWhiteSpace(name) || paths is null) continue;
+                    _orders[name] = Deduplicate(paths);
+                }
             }
-        }
-        catch
-        {
-            // Best-effort: malformed file means we start empty.
+            catch
+            {
+                // Best-effort: malformed file means we start empty.
+            }
         }
     }
 
     public IReadOnlyList<string>? GetOrder(string playlistName)
     {
         if (string.IsNullOrWhiteSpace(playlistName)) return null;
-        return _orders.TryGetValue(playlistName, out var list) ? list.AsReadOnly() : null;
+
+        lock (_lock)
+        {
+            return _orders.TryGetValue(playlistName, out var list) ? list.AsReadOnly() : null;
+        }
     }
 
     public void SetOrder(string playlistName, IEnumerable<string> paths)
     {
         if (string.IsNullOrWhiteSpace(playlistName)) return;
-        _orders[playlistName] = Deduplicate(paths);
-        Save();
+
+        lock (_lock)
+        {
+            _orders[playlistName] = Deduplicate(paths);
+            SaveUnlocked();
+        }
     }
 
     /// <summary>
@@ -68,19 +80,22 @@ public sealed class PlaylistOrderStore
     {
         if (string.IsNullOrWhiteSpace(playlistName)) return;
 
-        var merged = _orders.TryGetValue(playlistName, out var existing)
-            ? new List<string>(existing)
-            : new List<string>();
-
-        foreach (var path in newPathsInOrder)
+        lock (_lock)
         {
-            if (string.IsNullOrWhiteSpace(path)) continue;
-            merged.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
-            merged.Add(path);
-        }
+            var merged = _orders.TryGetValue(playlistName, out var existing)
+                ? new List<string>(existing)
+                : new List<string>();
 
-        _orders[playlistName] = merged;
-        Save();
+            foreach (var path in newPathsInOrder)
+            {
+                if (string.IsNullOrWhiteSpace(path)) continue;
+                merged.RemoveAll(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
+                merged.Add(path);
+            }
+
+            _orders[playlistName] = merged;
+            SaveUnlocked();
+        }
     }
 
     public void AppendToOrder(string playlistName, IEnumerable<string> newPaths)
@@ -91,8 +106,12 @@ public sealed class PlaylistOrderStore
     public void RemovePlaylist(string playlistName)
     {
         if (string.IsNullOrWhiteSpace(playlistName)) return;
-        if (!_orders.Remove(playlistName)) return;
-        Save();
+
+        lock (_lock)
+        {
+            if (!_orders.Remove(playlistName)) return;
+            SaveUnlocked();
+        }
     }
 
     public void RenamePlaylist(string oldName, string newName)
@@ -100,28 +119,35 @@ public sealed class PlaylistOrderStore
         if (string.IsNullOrWhiteSpace(oldName) || string.IsNullOrWhiteSpace(newName)) return;
         if (string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase)) return;
 
-        if (_orders.TryGetValue(oldName, out var list))
+        lock (_lock)
         {
-            _orders.Remove(oldName);
-            _orders[newName] = list;
-            Save();
+            if (_orders.TryGetValue(oldName, out var list))
+            {
+                _orders.Remove(oldName);
+                _orders[newName] = list;
+                SaveUnlocked();
+            }
         }
     }
 
     public void RemovePath(string playlistName, string filePath)
     {
         if (string.IsNullOrWhiteSpace(playlistName) || string.IsNullOrWhiteSpace(filePath)) return;
-        if (!_orders.TryGetValue(playlistName, out var list)) return;
 
-        var removed = list.RemoveAll(p => string.Equals(p, filePath, StringComparison.OrdinalIgnoreCase));
-        if (removed == 0) return;
-
-        if (list.Count == 0)
+        lock (_lock)
         {
-            _orders.Remove(playlistName);
-        }
+            if (!_orders.TryGetValue(playlistName, out var list)) return;
 
-        Save();
+            var removed = list.RemoveAll(p => string.Equals(p, filePath, StringComparison.OrdinalIgnoreCase));
+            if (removed == 0) return;
+
+            if (list.Count == 0)
+            {
+                _orders.Remove(playlistName);
+            }
+
+            SaveUnlocked();
+        }
     }
 
     public void ReplacePath(string playlistName, string oldPath, string newPath)
@@ -133,16 +159,19 @@ public sealed class PlaylistOrderStore
             return;
         }
 
-        if (!_orders.TryGetValue(playlistName, out var list)) return;
+        lock (_lock)
+        {
+            if (!_orders.TryGetValue(playlistName, out var list)) return;
 
-        var idx = list.FindIndex(p => string.Equals(p, oldPath, StringComparison.OrdinalIgnoreCase));
-        if (idx < 0) return;
+            var idx = list.FindIndex(p => string.Equals(p, oldPath, StringComparison.OrdinalIgnoreCase));
+            if (idx < 0) return;
 
-        list[idx] = newPath;
-        Save();
+            list[idx] = newPath;
+            SaveUnlocked();
+        }
     }
 
-    private void Save()
+    private void SaveUnlocked()
     {
         try
         {
@@ -153,7 +182,9 @@ public sealed class PlaylistOrderStore
             }
 
             var json = JsonSerializer.Serialize(_orders, JsonOptions);
-            File.WriteAllText(_path, json);
+            var tempPath = _path + ".tmp";
+            File.WriteAllText(tempPath, json);
+            File.Move(tempPath, _path, overwrite: true);
         }
         catch
         {

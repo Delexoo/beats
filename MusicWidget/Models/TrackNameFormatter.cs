@@ -50,4 +50,18 @@ public static class TrackNameFormatter
         var cleaned = new string(name.Where(c => !invalid.Contains(c)).ToArray()).Trim();
         return Beautify(cleaned);
     }
+
+    public static string BuildDisplayName(string? artist, string? title)
+    {
+        var cleanTitle = SanitizeFileName(title ?? string.Empty);
+        if (string.IsNullOrWhiteSpace(cleanTitle))
+        {
+            return string.Empty;
+        }
+
+        var cleanArtist = SanitizeFileName(artist ?? string.Empty);
+        return string.IsNullOrWhiteSpace(cleanArtist)
+            ? cleanTitle
+            : $"{cleanArtist} - {cleanTitle}";
+    }
 }

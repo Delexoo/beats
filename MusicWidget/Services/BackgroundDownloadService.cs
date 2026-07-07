@@ -32,6 +32,17 @@ public sealed class BackgroundDownloadService
     private CancellationTokenSource? _cts;
     private double _peakPercent;
 
+    /// <summary>
+    /// Forwards progress on the caller thread — unlike <see cref="Progress{T}"/>, does not
+    /// marshal to the UI sync context (which would block the UI on disk I/O).
+    /// </summary>
+    private sealed class DirectProgress<T> : IProgress<T>
+    {
+        private readonly Action<T> _handler;
+        public DirectProgress(Action<T> handler) => _handler = handler;
+        public void Report(T value) => _handler(value);
+    }
+
     public bool IsRunning { get; private set; }
     public string? ActivePlaylistName { get; private set; }
 
@@ -94,16 +105,23 @@ public sealed class BackgroundDownloadService
         using var folderPollCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         var folderPollTask = PollDestinationFolderAsync(dest, playlist.Name, knownAudioFiles, folderPollCts.Token);
 
-        var progress = new Progress<DownloadProgressUpdate>(p =>
+        var progress = new DirectProgress<DownloadProgressUpdate>(p =>
         {
-            if (!string.IsNullOrWhiteSpace(p.CompletedFilePath))
+            try
             {
-                App.PlaylistOrders.AppendToOrder(playlist.Name, [p.CompletedFilePath]);
-            }
+                if (!string.IsNullOrWhiteSpace(p.CompletedFilePath))
+                {
+                    App.PlaylistOrders.AppendToOrder(playlist.Name, [p.CompletedFilePath]);
+                }
 
-            if (p.RefreshPlaylistTracks || !string.IsNullOrWhiteSpace(p.CompletedFilePath))
+                if (p.RefreshPlaylistTracks || !string.IsNullOrWhiteSpace(p.CompletedFilePath))
+                {
+                    App.Playlists.RequestTracksRefresh(playlist.Name);
+                }
+            }
+            catch (Exception ex)
             {
-                App.Playlists.RequestTracksRefresh(playlist.Name);
+                CrashLog.Write(ex, "BackgroundDownloadService.Progress");
             }
 
             RaiseProgress(playlist.Name, p);
@@ -259,8 +277,15 @@ public sealed class BackgroundDownloadService
                     continue;
                 }
 
-                App.PlaylistOrders.AppendToOrder(playlistName, newFiles);
-                App.Playlists.RequestTracksRefresh(playlistName);
+                try
+                {
+                    App.PlaylistOrders.AppendToOrder(playlistName, newFiles);
+                    App.Playlists.RequestTracksRefresh(playlistName);
+                }
+                catch (Exception ex)
+                {
+                    CrashLog.Write(ex, "BackgroundDownloadService.PollDestinationFolder");
+                }
             }
         }
         catch (OperationCanceledException)

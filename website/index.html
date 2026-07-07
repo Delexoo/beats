@@ -156,6 +156,7 @@
             <div class="preview">
               <div class="desktop-sim" aria-label="Windows 11 desktop preview with Beats widget">
               <div class="desktop-screen" id="desktop-screen">
+                <img class="desktop-wallpaper" src="assets/Windows11.jpg" alt="" draggable="false" aria-hidden="true" />
                 <button type="button" class="desktop-hide-tab" id="desktop-hide-tab" aria-label="Hide widget">
                   <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4z"/></svg>
                 </button>
@@ -199,18 +200,26 @@
               </div>
             </div>
             <div class="widget-tips" aria-label="Widget tips">
-              <p class="widget-tips-title">Tips:</p>
+              <p class="widget-tips-title">Tips</p>
               <ul class="widget-tips-list">
-                <li>
-                  Click on
-                  <span class="widget-tip-tab" aria-hidden="true">
-                    <svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4z"/></svg>
-                  </span>
-                  to toggle the widget
+                <li class="widget-tip-card">
+                  <p class="widget-tip-text">
+                    Click on
+                    <span class="widget-tip-tab" aria-hidden="true">
+                      <svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4z"/></svg>
+                    </span>
+                    to toggle the widget
+                  </p>
                 </li>
-                <li><kbd>Alt</kbd> + <kbd>\</kbd> to hide, or <kbd>Ctrl</kbd> + <kbd>\</kbd> to open the dashboard</li>
-                <li>Hover over the widget to expand</li>
-                <li>Drag the album cover to move</li>
+                <li class="widget-tip-card">
+                  <p class="widget-tip-text"><kbd>Alt</kbd> + <kbd>\</kbd> to hide, or <kbd>Ctrl</kbd> + <kbd>\</kbd> to open the dashboard</p>
+                </li>
+                <li class="widget-tip-card">
+                  <p class="widget-tip-text">Hover over the widget to expand</p>
+                </li>
+                <li class="widget-tip-card">
+                  <p class="widget-tip-text">Drag the album cover to move</p>
+                </li>
               </ul>
             </div>
           </div>

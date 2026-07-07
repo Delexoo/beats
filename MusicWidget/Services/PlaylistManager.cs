@@ -256,6 +256,60 @@ public sealed class PlaylistManager
         return newPath;
     }
 
+    public string EditTrack(string playlistName, string oldFileName, string artist, string title, string? coverImagePath)
+    {
+        var folder = Path.Combine(Root, playlistName);
+        var oldPath = Path.Combine(folder, oldFileName);
+        if (!File.Exists(oldPath))
+        {
+            throw new FileNotFoundException("Track no longer exists.", oldPath);
+        }
+
+        return EditTrackAtPath(oldPath, artist, title, coverImagePath);
+    }
+
+    /// <summary>
+    /// Updates a track's artist, title, and optional cover art. Renames the file to
+    /// match the new display name when needed. Returns the final full path.
+    /// </summary>
+    public string EditTrackAtPath(string oldFullPath, string artist, string title, string? coverImagePath)
+    {
+        if (!File.Exists(oldFullPath))
+        {
+            throw new FileNotFoundException("Track no longer exists.", oldFullPath);
+        }
+
+        var displayName = TrackNameFormatter.BuildDisplayName(artist, title);
+        var clean = Sanitize(displayName);
+        if (string.IsNullOrWhiteSpace(clean))
+        {
+            throw new ArgumentException("Song name cannot be empty.");
+        }
+
+        var folder = Path.GetDirectoryName(oldFullPath) ?? throw new InvalidOperationException("Bad file path.");
+        var ext = Path.GetExtension(oldFullPath);
+        var newPath = Path.Combine(folder, clean + ext);
+
+        if (!string.Equals(oldFullPath, newPath, StringComparison.OrdinalIgnoreCase))
+        {
+            if (File.Exists(newPath))
+            {
+                throw new InvalidOperationException("A song with that name already exists in this folder.");
+            }
+
+            File.Move(oldFullPath, newPath);
+
+            var folderName = Path.GetFileName(folder);
+            if (!string.IsNullOrEmpty(folderName))
+            {
+                _orders.ReplacePath(folderName, oldFullPath, newPath);
+            }
+        }
+
+        TrackTagService.WriteMetadata(newPath, artist, title, coverImagePath);
+        return newPath;
+    }
+
     public void AddTrackByCopy(string playlistName, string sourceFilePath)
     {
         var destDir = Path.Combine(Root, playlistName);

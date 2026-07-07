@@ -148,7 +148,7 @@ public sealed class ArtworkService
         }
 
         if (dispatcher.CheckAccess()) Apply();
-        else dispatcher.BeginInvoke(Apply);
+        else UiDispatcher.BeginInvokeSafe(Apply);
     }
 
     private static async Task<byte[]?> TryFetchOnlineAsync(
@@ -211,6 +211,26 @@ public sealed class ArtworkService
             sb.Append(track.FriendlyDisplayName);
         }
         return sb.ToString().Trim();
+    }
+
+    public void Invalidate(string filePath)
+    {
+        var key = NormalizeKey(filePath);
+        _memCache.TryRemove(key, out _);
+        _inflight.TryRemove(key, out _);
+
+        var cachePath = Path.Combine(_cacheDir, key + ".png");
+        try
+        {
+            if (File.Exists(cachePath))
+            {
+                File.Delete(cachePath);
+            }
+        }
+        catch
+        {
+            // Cache cleanup is best-effort.
+        }
     }
 
     private static string SanitizeFilename(string name) => TrackNameFormatter.Beautify(name);

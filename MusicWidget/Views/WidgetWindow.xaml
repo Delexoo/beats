@@ -27,6 +27,18 @@
     <Grid x:Name="PillRowHost"
           Grid.Row="0"
           HorizontalAlignment="Stretch">
+    <Grid x:Name="PillStack"
+          HorizontalAlignment="Left">
+      <!-- Rounded shadow layer — DropShadowEffect ignores CornerRadius and leaves square corners. -->
+      <Border CornerRadius="14"
+              Margin="0,5,2,0"
+              IsHitTestVisible="False"
+              SnapsToDevicePixels="True"
+              UseLayoutRounding="True">
+        <Border.Background>
+          <SolidColorBrush Color="#40000000"/>
+        </Border.Background>
+      </Border>
     <Border x:Name="PillBorder"
             Style="{StaticResource WidgetPillBar}"
             HorizontalAlignment="Left"
@@ -204,6 +216,7 @@
         </StackPanel>
       </Grid>
     </Border>
+    </Grid>
     </Grid>
 
     <!-- Settings panel host (animated expand) -->

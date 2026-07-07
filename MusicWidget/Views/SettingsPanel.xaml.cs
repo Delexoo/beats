@@ -80,6 +80,10 @@ public partial class SettingsPanel : UserControl
     private int _lastNonZeroVolume = 80;
     private DispatcherTimer? _progressTimer;
     private DispatcherTimer? _backgroundDownloadHideTimer;
+    private EventHandler? _backgroundDownloadHideTick;
+    private DispatcherTimer? _downloadRefreshDebounceTimer;
+    private string? _pendingDownloadRefreshPlaylist;
+    private bool _isLoaded;
     private string? _backgroundDownloadPlaylistName;
     private UpdateCheckResult? _pendingUpdate;
     private bool _updateCheckInFlight;
@@ -88,10 +92,17 @@ public partial class SettingsPanel : UserControl
     {
         InitializeComponent();
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        if (_isLoaded)
+        {
+            return;
+        }
+
+        _isLoaded = true;
         _isPanelActive = true;
         ShowView(View.Home);
         RebuildLikedTracks();
@@ -107,7 +118,6 @@ public partial class SettingsPanel : UserControl
         App.Playlists.PlaylistTracksChanged += OnPlaylistTracksChanged;
         App.Player.PlayStateChanged += OnPlayerStateChanged;
         App.Player.CurrentTrackChanged += OnPlayerStateChanged;
-        App.Player.PositionChanged += OnPlayerPositionChanged;
         App.Player.ShuffleChanged += OnShuffleChanged;
         App.Player.LoopCurrentChanged += OnLoopChanged;
         App.LikedSongs.Changed += OnLikedSongsChanged;
@@ -115,27 +125,43 @@ public partial class SettingsPanel : UserControl
         App.BackgroundDownloads.ProgressChanged += OnBackgroundDownloadProgress;
         App.BackgroundDownloads.Completed += OnBackgroundDownloadCompleted;
         _ = SyncUpdateButtonFromServiceAsync();
-        Unloaded += OnUnloaded;
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        if (!_isLoaded)
+        {
+            return;
+        }
+
+        _isLoaded = false;
         _isPanelActive = false;
         App.Playlists.PlaylistsChanged -= OnPlaylistsChanged;
         App.Playlists.PlaylistTracksChanged -= OnPlaylistTracksChanged;
         App.Player.PlayStateChanged -= OnPlayerStateChanged;
         App.Player.CurrentTrackChanged -= OnPlayerStateChanged;
-        App.Player.PositionChanged -= OnPlayerPositionChanged;
         App.Player.ShuffleChanged -= OnShuffleChanged;
         _progressTimer?.Stop();
         _progressTimer = null;
+        _downloadRefreshDebounceTimer?.Stop();
+        if (_downloadRefreshDebounceTimer is not null)
+        {
+            _downloadRefreshDebounceTimer.Tick -= OnDownloadRefreshDebounceTick;
+        }
+        _downloadRefreshDebounceTimer = null;
+        _pendingDownloadRefreshPlaylist = null;
         App.Player.LoopCurrentChanged -= OnLoopChanged;
         App.LikedSongs.Changed -= OnLikedSongsChanged;
         App.SavedSongs.Changed -= OnSavedSongsChanged;
         App.BackgroundDownloads.ProgressChanged -= OnBackgroundDownloadProgress;
         App.BackgroundDownloads.Completed -= OnBackgroundDownloadCompleted;
+        if (_backgroundDownloadHideTick is not null && _backgroundDownloadHideTimer is not null)
+        {
+            _backgroundDownloadHideTimer.Tick -= _backgroundDownloadHideTick;
+        }
         _backgroundDownloadHideTimer?.Stop();
         _backgroundDownloadHideTimer = null;
+        _backgroundDownloadHideTick = null;
         if (_nowPlayingTrack is not null)
         {
             _nowPlayingTrack.PropertyChanged -= NowPlayingTrack_PropertyChanged;
@@ -182,13 +208,9 @@ public partial class SettingsPanel : UserControl
         });
     }
 
-    private void OnPlayerPositionChanged(object? sender, EventArgs e)
-    {
-        UiDispatcher.BeginInvokeSafe(UpdateFooterProgress, DispatcherPriority.Background);
-    }
-
     private void StartProgressTimer()
     {
+        _progressTimer?.Stop();
         _progressTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
         _progressTimer.Tick += (_, _) => UpdateFooterProgress();
         _progressTimer.Start();
@@ -1184,6 +1206,36 @@ public partial class SettingsPanel : UserControl
         }
     }
 
+    private void ScheduleRefreshAfterDownload(string playlistName)
+    {
+        _pendingDownloadRefreshPlaylist = playlistName;
+        _downloadRefreshDebounceTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(450) };
+        _downloadRefreshDebounceTimer.Stop();
+        _downloadRefreshDebounceTimer.Tick -= OnDownloadRefreshDebounceTick;
+        _downloadRefreshDebounceTimer.Tick += OnDownloadRefreshDebounceTick;
+        _downloadRefreshDebounceTimer.Start();
+    }
+
+    private void OnDownloadRefreshDebounceTick(object? sender, EventArgs e)
+    {
+        _downloadRefreshDebounceTimer?.Stop();
+        var playlistName = _pendingDownloadRefreshPlaylist;
+        _pendingDownloadRefreshPlaylist = null;
+        if (string.IsNullOrWhiteSpace(playlistName) || !_isPanelActive)
+        {
+            return;
+        }
+
+        try
+        {
+            RefreshAfterDownload(playlistName);
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "SettingsPanel.OnDownloadRefreshDebounceTick");
+        }
+    }
+
     private void SelectPlaylistByName(string playlistName)
     {
         var cached = FindPlaylistByName(playlistName);
@@ -1222,38 +1274,45 @@ public partial class SettingsPanel : UserControl
             return;
         }
 
-        if (!string.Equals(_backgroundDownloadPlaylistName, e.PlaylistName, StringComparison.OrdinalIgnoreCase))
+        try
         {
-            _backgroundDownloadPlaylistName = e.PlaylistName;
-            SelectPlaylistByName(e.PlaylistName);
-        }
+            if (!string.Equals(_backgroundDownloadPlaylistName, e.PlaylistName, StringComparison.OrdinalIgnoreCase))
+            {
+                _backgroundDownloadPlaylistName = e.PlaylistName;
+                SelectPlaylistByName(e.PlaylistName);
+            }
 
-        var update = e.Update;
-        if (update.RefreshPlaylistTracks || !string.IsNullOrWhiteSpace(update.CompletedFilePath))
-        {
-            RefreshAfterDownload(e.PlaylistName);
-        }
+            var update = e.Update;
+            if (update.RefreshPlaylistTracks || !string.IsNullOrWhiteSpace(update.CompletedFilePath))
+            {
+                ScheduleRefreshAfterDownload(e.PlaylistName);
+            }
 
-        BackgroundDownloadBanner.Visibility = Visibility.Visible;
-        BackgroundDownloadTitle.Text = $"Downloading to \"{e.PlaylistName}\"";
-        BackgroundDownloadCancelButton.IsEnabled = App.BackgroundDownloads.IsRunning;
-        BackgroundDownloadCancelButton.Visibility = App.BackgroundDownloads.IsRunning
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+            BackgroundDownloadBanner.Visibility = Visibility.Visible;
+            BackgroundDownloadTitle.Text = $"Downloading to \"{e.PlaylistName}\"";
+            BackgroundDownloadCancelButton.IsEnabled = App.BackgroundDownloads.IsRunning;
+            BackgroundDownloadCancelButton.Visibility = App.BackgroundDownloads.IsRunning
+                ? Visibility.Visible
+                : Visibility.Collapsed;
 
-        if (update.Percent >= 0)
-        {
-            BackgroundDownloadProgress.Value = update.Percent;
-            BackgroundDownloadPercent.Text = $"{update.Percent:0}%";
-        }
+            if (update.Percent >= 0)
+            {
+                BackgroundDownloadProgress.Value = update.Percent;
+                BackgroundDownloadPercent.Text = $"{update.Percent:0}%";
+            }
 
-        if (!string.IsNullOrWhiteSpace(update.CurrentSong))
-        {
-            BackgroundDownloadDetail.Text = update.CurrentSong;
+            if (!string.IsNullOrWhiteSpace(update.CurrentSong))
+            {
+                BackgroundDownloadDetail.Text = update.CurrentSong;
+            }
+            else if (!string.IsNullOrWhiteSpace(update.Message))
+            {
+                BackgroundDownloadDetail.Text = update.Message;
+            }
         }
-        else if (!string.IsNullOrWhiteSpace(update.Message))
+        catch (Exception ex)
         {
-            BackgroundDownloadDetail.Text = update.Message;
+            CrashLog.Write(ex, "SettingsPanel.OnBackgroundDownloadProgress");
         }
     }
 
@@ -1291,12 +1350,18 @@ public partial class SettingsPanel : UserControl
         }
 
         _backgroundDownloadHideTimer?.Stop();
-        _backgroundDownloadHideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
-        _backgroundDownloadHideTimer.Tick += (_, _) =>
+        if (_backgroundDownloadHideTick is not null)
+        {
+            _backgroundDownloadHideTimer!.Tick -= _backgroundDownloadHideTick;
+        }
+
+        _backgroundDownloadHideTimer ??= new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+        _backgroundDownloadHideTick = (_, _) =>
         {
             _backgroundDownloadHideTimer?.Stop();
             BackgroundDownloadBanner.Visibility = Visibility.Collapsed;
         };
+        _backgroundDownloadHideTimer.Tick += _backgroundDownloadHideTick;
         _backgroundDownloadHideTimer.Start();
     }
 
@@ -1840,24 +1905,21 @@ public partial class SettingsPanel : UserControl
         }
     }
 
-    private void TrackContextRename_Click(object sender, RoutedEventArgs e)
+    private void TrackContextEdit_Click(object sender, RoutedEventArgs e)
     {
         var t = GetContextTrack();
         var pl = GetActivePlaylist();
         if (t is null || pl is null) return;
 
-        var newName = PromptForName(
-            "Rename song",
-            "Enter a new name for this song:",
-            Path.GetFileNameWithoutExtension(t.FilePath));
-        if (newName is null) return;
+        var edit = PromptForEditTrack(t);
+        if (edit is null) return;
 
         var wasCurrent = string.Equals(App.Player.CurrentTrack?.FilePath, t.FilePath,
             StringComparison.OrdinalIgnoreCase);
 
         if (wasCurrent)
         {
-            // Releases the file handle so File.Move can succeed.
+            // Releases the file handle so tag writes / file moves can succeed.
             App.Player.Stop();
         }
 
@@ -1867,17 +1929,25 @@ public partial class SettingsPanel : UserControl
             string newPath;
             if (pl.Kind == PlaylistKind.Normal)
             {
-                newPath = App.Playlists.RenameTrack(pl.Name, Path.GetFileName(oldPath), newName);
+                newPath = App.Playlists.EditTrack(
+                    pl.Name,
+                    Path.GetFileName(oldPath),
+                    edit.Artist,
+                    edit.Title,
+                    edit.CoverImagePath);
             }
             else
             {
-                // Virtual playlist: rename at the original location.
-                newPath = App.Playlists.RenameTrackAtPath(oldPath, newName);
+                newPath = App.Playlists.EditTrackAtPath(
+                    oldPath,
+                    edit.Artist,
+                    edit.Title,
+                    edit.CoverImagePath);
             }
 
-            // Keep Liked in sync regardless of which playlist we renamed from — the file may
-            // be liked even if the user kicked off the rename from its home playlist.
             App.LikedSongs.ReplacePath(oldPath, newPath);
+            App.Artwork.Invalidate(oldPath);
+            App.Artwork.Invalidate(newPath);
         }
         catch (Exception ex)
         {
@@ -1903,7 +1973,7 @@ public partial class SettingsPanel : UserControl
         bool isLiked = active is not null && active.Kind == PlaylistKind.Liked;
 
         SeparatorBeforeEdit.Visibility = isVirtual ? Visibility.Collapsed : Visibility.Visible;
-        MenuItemRename.Visibility = isVirtual ? Visibility.Collapsed : Visibility.Visible;
+        MenuItemEdit.Visibility = isVirtual ? Visibility.Collapsed : Visibility.Visible;
 
         if (isLiked)
         {
@@ -2236,6 +2306,11 @@ public partial class SettingsPanel : UserControl
 
     private void Donate_Click(object sender, RoutedEventArgs e)
     {
+        if (Window.GetWindow(this) is WidgetWindow widget)
+        {
+            widget.MinimizeWidget();
+        }
+
         try
         {
             Process.Start(new ProcessStartInfo
@@ -2302,6 +2377,16 @@ public partial class SettingsPanel : UserControl
     }
 
     // ----- Helpers -----
+
+    private static EditTrackResult? PromptForEditTrack(Track track)
+    {
+        var window = new EditTrackWindow(track)
+        {
+            Owner = Application.Current.Windows.OfType<Window>()
+                .FirstOrDefault(w => w.IsActive),
+        };
+        return window.ShowDialog() == true ? window.Result : null;
+    }
 
     private static string? PromptForName(string title, string prompt, string defaultValue)
     {

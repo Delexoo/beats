@@ -707,9 +707,9 @@
                         </MenuItem.Icon>
                       </MenuItem>
                       <Separator x:Name="SeparatorBeforeEdit"/>
-                      <MenuItem x:Name="MenuItemRename"
-                                Header="Rename..."
-                                Click="TrackContextRename_Click">
+                      <MenuItem x:Name="MenuItemEdit"
+                                Header="Edit..."
+                                Click="TrackContextEdit_Click">
                         <MenuItem.Icon>
                           <Path Data="{StaticResource Icon.Edit}"
                                 Fill="{StaticResource Brush.Text}"

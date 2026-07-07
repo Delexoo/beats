@@ -12,6 +12,7 @@ public sealed class AudioPlayer : IDisposable
 {
     private readonly LibVLC _libVlc;
     private readonly MediaPlayer _player;
+    private readonly object _playbackLock = new();
 
     private List<Track> _queue = new();
     private int _index = -1;
@@ -22,6 +23,9 @@ public sealed class AudioPlayer : IDisposable
     private bool _disposed;
     private long _resumeMsAfterUserPause = -1;
     private int _trackEndAdvanceScheduled;
+    private long _lastPositionNotifyTicks;
+    private EventHandler<EventArgs>? _onPlayingHandler;
+    private EventHandler<EventArgs>? _onPausedHandler;
     private static readonly Random _random = new();
 
     public event EventHandler? PlayStateChanged;
@@ -60,8 +64,10 @@ public sealed class AudioPlayer : IDisposable
         _libVlc = new LibVLC();
         _player = new MediaPlayer(_libVlc);
         _player.EndReached += OnEndReached;
-        _player.Playing += (_, _) => PlayStateChanged?.Invoke(this, EventArgs.Empty);
-        _player.Paused += (_, _) => PlayStateChanged?.Invoke(this, EventArgs.Empty);
+        _onPlayingHandler = (_, _) => PlayStateChanged?.Invoke(this, EventArgs.Empty);
+        _onPausedHandler = (_, _) => PlayStateChanged?.Invoke(this, EventArgs.Empty);
+        _player.Playing += _onPlayingHandler;
+        _player.Paused += _onPausedHandler;
         _player.Stopped += OnStopped;
         _player.TimeChanged += OnTimeChanged;
 
@@ -72,17 +78,20 @@ public sealed class AudioPlayer : IDisposable
 
     public void SetQueue(IEnumerable<Track> tracks, int startIndex = 0)
     {
-        _queue = new List<Track>(tracks);
-        if (_queue.Count == 0)
+        lock (_playbackLock)
         {
-            _index = -1;
-            _currentTrack = null;
-            CurrentTrackChanged?.Invoke(this, EventArgs.Empty);
-            return;
-        }
+            _queue = new List<Track>(tracks);
+            if (_queue.Count == 0)
+            {
+                _index = -1;
+                _currentTrack = null;
+                CurrentTrackChanged?.Invoke(this, EventArgs.Empty);
+                return;
+            }
 
-        _index = Math.Clamp(startIndex, 0, _queue.Count - 1);
-        Play(_queue[_index]);
+            _index = Math.Clamp(startIndex, 0, _queue.Count - 1);
+            PlayUnlocked(_queue[_index]);
+        }
     }
 
     /// <summary>
@@ -95,22 +104,33 @@ public sealed class AudioPlayer : IDisposable
             return;
         }
 
-        var currentPath = _currentTrack?.FilePath;
-        _queue = tracks.ToList();
-        if (string.IsNullOrEmpty(currentPath))
+        lock (_playbackLock)
         {
-            return;
-        }
+            var currentPath = _currentTrack?.FilePath;
+            _queue = tracks.ToList();
+            if (string.IsNullOrEmpty(currentPath))
+            {
+                return;
+            }
 
-        _index = _queue.FindIndex(t =>
-            string.Equals(t.FilePath, currentPath, StringComparison.OrdinalIgnoreCase));
-        if (_index < 0)
-        {
-            _index = 0;
+            _index = _queue.FindIndex(t =>
+                string.Equals(t.FilePath, currentPath, StringComparison.OrdinalIgnoreCase));
+            if (_index < 0)
+            {
+                _index = 0;
+            }
         }
     }
 
     public void Play(Track track, long resumePositionMs = -1)
+    {
+        lock (_playbackLock)
+        {
+            PlayUnlocked(track, resumePositionMs);
+        }
+    }
+
+    private void PlayUnlocked(Track track, long resumePositionMs = -1)
     {
         if (_disposed || !File.Exists(track.FilePath))
         {
@@ -193,69 +213,82 @@ public sealed class AudioPlayer : IDisposable
 
     public void TogglePlayPause()
     {
-        if (_currentTrack is null)
+        lock (_playbackLock)
         {
-            if (TryAutoSelectFirstTrack(out var first))
+            if (_currentTrack is null)
             {
-                Play(first);
-            }
-            return;
-        }
+                if (TryAutoSelectFirstTrackUnlocked(out var first))
+                {
+                    PlayUnlocked(first);
+                }
 
-        if (_player.IsPlaying)
-        {
-            // Pause() keeps the media file locked on Windows. Stop() releases the handle so
-            // the user can move, rename, delete, or copy the file while "paused".
-            var t = _player.Time;
-            _resumeMsAfterUserPause = Math.Max(0, t);
-            _player.Stop();
-        }
-        else
-        {
-            var resume = _resumeMsAfterUserPause;
-            _resumeMsAfterUserPause = -1;
-            Play(_currentTrack!, resume);
+                return;
+            }
+
+            if (_player.IsPlaying)
+            {
+                var t = _player.Time;
+                _resumeMsAfterUserPause = Math.Max(0, t);
+                _player.Stop();
+            }
+            else
+            {
+                var resume = _resumeMsAfterUserPause;
+                _resumeMsAfterUserPause = -1;
+                PlayUnlocked(_currentTrack!, resume);
+            }
         }
     }
 
     public void Next()
     {
-        if (_queue.Count == 0)
+        lock (_playbackLock)
         {
-            if (TryAutoSelectFirstTrack(out var first))
+            if (_queue.Count == 0)
             {
-                Play(first);
-            }
-            return;
-        }
+                if (TryAutoSelectFirstTrackUnlocked(out var first))
+                {
+                    PlayUnlocked(first);
+                }
 
-        if (_shuffle && _queue.Count > 1)
-        {
-            var next = _random.Next(_queue.Count - 1);
-            if (next >= _index) next++;
-            _index = next;
+                return;
+            }
+
+            if (_shuffle && _queue.Count > 1)
+            {
+                var next = _random.Next(_queue.Count - 1);
+                if (next >= _index) next++;
+                _index = next;
+            }
+            else
+            {
+                _index = (_index + 1) % _queue.Count;
+            }
+
+            PlayUnlocked(_queue[_index]);
         }
-        else
-        {
-            _index = (_index + 1) % _queue.Count;
-        }
-        Play(_queue[_index]);
     }
 
     public void Previous()
     {
-        if (_queue.Count == 0)
+        lock (_playbackLock)
         {
-            return;
-        }
+            if (_queue.Count == 0)
+            {
+                return;
+            }
 
-        _index = (_index - 1 + _queue.Count) % _queue.Count;
-        Play(_queue[_index]);
+            _index = (_index - 1 + _queue.Count) % _queue.Count;
+            PlayUnlocked(_queue[_index]);
+        }
     }
 
     public void Stop()
     {
-        _player.Stop();
+        lock (_playbackLock)
+        {
+            _player.Stop();
+        }
     }
 
     public void SeekToMilliseconds(long positionMs)
@@ -303,6 +336,13 @@ public sealed class AudioPlayer : IDisposable
 
     private void OnTimeChanged(object? sender, MediaPlayerTimeChangedEventArgs e)
     {
+        var now = Environment.TickCount64;
+        if (now - _lastPositionNotifyTicks < 250)
+        {
+            return;
+        }
+
+        _lastPositionNotifyTicks = now;
         PositionChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -347,15 +387,18 @@ public sealed class AudioPlayer : IDisposable
 
             try
             {
-                _player.Stop();
+                lock (_playbackLock)
+                {
+                    _player.Stop();
 
-                if (_loopCurrent && _currentTrack is not null)
-                {
-                    Play(_currentTrack);
-                }
-                else
-                {
-                    AdvanceQueueAfterTrackEnd();
+                    if (_loopCurrent && _currentTrack is not null)
+                    {
+                        PlayUnlocked(_currentTrack);
+                    }
+                    else
+                    {
+                        AdvanceQueueAfterTrackEndUnlocked();
+                    }
                 }
             }
             catch (Exception ex)
@@ -369,13 +412,13 @@ public sealed class AudioPlayer : IDisposable
         });
     }
 
-    private void AdvanceQueueAfterTrackEnd()
+    private void AdvanceQueueAfterTrackEndUnlocked()
     {
         if (_queue.Count == 0)
         {
-            if (TryAutoSelectFirstTrack(out var first))
+            if (TryAutoSelectFirstTrackUnlocked(out var first))
             {
-                Play(first);
+                PlayUnlocked(first);
             }
 
             return;
@@ -396,22 +439,43 @@ public sealed class AudioPlayer : IDisposable
             _index = (_index + 1) % _queue.Count;
         }
 
-        Play(_queue[_index]);
+        PlayUnlocked(_queue[_index]);
     }
 
-    private bool TryAutoSelectFirstTrack(out Track track)
+    private bool TryAutoSelectFirstTrackUnlocked(out Track track)
     {
         track = null!;
-        var current = App.Playlists.GetCurrentPlaylist();
-        if (current is null || current.Tracks.Count == 0)
+        if (_queue.Count > 0)
+        {
+            _index = 0;
+            track = _queue[0];
+            return true;
+        }
+
+        // Playlist scans touch disk — only run on the UI thread to avoid background freezes.
+        if (System.Windows.Application.Current?.Dispatcher?.CheckAccess() != true)
         {
             return false;
         }
 
-        _queue = new List<Track>(current.Tracks);
-        _index = 0;
-        track = _queue[0];
-        return true;
+        try
+        {
+            var current = App.Playlists.GetCurrentPlaylist();
+            if (current is null || current.Tracks.Count == 0)
+            {
+                return false;
+            }
+
+            _queue = new List<Track>(current.Tracks);
+            _index = 0;
+            track = _queue[0];
+            return true;
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "AudioPlayer.TryAutoSelectFirstTrack");
+            return false;
+        }
     }
 
     public void Dispose()
@@ -420,10 +484,24 @@ public sealed class AudioPlayer : IDisposable
         _disposed = true;
         try
         {
-            _player.Stop();
+            lock (_playbackLock)
+            {
+                _player.Stop();
+            }
+
             _player.EndReached -= OnEndReached;
             _player.TimeChanged -= OnTimeChanged;
             _player.Stopped -= OnStopped;
+            if (_onPlayingHandler is not null)
+            {
+                _player.Playing -= _onPlayingHandler;
+            }
+
+            if (_onPausedHandler is not null)
+            {
+                _player.Paused -= _onPausedHandler;
+            }
+
             _loadedMedia?.Dispose();
             _loadedMedia = null;
             _player.Dispose();

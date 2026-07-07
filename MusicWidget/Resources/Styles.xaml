@@ -747,11 +747,7 @@
     <Setter Property="Padding" Value="8,8,8,8"/>
     <Setter Property="SnapsToDevicePixels" Value="True"/>
     <Setter Property="UseLayoutRounding" Value="True"/>
-    <Setter Property="Effect">
-      <Setter.Value>
-        <DropShadowEffect Color="Black" Opacity="0.22" BlurRadius="24" ShadowDepth="6"/>
-      </Setter.Value>
-    </Setter>
+    <Setter Property="ClipToBounds" Value="True"/>
   </Style>
 
   <!-- White circular transport buttons (black icons) -->
