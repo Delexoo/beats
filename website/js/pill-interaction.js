@@ -17,6 +17,10 @@
 
   function setExpanded(expanded) {
     pill.classList.toggle("is-expanded", expanded);
+    var wrap = document.getElementById("desktop-widget-wrap");
+    if (wrap) {
+      wrap.classList.toggle("is-pill-expanded", expanded);
+    }
     if (hoverControls) {
       hoverControls.setAttribute("aria-hidden", expanded ? "false" : "true");
     }

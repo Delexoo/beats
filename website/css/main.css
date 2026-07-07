@@ -16,6 +16,8 @@
   --pill-blue: #3b82f6;
   --scale: 1.32;
   --max-w: calc(1080px * var(--scale));
+  --pill-hover-expand: calc(30px * var(--scale));
+  --pill-hover-half: calc(15px * var(--scale));
 }
 
 html {
@@ -608,17 +610,36 @@ h1 {
   position: absolute;
   left: 50%;
   top: 42%;
-  transform: translate(-50%, -50%);
+  width: fit-content;
   max-width: calc(100% - 24px);
+  transform: translate(-50%, -50%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .desktop-widget-wrap.is-positioned { transform: none; }
+
+.desktop-widget-wrap.is-pill-expanded {
+  transform: translate(calc(-50% - var(--pill-hover-half)), -50%);
+}
+
+.desktop-widget-wrap.is-positioned.is-pill-expanded {
+  transform: translateX(calc(-1 * var(--pill-hover-half)));
+}
 
 .desktop-widget-wrap.is-animating {
   transition:
     left 0.38s cubic-bezier(0.4, 0, 0.2, 1),
     top 0.38s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.28s ease;
+}
+
+.desktop-widget-wrap.is-animating.is-pill-expanded,
+.desktop-widget-wrap.is-animating:not(.is-positioned) {
+  transition:
+    left 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+    top 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.28s ease,
+    transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .desktop-widget-wrap.is-hidden { opacity: 0; pointer-events: none; }
