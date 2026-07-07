@@ -415,6 +415,7 @@ public sealed class PlaylistManager
 
     private void LoadTracks(Playlist pl)
     {
+        var existing = pl.Tracks.ToDictionary(t => t.FilePath, StringComparer.OrdinalIgnoreCase);
         pl.Tracks.Clear();
         if (!Directory.Exists(pl.FolderPath)) return;
 
@@ -424,7 +425,7 @@ public sealed class PlaylistManager
 
         foreach (var f in OrderFiles(pl.Name, files))
         {
-            pl.Tracks.Add(new Track(f));
+            pl.Tracks.Add(existing.TryGetValue(f, out var track) ? track : new Track(f));
         }
     }
 

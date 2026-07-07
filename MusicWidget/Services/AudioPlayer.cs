@@ -20,7 +20,10 @@ public sealed class AudioPlayer : IDisposable
     private Media? _loadedMedia;
     private bool _loopCurrent;
     private bool _shuffle;
+    private bool _bassBoost;
+    private bool _enhancedAudio;
     private bool _disposed;
+    private Equalizer? _equalizer;
     private long _resumeMsAfterUserPause = -1;
     private int _trackEndAdvanceScheduled;
     private long _lastPositionNotifyTicks;
@@ -40,6 +43,8 @@ public sealed class AudioPlayer : IDisposable
     public Track? CurrentTrack => _currentTrack;
     public bool LoopCurrent => _loopCurrent;
     public bool Shuffle => _shuffle;
+    public bool BassBoost => _bassBoost;
+    public bool EnhancedAudio => _enhancedAudio;
 
     public int Volume
     {
@@ -73,7 +78,10 @@ public sealed class AudioPlayer : IDisposable
 
         _loopCurrent = App.Settings.Current.LoopCurrent;
         _shuffle = App.Settings.Current.Shuffle;
+        _bassBoost = App.Settings.Current.BassBoost;
+        _enhancedAudio = App.Settings.Current.EnhancedAudio;
         _player.Volume = App.Settings.Current.Volume;
+        ApplyAudioEnhancements();
     }
 
     public void SetQueue(IEnumerable<Track> tracks, int startIndex = 0)
@@ -334,6 +342,74 @@ public sealed class AudioPlayer : IDisposable
         ShuffleChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    public void SetBassBoost(bool enabled)
+    {
+        if (_bassBoost == enabled) return;
+        _bassBoost = enabled;
+        App.Settings.Current.BassBoost = enabled;
+        App.Settings.Save();
+        ApplyAudioEnhancements();
+    }
+
+    public void SetEnhancedAudio(bool enabled)
+    {
+        if (_enhancedAudio == enabled) return;
+        _enhancedAudio = enabled;
+        App.Settings.Current.EnhancedAudio = enabled;
+        App.Settings.Save();
+        ApplyAudioEnhancements();
+    }
+
+    private void ApplyAudioEnhancements()
+    {
+        try
+        {
+            _equalizer?.Dispose();
+            _equalizer = null;
+
+            if (!_bassBoost && !_enhancedAudio)
+            {
+                _player.UnsetEqualizer();
+                return;
+            }
+
+            _equalizer = new Equalizer();
+            var bands = _equalizer.BandCount;
+            var amps = new float[bands];
+
+            if (_bassBoost)
+            {
+                if (bands > 0) amps[0] += 7f;
+                if (bands > 1) amps[1] += 5f;
+                if (bands > 2) amps[2] += 3f;
+            }
+
+            if (_enhancedAudio)
+            {
+                ReadOnlySpan<float> enhanced = [3f, 3.5f, 4f, 4.5f, 5f, 5f];
+                for (var i = 0; i < enhanced.Length && 4 + i < bands; i++)
+                {
+                    amps[4 + i] += enhanced[i];
+                }
+            }
+
+            for (uint band = 0; band < bands; band++)
+            {
+                _equalizer.SetAmp(Math.Clamp(amps[band], -20f, 20f), band);
+            }
+
+            var preamp = 0f;
+            if (_bassBoost) preamp += 2f;
+            if (_enhancedAudio) preamp += 1f;
+            _equalizer.SetPreamp(Math.Clamp(preamp, -20f, 20f));
+            _player.SetEqualizer(_equalizer);
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "AudioPlayer.ApplyAudioEnhancements");
+        }
+    }
+
     private void OnTimeChanged(object? sender, MediaPlayerTimeChangedEventArgs e)
     {
         var now = Environment.TickCount64;
@@ -504,6 +580,9 @@ public sealed class AudioPlayer : IDisposable
 
             _loadedMedia?.Dispose();
             _loadedMedia = null;
+            _player.UnsetEqualizer();
+            _equalizer?.Dispose();
+            _equalizer = null;
             _player.Dispose();
             _libVlc.Dispose();
         }

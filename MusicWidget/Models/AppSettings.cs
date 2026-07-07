@@ -48,4 +48,10 @@ public sealed class AppSettings
 
     /// <summary>When true, loop/settings controls stay visible on the widget pill.</summary>
     public bool KeepWidgetExpanded { get; set; } = false;
+
+    /// <summary>Applies a low-frequency boost via the playback equalizer.</summary>
+    public bool BassBoost { get; set; } = false;
+
+    /// <summary>Applies a mid/high-frequency boost for clearer vocals and detail.</summary>
+    public bool EnhancedAudio { get; set; } = false;
 }

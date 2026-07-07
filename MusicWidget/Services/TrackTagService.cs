@@ -63,7 +63,18 @@ public static class TrackTagService
                 return null;
             }
 
-            return pics[0].Data?.Data;
+            IPicture? best = null;
+            foreach (var pic in pics)
+            {
+                if (pic.Type == PictureType.FrontCover)
+                {
+                    return pic.Data?.Data;
+                }
+
+                best ??= pic;
+            }
+
+            return best?.Data?.Data;
         }
         catch
         {

@@ -77,6 +77,7 @@ public partial class SettingsPanel : UserControl
     private bool _suppressVolumeChanged;
     private bool _suppressProgressChanged;
     private bool _suppressKeepWidgetExpandedChanged;
+    private bool _suppressAudioEnhancementChanged;
     private int _lastNonZeroVolume = 80;
     private DispatcherTimer? _progressTimer;
     private DispatcherTimer? _backgroundDownloadHideTimer;
@@ -278,6 +279,7 @@ public partial class SettingsPanel : UserControl
         UpdateFooterVolumeIcon();
         UpdateFooterLikeIcon();
         UpdateFooterSaveIcon();
+        InitializeFooterAudioEnhancements();
         UpdateFooterProgress();
         UpdateNowPlayingFooter();
     }
@@ -606,6 +608,26 @@ public partial class SettingsPanel : UserControl
         App.Settings.Save();
 
         UpdateFooterVolumeIcon();
+    }
+
+    private void InitializeFooterAudioEnhancements()
+    {
+        _suppressAudioEnhancementChanged = true;
+        FooterBassBoostToggle.IsChecked = App.Settings.Current.BassBoost;
+        FooterEnhancedAudioToggle.IsChecked = App.Settings.Current.EnhancedAudio;
+        _suppressAudioEnhancementChanged = false;
+    }
+
+    private void FooterBassBoostToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if (_suppressAudioEnhancementChanged) return;
+        App.Player.SetBassBoost(FooterBassBoostToggle.IsChecked == true);
+    }
+
+    private void FooterEnhancedAudioToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if (_suppressAudioEnhancementChanged) return;
+        App.Player.SetEnhancedAudio(FooterEnhancedAudioToggle.IsChecked == true);
     }
 
     // ===== Reset layout =====
@@ -1000,9 +1022,6 @@ public partial class SettingsPanel : UserControl
 
     private static void LoadArtworkForTracks(Playlist pl)
     {
-        const int maxPerRefresh = 80;
-        var loaded = 0;
-
         foreach (var track in pl.Tracks)
         {
             if (track.ArtworkSource is not null)
@@ -1010,12 +1029,6 @@ public partial class SettingsPanel : UserControl
                 continue;
             }
 
-            if (loaded >= maxPerRefresh)
-            {
-                break;
-            }
-
-            loaded++;
             var capture = track;
             _ = Task.Run(async () =>
             {
@@ -1948,6 +1961,12 @@ public partial class SettingsPanel : UserControl
             App.LikedSongs.ReplacePath(oldPath, newPath);
             App.Artwork.Invalidate(oldPath);
             App.Artwork.Invalidate(newPath);
+            t.ArtworkSource = null;
+
+            if (pl.Kind == PlaylistKind.Normal)
+            {
+                RefreshAfterDownload(pl.Name);
+            }
         }
         catch (Exception ex)
         {

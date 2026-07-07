@@ -49,33 +49,31 @@
                        FontWeight="SemiBold"
                        FontSize="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=11}"
                        HorizontalAlignment="Center"
-                       VerticalAlignment="Center"/>
-            <!--
-              Painting the cover via ImageBrush on a Rectangle (instead of an Image
-              control) guarantees center-cropped fill for any source aspect ratio.
-              UniformToFill + AlignmentX/Y=Center is the reliable WPF idiom for
-              square cover treatments; some sources (embedded ID3, iTunes lookups)
-              return non-square artwork, and an <Image> can render off-center inside
-              a rounded Border depending on layout slack.
-            -->
-            <Rectangle RenderOptions.BitmapScalingMode="HighQuality">
-              <Rectangle.Style>
-                <Style TargetType="Rectangle">
-                  <Setter Property="Visibility" Value="Visible"/>
+                       VerticalAlignment="Center">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock">
                   <Style.Triggers>
-                    <DataTrigger Binding="{Binding ArtworkSource}" Value="{x:Null}">
+                    <DataTrigger Binding="{Binding HasArtwork}" Value="True">
                       <Setter Property="Visibility" Value="Collapsed"/>
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>
-              </Rectangle.Style>
-              <Rectangle.Fill>
-                <ImageBrush ImageSource="{Binding ArtworkSource}"
-                            Stretch="UniformToFill"
-                            AlignmentX="Center"
-                            AlignmentY="Center"/>
-              </Rectangle.Fill>
-            </Rectangle>
+              </TextBlock.Style>
+            </TextBlock>
+            <Image Source="{Binding ArtworkSource}"
+                   Stretch="UniformToFill"
+                   RenderOptions.BitmapScalingMode="HighQuality">
+              <Image.Style>
+                <Style TargetType="Image">
+                  <Setter Property="Visibility" Value="Collapsed"/>
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding HasArtwork}" Value="True">
+                      <Setter Property="Visibility" Value="Visible"/>
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Image.Style>
+            </Image>
           </Grid>
         </Border>
         <TextBlock Grid.Column="1"
@@ -954,6 +952,38 @@
                         ValueChanged="FooterVolume_ValueChanged"
                         ToolTip="Volume"/>
               </StackPanel>
+              <Grid Margin="0,6,0,0"
+                    HorizontalAlignment="Right">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="14"/>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="Bass boost"
+                           Foreground="{StaticResource Brush.TextDim}"
+                           FontSize="10"
+                           VerticalAlignment="Center"
+                           Margin="0,0,6,0"/>
+                <ToggleButton x:Name="FooterBassBoostToggle"
+                              Grid.Column="1"
+                              Style="{StaticResource ToggleSwitch}"
+                              ToolTip="Boost low frequencies"
+                              Click="FooterBassBoostToggle_Click"/>
+                <TextBlock Grid.Column="3"
+                           Text="Enhanced"
+                           Foreground="{StaticResource Brush.TextDim}"
+                           FontSize="10"
+                           VerticalAlignment="Center"
+                           Margin="0,0,6,0"/>
+                <ToggleButton x:Name="FooterEnhancedAudioToggle"
+                              Grid.Column="4"
+                              Style="{StaticResource ToggleSwitch}"
+                              ToolTip="Boost clarity and detail"
+                              Click="FooterEnhancedAudioToggle_Click"/>
+              </Grid>
               <Grid Margin="0,8,0,0"
                     HorizontalAlignment="Stretch"
                     MinWidth="200"

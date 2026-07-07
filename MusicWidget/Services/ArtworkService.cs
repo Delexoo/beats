@@ -32,9 +32,9 @@ public sealed class ArtworkService
     public Task<ImageSource?> GetArtworkAsync(Track track, CancellationToken ct = default)
     {
         var key = NormalizeKey(track.FilePath);
-        if (_memCache.TryGetValue(key, out var cached))
+        if (_memCache.TryGetValue(key, out var cached) && cached is not null)
         {
-            return Task.FromResult(cached);
+            return Task.FromResult<ImageSource?>(cached);
         }
 
         return _inflight.GetOrAdd(key, _ => LoadAsync(track, ct));
@@ -50,8 +50,20 @@ public sealed class ArtworkService
             if (File.Exists(cachePath))
             {
                 var fromDisk = LoadBitmap(cachePath);
-                _memCache[key] = fromDisk;
-                return fromDisk;
+                if (fromDisk is not null)
+                {
+                    _memCache[key] = fromDisk;
+                    return fromDisk;
+                }
+
+                try
+                {
+                    File.Delete(cachePath);
+                }
+                catch
+                {
+                    // Stale cache cleanup is best-effort.
+                }
             }
 
             string? title = null;
@@ -63,11 +75,7 @@ public sealed class ArtworkService
                 using var tagFile = TagLib.File.Create(track.FilePath);
                 title = tagFile.Tag.Title;
                 artist = tagFile.Tag.FirstPerformer ?? tagFile.Tag.FirstAlbumArtist;
-                var pics = tagFile.Tag.Pictures;
-                if (pics is not null && pics.Length > 0)
-                {
-                    embedded = pics[0].Data?.Data;
-                }
+                embedded = ReadBestEmbeddedCover(tagFile.Tag.Pictures);
             }
             catch
             {
@@ -101,12 +109,24 @@ public sealed class ArtworkService
 
             if (bytes is null || bytes.Length == 0)
             {
-                _memCache[key] = null;
                 return null;
             }
 
-            await File.WriteAllBytesAsync(cachePath, bytes, ct).ConfigureAwait(false);
-            var bmp = LoadBitmap(cachePath);
+            var bmp = LoadBitmapFromBytes(bytes);
+            if (bmp is null)
+            {
+                return null;
+            }
+
+            try
+            {
+                await File.WriteAllBytesAsync(cachePath, bytes, ct).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Disk cache is best-effort; keep the in-memory bitmap.
+            }
+
             _memCache[key] = bmp;
             return bmp;
         }
@@ -234,6 +254,53 @@ public sealed class ArtworkService
     }
 
     private static string SanitizeFilename(string name) => TrackNameFormatter.Beautify(name);
+
+    private static byte[]? ReadBestEmbeddedCover(TagLib.IPicture[]? pictures)
+    {
+        if (pictures is null || pictures.Length == 0)
+        {
+            return null;
+        }
+
+        TagLib.IPicture? best = null;
+        foreach (var pic in pictures)
+        {
+            if (pic.Type == TagLib.PictureType.FrontCover)
+            {
+                return pic.Data?.Data;
+            }
+
+            best ??= pic;
+        }
+
+        return best?.Data?.Data;
+    }
+
+    private static ImageSource? LoadBitmapFromBytes(byte[] bytes)
+    {
+        if (bytes.Length == 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            using var stream = new MemoryStream(bytes);
+            var bmp = new BitmapImage();
+            bmp.BeginInit();
+            bmp.CacheOption = BitmapCacheOption.OnLoad;
+            bmp.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+            bmp.DecodePixelWidth = 120;
+            bmp.StreamSource = stream;
+            bmp.EndInit();
+            bmp.Freeze();
+            return bmp;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     private static ImageSource? LoadBitmap(string path)
     {

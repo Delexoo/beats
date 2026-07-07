@@ -42,7 +42,6 @@ public partial class WidgetWindow : Window
     private bool _hoverExpanded;
     private bool _animatingHover;
     private double _pillBaseWidth;
-    private double _pillDashboardMargin = -1;
     private double _hoverAnchorCenterX;
     private bool _settingsAnimOpen;
     private double _settingsAnimPillCenterX;
@@ -337,7 +336,7 @@ public partial class WidgetWindow : Window
     }
 
     /// <summary>
-    /// When the dashboard is open, offset the pill so it stays centered over the panel
+    /// When the dashboard is open, center the pill stack over the panel
     /// (including while hover expands/collapses the pill width).
     /// </summary>
     private void UpdatePillDashboardAlignment()
@@ -350,28 +349,12 @@ public partial class WidgetWindow : Window
             }
 
             PillBorder.HorizontalAlignment = HorizontalAlignment.Left;
+            PillBorder.BeginAnimation(FrameworkElement.MarginProperty, null);
+            PillBorder.Margin = new Thickness(0);
 
-            if (!ShouldAlignPillOverDashboard)
-            {
-                SetPillDashboardMargin(0);
-                return;
-            }
-
-            var dashboardW = GetDashboardWidth();
-            if (dashboardW <= 0)
-            {
-                SetPillDashboardMargin(0);
-                return;
-            }
-
-            var pillW = GetEffectivePillWidth();
-            if (pillW <= 0)
-            {
-                SetPillDashboardMargin(0);
-                return;
-            }
-
-            SetPillDashboardMargin(Math.Max(0, (dashboardW - pillW) / 2.0));
+            PillStack.HorizontalAlignment = ShouldAlignPillOverDashboard
+                ? HorizontalAlignment.Center
+                : HorizontalAlignment.Left;
         }
         catch (Exception ex)
         {
@@ -379,16 +362,11 @@ public partial class WidgetWindow : Window
         }
     }
 
-    private void SetPillDashboardMargin(double leftMargin)
+    private void ResetPillDashboardAlignment()
     {
-        if (Math.Abs(_pillDashboardMargin - leftMargin) < 0.5)
-        {
-            return;
-        }
-
-        _pillDashboardMargin = leftMargin;
+        PillStack.HorizontalAlignment = HorizontalAlignment.Left;
         PillBorder.BeginAnimation(FrameworkElement.MarginProperty, null);
-        PillBorder.Margin = new Thickness(leftMargin, 0, 0, 0);
+        PillBorder.Margin = new Thickness(0);
     }
 
     /// <summary>
@@ -600,7 +578,8 @@ public partial class WidgetWindow : Window
         HoverControlsClip.BeginAnimation(FrameworkElement.WidthProperty, null);
         PillBorder.BeginAnimation(FrameworkElement.MarginProperty, null);
         HoverControlsClip.Width = _hoverClipWidth;
-        PillBorder.Margin = new Thickness(_pillDashboardMargin > 0 ? _pillDashboardMargin : 0, 0, 0, 0);
+        PillBorder.BeginAnimation(FrameworkElement.MarginProperty, null);
+        PillBorder.Margin = new Thickness(0);
 
         IsBeingDragged = true;
     }
@@ -801,19 +780,19 @@ public partial class WidgetWindow : Window
             }
         }
 
-        if (App.Settings.Current.KeepWidgetExpanded && _pillDashboardMargin > 0.5)
+        if (App.Settings.Current.KeepWidgetExpanded && PillStack.HorizontalAlignment == HorizontalAlignment.Center)
         {
             SettingsHost.Visibility = Visibility.Collapsed;
             UpdateLayout();
             PreservePillScreenX(_hoverAnchorCenterX);
-            AnimateDashboardCloseMargin();
+            FinishDashboardCloseAlignment();
             return;
         }
 
         if (hoverStillVisible)
         {
             SettingsHost.Visibility = Visibility.Collapsed;
-            SetPillDashboardMargin(0);
+            ResetPillDashboardAlignment();
             UpdateLayout();
             PreservePillScreenX(_hoverAnchorCenterX);
             return;
@@ -836,7 +815,7 @@ public partial class WidgetWindow : Window
                 }
 
                 SettingsHost.Visibility = Visibility.Collapsed;
-                SetPillDashboardMargin(0);
+                ResetPillDashboardAlignment();
                 UpdateLayout();
                 PreservePillScreenX(_hoverAnchorCenterX);
                 return;
@@ -845,7 +824,7 @@ public partial class WidgetWindow : Window
             ApplyHoverStateSilently(false);
         }
 
-        SetPillDashboardMargin(0);
+        ResetPillDashboardAlignment();
         SettingsHost.Visibility = Visibility.Collapsed;
 
         UpdateLayout();
@@ -853,45 +832,10 @@ public partial class WidgetWindow : Window
         EndSettingsAnimation();
     }
 
-    private void AnimateDashboardCloseMargin()
+    private void FinishDashboardCloseAlignment()
     {
-        PillBorder.BeginAnimation(FrameworkElement.MarginProperty, null);
-
-        var from = new Thickness(_pillDashboardMargin, 0, 0, 0);
-        if (from.Left <= 0.5)
-        {
-            CompleteDashboardCloseLayout();
-            return;
-        }
-
-        var marginAnim = new ThicknessAnimation
-        {
-            From = from,
-            To = new Thickness(0),
-            Duration = TimeSpan.FromMilliseconds(220),
-            EasingFunction = HoverCollapseEase,
-            FillBehavior = FillBehavior.Stop,
-        };
-        marginAnim.CurrentTimeInvalidated += (_, _) =>
-        {
-            if (!IsBeingDragged)
-            {
-                PreservePillScreenX(_hoverAnchorCenterX);
-            }
-        };
-        marginAnim.Completed += OnDashboardCloseMarginAnimationCompleted;
-        PillBorder.BeginAnimation(FrameworkElement.MarginProperty, marginAnim, HandoffBehavior.SnapshotAndReplace);
-    }
-
-    private void OnDashboardCloseMarginAnimationCompleted(object? sender, EventArgs e)
-    {
-        if (sender is ThicknessAnimation anim)
-        {
-            anim.Completed -= OnDashboardCloseMarginAnimationCompleted;
-        }
-
-        PillBorder.BeginAnimation(FrameworkElement.MarginProperty, null);
-        SetPillDashboardMargin(0);
+        ResetPillDashboardAlignment();
+        UpdateLayout();
         PreservePillScreenX(_hoverAnchorCenterX);
         CompleteDashboardCloseLayout();
     }
@@ -1036,7 +980,7 @@ public partial class WidgetWindow : Window
         SettingsHost.BeginAnimation(HeightProperty, null);
         SettingsHost.Height = 0;
         SettingsHost.Visibility = Visibility.Collapsed;
-        SetPillDashboardMargin(0);
+        ResetPillDashboardAlignment();
         ApplyHoverStateSilently(false);
         UpdateLayout();
         PreservePillScreenX(pillCenterX);
