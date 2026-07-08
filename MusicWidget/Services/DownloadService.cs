@@ -1005,6 +1005,12 @@ public sealed class DownloadService
             CreateNoWindow = true,
             WorkingDirectory = destFolder,
         };
+        // Users can have a global yt-dlp config that forces a specific format (-f / --format),
+        // which can break extraction on some videos. We always want a predictable "best audio"
+        // behavior inside the app.
+        psi.ArgumentList.Add("--ignore-config");
+        psi.ArgumentList.Add("-f");
+        psi.ArgumentList.Add("bestaudio/best");
         psi.ArgumentList.Add("-x");
         psi.ArgumentList.Add("--audio-format");
         psi.ArgumentList.Add("mp3");

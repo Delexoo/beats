@@ -536,7 +536,31 @@ public partial class WidgetWindow : Window
         }
         else
         {
-            WindowAnimator.SlideBackIn(this, OnDone);
+            WindowAnimator.SlideBackIn(this, () =>
+            {
+                try
+                {
+                    // After re-showing, ensure the widget is visible on the current screen
+                    // (monitors/work area may have changed while hidden). If the user never
+                    // dragged the widget, keep the experience "centered on open".
+                    if (!IsPositionOnScreen(Left, Top))
+                    {
+                        CenterPillOnScreen();
+                    }
+                    else if (!_userMovedWidget && !_settingsExpanded && !_animatingSettings)
+                    {
+                        CenterPillOnScreen();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    CrashLog.Write(ex, "WidgetWindow.ToggleVisibility.SlideBackIn");
+                }
+                finally
+                {
+                    OnDone();
+                }
+            });
         }
     }
 
