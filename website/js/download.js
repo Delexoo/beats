@@ -26,13 +26,12 @@
   }
 
   function wireDownload(url) {
-    if (!url || !downloadBtn) return;
-    downloadBtn.href = url;
-    downloadBtn.setAttribute("download", ASSET);
-    if (downloadBtnSection) {
-      downloadBtnSection.href = url;
-      downloadBtnSection.setAttribute("download", ASSET);
-    }
+    if (!url) return;
+    [downloadBtn, downloadBtnSection].forEach(function (btn) {
+      if (!btn) return;
+      btn.href = url;
+      btn.setAttribute("download", ASSET);
+    });
   }
 
   function formatReleaseMeta(data) {

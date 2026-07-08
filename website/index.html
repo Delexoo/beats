@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Beats - Desktop player for Windows</title>
-  <meta name="description" content="Beats is a floating desktop player for Windows. Play local playlists, download from YouTube, Spotify, TikTok, and more, all from a minimal widget on your screen." />
+  <title>Beats — Desktop player for Windows</title>
+  <meta name="description" content="Beats is a floating desktop player for Windows. Play local playlists, download from YouTube, Spotify, TikTok, and more — all from a minimal widget on your screen." />
   <meta name="beats-repo" content="Delexoo/beats" />
   <link rel="icon" href="assets/app-icon.png" type="image/png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
 </head>
 <body>
@@ -32,122 +32,128 @@
                 <div class="hero-stage hero-copy is-active" id="stage-home" data-stage-name="home">
                   <h1>Beats.</h1>
                   <p class="lead">
-                    A floating desktop player for Windows. Play local playlists, download from YouTube, Spotify, TikTok, and more, all from a minimal widget on your screen.
+                    A quiet floating player for Windows. Keep music controls close, organize local playlists, and download tracks without opening a full app window.
                   </p>
                   <div class="cta-stack">
                     <a id="download-btn" class="btn btn-primary" href="downloads/Beats-Setup-x64.exe" download="Beats-Setup-x64.exe">Download for Windows</a>
                     <a id="github-btn-secondary" class="btn btn-secondary" href="#" target="_blank" rel="noopener">View on GitHub</a>
                   </div>
-                  <p class="meta" id="version-meta-home">Windows 10 / 11 | 64-bit</p>
+                  <p class="meta" id="version-meta-home">Windows 10 / 11 · 64-bit</p>
                 </div>
 
                 <div class="hero-stage" id="stage-features" data-stage-name="features">
                   <section class="info-section">
-                    <p class="features-heading">Features</p>
+                    <p class="features-heading">Small by design</p>
+                    <p class="section-subtitle">A focused set of controls for listening while you work.</p>
                     <ol class="info-list">
-                      <li tabindex="0">
-                        <div class="flip-card-inner">
-                          <div class="flip-card-front">
-                            <span class="info-name">Floating widget</span>
-                          </div>
-                          <div class="flip-card-back">
-                            <span class="info-desc">Stays on top of any app.</span>
-                          </div>
+                      <li class="feature-card">
+                        <span class="feature-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 21h8"/></svg>
+                        </span>
+                        <div class="feature-text">
+                          <span class="info-name">Floating widget</span>
+                          <span class="info-desc">Stays on top of any app, always within reach.</span>
                         </div>
                       </li>
-                      <li tabindex="0">
-                        <div class="flip-card-inner">
-                          <div class="flip-card-front">
-                            <span class="info-name">Folder playlists</span>
-                          </div>
-                          <div class="flip-card-back">
-                            <span class="info-desc">Your music, organized on disk.</span>
-                          </div>
+                      <li class="feature-card">
+                        <span class="feature-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M3 7h5l2 2h11v10H3z"/></svg>
+                        </span>
+                        <div class="feature-text">
+                          <span class="info-name">Folder playlists</span>
+                          <span class="info-desc">Your music, organized on disk the way you like it.</span>
                         </div>
                       </li>
-                      <li tabindex="0">
-                        <div class="flip-card-inner">
-                          <div class="flip-card-front">
-                            <span class="info-name">Download from web</span>
-                          </div>
-                          <div class="flip-card-back">
-                            <span class="info-desc">YouTube, Spotify, TikTok, and more.</span>
-                          </div>
+                      <li class="feature-card">
+                        <span class="feature-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                        </span>
+                        <div class="feature-text">
+                          <span class="info-name">Download from web</span>
+                          <span class="info-desc">Save tracks from the web into your playlists.</span>
                         </div>
                       </li>
-                      <li tabindex="0">
-                        <div class="flip-card-inner">
-                          <div class="flip-card-front">
-                            <span class="info-name">Hide &amp; show</span>
-                          </div>
-                          <div class="flip-card-back">
-                            <span class="info-desc">Alt+\ or the top chevron.</span>
-                          </div>
+                      <li class="feature-card">
+                        <span class="feature-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M6 9l6-4 6 4"/><path d="M4 20h16"/><path d="M8 9v11"/><path d="M16 9v11"/></svg>
+                        </span>
+                        <div class="feature-text">
+                          <span class="info-name">Hide &amp; show</span>
+                          <span class="info-desc">Alt+\ or the top chevron keeps the interface out of the way.</span>
                         </div>
                       </li>
                     </ol>
-                    <p class="cards-tip">Tip: Hover a card for more info.</p>
                   </section>
                 </div>
 
                 <div class="hero-stage" id="stage-how" data-stage-name="how">
                   <section class="info-section">
-                    <p class="features-heading">How it works</p>
+                    <p class="features-heading">Simple setup</p>
+                    <p class="section-subtitle">Install, add music, and place the widget where it belongs.</p>
                     <ol class="info-list">
-                      <li tabindex="0">
-                        <div class="flip-card-inner">
-                          <div class="flip-card-front">
-                            <span class="info-name">Download</span>
-                          </div>
-                          <div class="flip-card-back">
-                            <span class="info-desc">Install Beats on Windows in one click.</span>
-                          </div>
+                      <li class="feature-card">
+                        <span class="feature-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                        </span>
+                        <div class="feature-text">
+                          <span class="info-name">1. Download</span>
+                          <span class="info-desc">Install Beats on Windows in one click.</span>
                         </div>
                       </li>
-                      <li tabindex="0">
-                        <div class="flip-card-inner">
-                          <div class="flip-card-front">
-                            <span class="info-name">Add your music</span>
-                          </div>
-                          <div class="flip-card-back">
-                            <span class="info-desc">Use a folder or paste a link.</span>
-                          </div>
+                      <li class="feature-card">
+                        <span class="feature-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+                        </span>
+                        <div class="feature-text">
+                          <span class="info-name">2. Add your music</span>
+                          <span class="info-desc">Point to a folder or paste a link to download.</span>
                         </div>
                       </li>
-                      <li tabindex="0">
-                        <div class="flip-card-inner">
-                          <div class="flip-card-front">
-                            <span class="info-name">Place it anywhere</span>
-                          </div>
-                          <div class="flip-card-back">
-                            <span class="info-desc">Drag the album art to move it.</span>
-                          </div>
+                      <li class="feature-card">
+                        <span class="feature-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M5 9l-3 3 3 3"/><path d="M9 5l3-3 3 3"/><path d="M15 19l-3 3-3-3"/><path d="M19 9l3 3-3 3"/><path d="M2 12h20"/><path d="M12 2v20"/></svg>
+                        </span>
+                        <div class="feature-text">
+                          <span class="info-name">3. Place it anywhere</span>
+                          <span class="info-desc">Drag the album art to position the widget.</span>
                         </div>
                       </li>
-                      <li tabindex="0">
-                        <div class="flip-card-inner">
-                          <div class="flip-card-front">
-                            <span class="info-name">Hide when needed</span>
-                          </div>
-                          <div class="flip-card-back">
-                            <span class="info-desc">Alt+\ or the top chevron.</span>
-                          </div>
+                      <li class="feature-card">
+                        <span class="feature-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M17.94 17.94A10 10 0 0 1 12 20a10 10 0 0 1-7.07-2.93"/><path d="M6.06 6.06A10 10 0 0 1 12 4a10 10 0 0 1 7.07 2.93"/><path d="M2 2l20 20"/></svg>
+                        </span>
+                        <div class="feature-text">
+                          <span class="info-name">4. Hide when needed</span>
+                          <span class="info-desc">Alt+\ or the top chevron keeps your screen clear.</span>
                         </div>
                       </li>
                     </ol>
-                    <p class="cards-tip">Tip: Hover a card for more info.</p>
                   </section>
                 </div>
 
                 <div class="hero-stage" id="stage-download" data-stage-name="download">
                   <section class="download-section info-section">
-                    <p class="features-heading">Download now</p>
+                    <p class="features-heading">Ready when you are</p>
                     <p class="download-lead">Free for Windows 10 and 11. No account required.</p>
                     <div class="cta-stack">
                       <a id="download-btn-section" class="btn btn-primary" href="downloads/Beats-Setup-x64.exe" download="Beats-Setup-x64.exe">Download for Windows</a>
                       <a id="github-btn-section" class="btn btn-secondary" href="#" target="_blank" rel="noopener">View on GitHub</a>
                     </div>
-                    <p class="meta" id="version-meta-section">Windows 10 / 11 | 64-bit</p>
+                    <p class="meta" id="version-meta-section">Windows 10 / 11 · 64-bit</p>
+                    <div class="download-badges">
+                      <span class="download-badge">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 20h10"/></svg>
+                        Windows 10 / 11
+                      </span>
+                      <span class="download-badge">
+                        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        Open source
+                      </span>
+                      <span class="download-badge">
+                        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                        No account
+                      </span>
+                    </div>
                   </section>
                 </div>
               </div>
@@ -155,82 +161,94 @@
 
             <div class="preview">
               <div class="desktop-sim" aria-label="Windows 11 desktop preview with Beats widget">
-              <div class="desktop-screen" id="desktop-screen">
-                <img class="desktop-wallpaper" src="assets/Windows11.jpg" alt="" draggable="false" aria-hidden="true" />
-                <button type="button" class="desktop-hide-tab" id="desktop-hide-tab" aria-label="Hide widget">
-                  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4z"/></svg>
-                </button>
-                <div class="desktop-widget-wrap" id="desktop-widget-wrap">
-                  <div class="beats-pill" id="beats-pill" tabindex="0" role="group" aria-label="Beats player preview">
-                    <div class="pill-hover-controls" id="pill-hover-controls" aria-hidden="true">
-                      <button type="button" class="ctrl ctrl-util ctrl-loop" id="pill-loop-btn" aria-label="Loop current song" aria-pressed="false">
-                        <img src="assets/loop.png" alt="" width="12" height="12" draggable="false" />
-                      </button>
-                      <button type="button" class="ctrl ctrl-util" id="pill-gear-btn" aria-label="Open dashboard">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.61l-1.92-3.32a.5.5 0 0 0-.59-.22l-2.39.96a7.7 7.7 0 0 1-1.62-.94l-.36-2.54a.5.5 0 0 0-.47-.41h-3.84a.5.5 0 0 0-.47.41l-.36 2.54a7.7 7.7 0 0 1-1.62.94l-2.39-.96a.5.5 0 0 0-.59.22L2.74 8.87a.5.5 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.5.5 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.5.5 0 0 0-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/>
-                        </svg>
-                      </button>
-                    </div>
-                    <div class="pill-core">
-                      <div class="pill-art" id="pill-drag-handle" role="button" aria-label="Drag to move widget" tabindex="-1">
-                        <img src="assets/albumcover.png" alt="" width="42" height="42" draggable="false" />
+                <div class="desktop-screen" id="desktop-screen">
+                  <img class="desktop-wallpaper" src="assets/Windows11.jpg" alt="" draggable="false" aria-hidden="true" />
+                  <button type="button" class="desktop-hide-tab" id="desktop-hide-tab" aria-label="Hide widget">
+                    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4z"/></svg>
+                  </button>
+                  <div class="desktop-widget-wrap" id="desktop-widget-wrap">
+                    <div class="beats-pill" id="beats-pill" tabindex="0" role="group" aria-label="Beats player preview">
+                      <div class="pill-hover-controls" id="pill-hover-controls" aria-hidden="true">
+                        <button type="button" class="ctrl ctrl-util ctrl-loop" id="pill-loop-btn" aria-label="Loop current song" aria-pressed="false">
+                          <img src="assets/loop.png" alt="" width="12" height="12" draggable="false" />
+                        </button>
+                        <button type="button" class="ctrl ctrl-util" id="pill-gear-btn" aria-label="Open dashboard">
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.61l-1.92-3.32a.5.5 0 0 0-.59-.22l-2.39.96a7.7 7.7 0 0 1-1.62-.94l-.36-2.54a.5.5 0 0 0-.47-.41h-3.84a.5.5 0 0 0-.47.41l-.36 2.54a7.7 7.7 0 0 1-1.62.94l-2.39-.96a.5.5 0 0 0-.59.22L2.74 8.87a.5.5 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.5.5 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.5.5 0 0 0-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/>
+                          </svg>
+                        </button>
                       </div>
-                      <div class="pill-info" id="pill-info">
-                        <div class="pill-title" id="pill-title">Bloom</div>
-                        <div class="pill-artist" id="pill-artist">Troye Sivan</div>
-                      </div>
-                      <div class="pill-controls">
-                        <button type="button" class="ctrl ctrl-sm" aria-label="Previous track">
-                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                        </button>
-                        <button type="button" class="ctrl ctrl-lg" id="pill-play-btn" aria-label="Pause">
-                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5zm8 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V5z"/></svg>
-                        </button>
-                        <button type="button" class="ctrl ctrl-sm" aria-label="Next track">
-                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18L14.5 12 6 6V18zM16 6v12h2V6z"/></svg>
-                        </button>
+                      <div class="pill-core">
+                        <div class="pill-art" id="pill-drag-handle" role="button" aria-label="Drag to move widget" tabindex="-1">
+                          <img src="assets/albumcover.png" alt="" width="42" height="42" draggable="false" />
+                        </div>
+                        <div class="pill-info" id="pill-info">
+                          <div class="pill-title" id="pill-title">Bloom</div>
+                          <div class="pill-artist" id="pill-artist">Troye Sivan</div>
+                        </div>
+                        <div class="pill-controls">
+                          <button type="button" class="ctrl ctrl-sm" aria-label="Previous track">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                          </button>
+                          <button type="button" class="ctrl ctrl-lg" id="pill-play-btn" aria-label="Pause">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5zm8 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V5z"/></svg>
+                          </button>
+                          <button type="button" class="ctrl ctrl-sm" aria-label="Next track">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18L14.5 12 6 6V18zM16 6v12h2V6z"/></svg>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
+                <div class="desktop-taskbar-wrap" aria-hidden="true">
+                  <img class="desktop-taskbar" src="assets/taskbar.png" alt="" draggable="false" />
+                </div>
               </div>
-              <div class="desktop-taskbar-wrap" aria-hidden="true">
-                <img class="desktop-taskbar" src="assets/taskbar.png" alt="" draggable="false" />
+              <div class="widget-tips" aria-label="Widget tips">
+                <p class="widget-tips-title">Quick tips</p>
+                <ul class="widget-tips-list">
+                  <li class="widget-tip-card">
+                    <p class="widget-tip-text">
+                      Click
+                      <span class="widget-tip-tab" aria-hidden="true">
+                        <svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4z"/></svg>
+                      </span>
+                      to toggle the widget
+                    </p>
+                  </li>
+                  <li class="widget-tip-card">
+                    <p class="widget-tip-text"><kbd>Alt</kbd> + <kbd>\</kbd> to hide · <kbd>Ctrl</kbd> + <kbd>\</kbd> for dashboard</p>
+                  </li>
+                  <li class="widget-tip-card">
+                    <p class="widget-tip-text">Hover the widget to reveal controls</p>
+                  </li>
+                  <li class="widget-tip-card">
+                    <p class="widget-tip-text">Drag the album cover to reposition</p>
+                  </li>
+                </ul>
               </div>
             </div>
-            <div class="widget-tips" aria-label="Widget tips">
-              <p class="widget-tips-title">Tips</p>
-              <ul class="widget-tips-list">
-                <li class="widget-tip-card">
-                  <p class="widget-tip-text">
-                    Click on
-                    <span class="widget-tip-tab" aria-hidden="true">
-                      <svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4z"/></svg>
-                    </span>
-                    to toggle the widget
-                  </p>
-                </li>
-                <li class="widget-tip-card">
-                  <p class="widget-tip-text"><kbd>Alt</kbd> + <kbd>\</kbd> to hide, or <kbd>Ctrl</kbd> + <kbd>\</kbd> to open the dashboard</p>
-                </li>
-                <li class="widget-tip-card">
-                  <p class="widget-tip-text">Hover over the widget to expand</p>
-                </li>
-                <li class="widget-tip-card">
-                  <p class="widget-tip-text">Drag the album cover to move</p>
-                </li>
-              </ul>
-            </div>
-          </div>
           </div>
         </div>
       </div>
     </div>
+
     <footer class="panel-footer">
-      <p>© Delexo | <a href="help.html">Help</a> | <a href="terms.html">Terms</a> | <a href="privacy.html">Privacy</a> | <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a> | <a href="https://delexo.store">delexo.store</a></p>
+      <div class="footer-inner">
+        <p class="footer-brand">Beats.</p>
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="help.html">Help</a>
+          <a href="terms.html">Terms</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="https://github.com/Delexoo/beats" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://delexo.store">delexo.store</a>
+        </nav>
+        <p class="footer-copy">© 2026 Delexo</p>
+      </div>
     </footer>
   </main>
+
   <script src="js/stages.js"></script>
   <script src="js/download.js"></script>
   <script src="js/pill-demo.js"></script>
