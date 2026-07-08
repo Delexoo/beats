@@ -73,9 +73,7 @@ Built with **WPF** and **.NET 8**, powered by **LibVLC** for playback and **yt-d
 The project site is hosted on **GitHub Pages** at **[delexoo.github.io/beats](https://delexoo.github.io/beats/)**.
 
 <div align="center">
-
-[![Beats - floating desktop player for Windows](website/assets/albumcover.png)](https://delexoo.github.io/beats/)
-
+    
 <br />
 
 [**Open the website**](https://delexoo.github.io/beats/) | [**Help & manual**](https://delexoo.github.io/beats/help.html)
