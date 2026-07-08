@@ -856,6 +856,14 @@ public partial class SettingsPanel : UserControl
         TracksList.ItemsSource = cached.Tracks;
         TracksHeader.Text = $"{cached.Name} Playlist";
         LoadArtworkForTracks(cached);
+
+        // Keep skip/previous working for newly added downloads: when the on-disk playlist
+        // changes, the player queue must be refreshed to include the new tracks.
+        if (!string.IsNullOrEmpty(App.Settings.Current.CurrentPlaylist)
+            && string.Equals(App.Settings.Current.CurrentPlaylist, playlistName, StringComparison.OrdinalIgnoreCase))
+        {
+            App.Player.UpdateQueueOrder(cached.Tracks);
+        }
     }
 
     private void RefreshAll()
