@@ -34,8 +34,7 @@
         <li><a href="#getting-started">Getting started</a></li>
         <li><a href="#widget">Widget</a></li>
         <li><a href="#dashboard">Dashboard</a></li>
-        <li><a href="#playlists">Playlists</a></li>
-        <li><a href="#downloads">Downloads</a></li>
+        <li><a href="#playlists-downloading">Playlists &amp; downloading music</a></li>
         <li><a href="#playback">Playback</a></li>
         <li><a href="#shortcuts">Shortcuts</a></li>
         <li><a href="#youtube-cookies">YouTube cookies</a></li>
@@ -67,13 +66,13 @@
             <span>Install and play in five steps.</span>
           </span>
         </a>
-        <a class="quick-card" href="#downloads">
+        <a class="quick-card" href="#playlists-downloading">
           <span class="quick-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           </span>
           <span class="quick-text">
-            <strong>Download from web</strong>
-            <span>Paste a YouTube or Spotify link.</span>
+            <strong>Playlists &amp; downloads</strong>
+            <span>Create playlists and download music.</span>
           </span>
         </a>
         <a class="quick-card" href="#shortcuts">
@@ -163,10 +162,10 @@
         <p>Drag the <strong>album art</strong> to reposition anywhere on screen.</p>
 
         <h3>Hide &amp; show</h3>
-        <p>Press <kbd>Alt</kbd> + <kbd>\</kbd> to slide off the nearest edge, or click the chevron tab at the top of your screen.</p>
+        <p>Press <kbd>Alt</kbd> + <kbd>\</kbd> to slide off the nearest edge, or click the chevron tab <span class="ui-icon chevron" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4z"/></svg></span> at the top of your screen.</p>
 
         <h3>Expanded controls</h3>
-        <p>Hover to reveal loop and settings. Enable <strong>Extended widget</strong> in the dashboard to keep them visible.</p>
+        <p>Hover to reveal loop <span class="ui-img" aria-hidden="true"><img src="assets/loop.png" alt="" /></span> and settings <span class="ui-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.61l-1.92-3.32a.5.5 0 0 0-.59-.22l-2.39.96a7.7 7.7 0 0 1-1.62-.94l-.36-2.54a.5.5 0 0 0-.47-.41h-3.84a.5.5 0 0 0-.47.41l-.36 2.54a7.7 7.7 0 0 1-1.62.94l-2.39-.96a.5.5 0 0 0-.59.22L2.74 8.87a.5.5 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.5.5 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.5.5 0 0 0-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z\"/></svg></span>. Enable <strong>Extended widget</strong> in the dashboard to keep them visible.</p>
       </section>
 
       <section id="dashboard">
@@ -177,7 +176,7 @@
           <h2>Dashboard</h2>
         </div>
         <p class="lead">Your control center for playlists and playback.</p>
-        <p>Open with <kbd>Ctrl</kbd> + <kbd>\</kbd> or the gear button.</p>
+        <p>Open with <kbd>Ctrl</kbd> + <kbd>\</kbd> or the gear button <span class="ui-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.61l-1.92-3.32a.5.5 0 0 0-.59-.22l-2.39.96a7.7 7.7 0 0 1-1.62-.94l-.36-2.54a.5.5 0 0 0-.47-.41h-3.84a.5.5 0 0 0-.47.41l-.36 2.54a7.7 7.7 0 0 1-1.62.94l-2.39-.96a.5.5 0 0 0-.59.22L2.74 8.87a.5.5 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.5.5 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.5.5 0 0 0-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z\"/></svg></span>.</p>
 
         <ul class="list">
           <li><strong>Playlists sidebar</strong> - create, rename, delete, and pin playlists</li>
@@ -190,25 +189,55 @@
         <p>Drag edges to resize. <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>\</kbd> resets layout. Hold <kbd>Ctrl</kbd> and scroll to zoom the track list.</p>
       </section>
 
-      <section id="playlists">
+      <section id="playlists-downloading">
         <div class="section-head">
           <span class="section-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><path d="M12 10v7"/><path d="M9 14l3 3 3-3"/></svg>
           </span>
-          <h2>Playlists</h2>
+          <h2>Playlists &amp; downloading music</h2>
         </div>
-        <p class="lead">Folder-based libraries stored on your disk.</p>
-        <p>Default location: <code>%USERPROFILE%\Music\Beats</code></p>
+        <p class="lead">Create playlists (folders), add local files, or download from links.</p>
+        <p>Default library location: <code>%USERPROFILE%\\Music\\Beats</code></p>
 
-        <h3>Manage</h3>
-        <ul class="list">
-          <li><strong>New Playlist</strong> - create a folder</li>
-          <li><strong>Rename / Delete / Pin</strong> - right-click a playlist</li>
-          <li><strong>Add tracks</strong> - click <strong>+</strong> for files, folder, or link</li>
-        </ul>
+        <h3>Create a playlist</h3>
+        <ol class="steps">
+          <li>
+            <span class="step-num">1</span>
+            <div class="step-body">
+              <strong>Open the dashboard</strong>
+              <span>Press <kbd>Ctrl</kbd> + <kbd>\</kbd> or click the <span class="ui-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.5.5 0 0 0 .12-.61l-1.92-3.32a.5.5 0 0 0-.59-.22l-2.39.96a7.7 7.7 0 0 1-1.62-.94l-.36-2.54a.5.5 0 0 0-.47-.41h-3.84a.5.5 0 0 0-.47.41l-.36 2.54a7.7 7.7 0 0 1-1.62.94l-2.39-.96a.5.5 0 0 0-.59.22L2.74 8.87a.5.5 0 0 0 .12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.5.5 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.04.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.5.5 0 0 0-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z\"/></svg></span> gear on the widget.</span>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">2</span>
+            <div class="step-body">
+              <strong>Create</strong>
+              <span>Click <strong>New Playlist</strong> in the left sidebar. A playlist is a real folder on disk.</span>
+            </div>
+          </li>
+        </ol>
 
-        <h3>Formats</h3>
-        <p>MP3, WAV, FLAC, M4A, AAC, OGG, Opus, WMA, AIFF, ALAC.</p>
+        <h3>Add local music</h3>
+        <p>In the playlist header, click <strong>+</strong> then choose <strong>Add files</strong> or <strong>Add folder</strong>.</p>
+        <p class="muted-line">Supported formats include MP3, WAV, FLAC, M4A, AAC, OGG, Opus, WMA, AIFF, and ALAC.</p>
+
+        <h3>Download music from a link</h3>
+        <ol class="steps">
+          <li>
+            <span class="step-num">1</span>
+            <div class="step-body">
+              <strong>Open the add menu</strong>
+              <span>Inside a playlist, click <strong>+</strong> then pick <strong>Paste audio link</strong>.</span>
+            </div>
+          </li>
+          <li>
+            <span class="step-num">2</span>
+            <div class="step-body">
+              <strong>Paste a URL</strong>
+              <span>Paste a YouTube / Spotify / TikTok / Instagram / SoundCloud link, then click <strong>Download</strong>.</span>
+            </div>
+          </li>
+        </ol>
 
         <div class="note tip">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 1 7 7c0 2.5-1.5 4.5-3.5 5.5L14 22h-4l-.5-7.5C7.5 13.5 6 11.5 6 9a7 7 0 0 1 7-7z"/></svg>
@@ -216,41 +245,8 @@
         </div>
       </section>
 
-      <section id="downloads">
-        <div class="section-head">
-          <span class="section-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          </span>
-          <h2>Downloads</h2>
-        </div>
-        <p class="lead">Paste a link and save MP3s into a playlist folder.</p>
-        <p>Click <strong>+</strong> on a playlist, choose <strong>Paste audio link</strong>, paste a URL, and hit <strong>Download</strong>.</p>
-
-        <div class="platforms" aria-label="Supported platforms">
-          <span class="platform" title="YouTube"><img src="assets/youtube.png" width="36" height="36" alt="YouTube" /></span>
-          <span class="platform" title="Spotify"><img src="assets/Spotify.png" width="36" height="36" alt="Spotify" /></span>
-          <span class="platform" title="TikTok"><img src="assets/tiktok.png" width="36" height="36" alt="TikTok" /></span>
-          <span class="platform" title="Instagram"><img src="assets/instagram.jpg" width="36" height="36" alt="Instagram" /></span>
-          <span class="platform soundcloud" title="SoundCloud" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M1.175 13.5c-.64 0-1.175.533-1.175 1.175v2.65c0 .642.535 1.175 1.175 1.175S2.35 17.967 2.35 17.325v-2.65c0-.642-.523-1.175-1.175-1.175zm2.65 1.325c-.642 0-1.175.535-1.175 1.175v1.325c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-1.325c0-.64-.533-1.175-1.175-1.175zm2.65-1.325c-.642 0-1.175.533-1.175 1.175v2.65c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-2.65c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v3.3c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-3.3c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v3.95c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-3.95c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v4.6c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-4.6c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v5.25c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-5.25c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v5.9c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-5.9c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v6.55c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-6.55c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v7.2c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-7.2c0-.642-.533-1.175-1.175-1.175zm2.65-.65c-.642 0-1.175.533-1.175 1.175v7.85c0 .642.533 1.175 1.175 1.175.642 0 1.175-.533 1.175-1.175v-7.85c0-.642-.533-1.175-1.175-1.175z"/></svg>
-          </span>
-        </div>
-
-        <ul class="list">
-          <li><strong>YouTube</strong> - videos, playlists, channels</li>
-          <li><strong>Spotify</strong> - tracks, albums, playlists</li>
-          <li><strong>TikTok, SoundCloud, Instagram</strong> - reels, posts, and IGTV via yt-dlp; audio pages search YouTube for a match</li>
-        </ul>
-
-        <p>Playlists must be <strong>public or unlisted</strong>. Private playlists cannot be downloaded.</p>
-
-        <h3>Instagram tips</h3>
-        <ul class="list">
-          <li>Paste a <strong>reel link</strong> (<code>instagram.com/reel/...</code>), not an audio-only page</li>
-          <li>Share links from the Instagram app are cleaned automatically</li>
-          <li>If Instagram asks you to sign in, export <code>cookies.txt</code> (see <a href="#youtube-cookies">cookies setup</a>)</li>
-        </ul>
-      </section>
+      <div id="downloads" class="anchor-alias" aria-hidden="true"></div>
+      <div id="playlists" class="anchor-alias" aria-hidden="true"></div>
 
       <section id="playback">
         <div class="section-head">

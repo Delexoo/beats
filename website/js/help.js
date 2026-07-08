@@ -59,6 +59,24 @@
     if (el) sections.push({ link: a, el: el });
   });
 
+  function scrollToId(id) {
+    if (!id) return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    try { history.replaceState(null, "", "#" + id); } catch (_) { /* noop */ }
+  }
+
+  links.forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      var href = a.getAttribute("href") || "";
+      if (!href.startsWith("#")) return;
+      var id = href.slice(1);
+      e.preventDefault();
+      scrollToId(id);
+    });
+  });
+
   function onScroll() {
     var y = window.scrollY + 100;
     var cur = sections[0];
