@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
@@ -14,6 +15,7 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 using MusicWidget.Models;
 using MusicWidget.Services;
+using Track = MusicWidget.Models.Track;
 
 namespace MusicWidget.Views;
 
@@ -40,13 +42,8 @@ public partial class SettingsPanel : UserControl
 
     private static void OnTracksZoomChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is SettingsPanel panel)
-        {
-            panel.ApplyTracksListItemStyle();
-        }
+        // Item sizing is handled by bindings in the Track DataTemplate.
     }
-
-    private Style? _tracksItemStyleBase;
 
     private Point _trackDragStart;
     private bool _trackDragPending;
@@ -109,7 +106,6 @@ public partial class SettingsPanel : UserControl
         RebuildSavedTracks();
         RefreshAll();
         InitializeTracksListZoom();
-        UpdatePlayPauseTrackButton();
         UpdateShuffleButton();
         InitializeFooter();
         InitializeKeepWidgetExpandedToggle();
@@ -186,22 +182,11 @@ public partial class SettingsPanel : UserControl
         App.Player.SetShuffle(!App.Player.Shuffle);
     }
 
-    private void SongsAddButton_Click(object sender, RoutedEventArgs e)
-    {
-        e.Handled = true;
-        if (PlaylistsList.SelectedItem is not Playlist playlist)
-        {
-            return;
-        }
-        ShowAddMenuFor(playlist, (UIElement)sender);
-    }
-
     private void OnPlayerStateChanged(object? sender, EventArgs e)
     {
         UiDispatcher.BeginInvokeSafe(() =>
         {
             if (!_isPanelActive) return;
-            UpdatePlayPauseTrackButton();
             UpdatePlaylistPlayingStates();
             UpdateNowPlayingFooter();
             UpdateFooterProgress();
@@ -219,15 +204,6 @@ public partial class SettingsPanel : UserControl
     private void OnLoopChanged(object? sender, EventArgs e)
     {
         UiDispatcher.BeginInvokeSafe(UpdateFooterLoopIcon);
-    }
-
-    private void UpdatePlayPauseTrackButton()
-    {
-        var playing = App.Player.IsPlaying;
-        var key = playing ? "Icon.Pause" : "Icon.Play";
-        PlayPauseTrackIcon.Data = (Geometry)Application.Current.Resources[key];
-        PlayPauseTrackLabel.Text = playing ? "Pause" : "Play";
-        PlayPauseTrackTooltip.Text = playing ? "Pause" : "Play";
     }
 
     private void UpdatePlaylistPlayingStates()
@@ -293,42 +269,38 @@ public partial class SettingsPanel : UserControl
         HighlightCurrentlyPlayingTrack();
     }
 
-    /// <summary>
-    /// If the currently-playing track exists in the visible TracksList, select it
-    /// and scroll it into view so the user can always tell which row is playing.
-    /// Match by FilePath because the player and the playlist sometimes hold
-    /// different Track instances for the same file. If the playing track lives
-    /// in a different playlist than the one being browsed, selection is left
-    /// alone so we don't fight the user's manual navigation.
-    /// </summary>
     private void HighlightCurrentlyPlayingTrack()
     {
         var current = App.Player.CurrentTrack;
         if (current is null) return;
-        if (TracksList.ItemsSource is null) return;
 
-        Track? match = null;
-        foreach (var item in TracksList.ItemsSource)
+        Playlist? owner = null;
+        if (App.LikedSongs.Contains(current.FilePath)) owner = _likedPlaylist;
+        else if (App.SavedSongs.Contains(current.FilePath)) owner = _savesPlaylist;
+        else if (!string.IsNullOrEmpty(App.Settings.Current.CurrentPlaylist))
         {
-            if (item is Track tr &&
-                string.Equals(tr.FilePath, current.FilePath, StringComparison.OrdinalIgnoreCase))
-            {
-                match = tr;
-                break;
-            }
+            owner = _playlistsCache.FirstOrDefault(p =>
+                string.Equals(p.Name, App.Settings.Current.CurrentPlaylist, StringComparison.OrdinalIgnoreCase));
         }
+
+        if (owner is null) return;
+
+        CollapseAllPlaylistsExcept(owner);
+        owner.IsExpanded = true;
+
+        var list = FindTracksListForPlaylist(owner);
+        if (list is null) return;
+
+        var match = owner.Tracks.FirstOrDefault(t =>
+            string.Equals(t.FilePath, current.FilePath, StringComparison.OrdinalIgnoreCase));
         if (match is null) return;
-        if (ReferenceEquals(TracksList.SelectedItem, match)) return;
 
-        TracksList.SelectedItem = match;
-        try
+        if (!ReferenceEquals(list.SelectedItem, match))
         {
-            TracksList.ScrollIntoView(match);
+            list.SelectedItem = match;
         }
-        catch
-        {
-            // ListBox containers may not be generated yet.
-        }
+
+        try { list.ScrollIntoView(match); } catch { }
     }
 
     private void BindNowPlayingTrack(Track? track)
@@ -618,9 +590,7 @@ public partial class SettingsPanel : UserControl
     /// </summary>
     public void ResetSplitter()
     {
-        if (PlaylistsSongsGrid is null || PlaylistsSongsGrid.ColumnDefinitions.Count < 3) return;
-        PlaylistsSongsGrid.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
-        PlaylistsSongsGrid.ColumnDefinitions[2].Width = new GridLength(1, GridUnitType.Star);
+        // Split view removed (accordion layout).
     }
 
     private void ResetLayout_Click(object sender, RoutedEventArgs e)
@@ -828,9 +798,6 @@ public partial class SettingsPanel : UserControl
         if (selected.Kind == PlaylistKind.Liked)
         {
             RebuildLikedTracks();
-            TracksList.ItemsSource = null;
-            TracksList.ItemsSource = _likedPlaylist.Tracks;
-            TracksHeader.Text = $"{_likedPlaylist.Name} Playlist";
             LoadArtworkForTracks(_likedPlaylist);
             return;
         }
@@ -838,9 +805,6 @@ public partial class SettingsPanel : UserControl
         if (selected.Kind == PlaylistKind.Saves)
         {
             RebuildSavedTracks();
-            TracksList.ItemsSource = null;
-            TracksList.ItemsSource = _savesPlaylist.Tracks;
-            TracksHeader.Text = $"{_savesPlaylist.Name} Playlist";
             LoadArtworkForTracks(_savesPlaylist);
             return;
         }
@@ -852,9 +816,6 @@ public partial class SettingsPanel : UserControl
             return;
         }
 
-        TracksList.ItemsSource = null;
-        TracksList.ItemsSource = cached.Tracks;
-        TracksHeader.Text = $"{cached.Name} Playlist";
         LoadArtworkForTracks(cached);
 
         // Keep skip/previous working for newly added downloads: when the on-disk playlist
@@ -944,16 +905,9 @@ public partial class SettingsPanel : UserControl
                 break;
         }
 
-        TracksList.ItemsSource = null;
-        TracksList.ItemsSource = pl.Tracks;
-        TracksHeader.Text = $"{pl.Name} Playlist";
-
         SyncTrackLikedStates();
         LoadArtworkForTracks(pl);
 
-        // After re-binding the tracks list, re-select the playing track if it
-        // lives in this playlist. Defer to the next layout pass so the ListBox
-        // has finished generating containers (otherwise ScrollIntoView noops).
         Dispatcher.BeginInvoke(new Action(HighlightCurrentlyPlayingTrack),
             System.Windows.Threading.DispatcherPriority.ContextIdle);
     }
@@ -1380,12 +1334,39 @@ public partial class SettingsPanel : UserControl
 
         if (PlaylistsList.SelectedItem is Playlist pl)
         {
+            CollapseAllPlaylistsExcept(pl);
+            pl.IsExpanded = true;
+            RefreshTracks(pl);
+
+            if (pl.Kind == PlaylistKind.Normal)
+            {
+                App.Playlists.SetCurrentPlaylist(pl.Name);
+            }
+        }
+        else
+        {
+            CollapseAllPlaylistsExcept(null);
+        }
+    }
+
+    private void PlaylistExpandToggle_Click(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        if (sender is not ToggleButton tb || tb.DataContext is not Playlist pl)
+        {
+            return;
+        }
+
+        PlaylistsList.SelectedItem = pl;
+        if (tb.IsChecked == true)
+        {
+            CollapseAllPlaylistsExcept(pl);
+            pl.IsExpanded = true;
             RefreshTracks(pl);
         }
         else
         {
-            TracksList.ItemsSource = null;
-            TracksHeader.Text = "Songs";
+            pl.IsExpanded = false;
         }
     }
 
@@ -1627,25 +1608,47 @@ public partial class SettingsPanel : UserControl
 
     private void InitializeTracksListZoom()
     {
-        _tracksItemStyleBase ??= TracksList.ItemContainerStyle;
         var saved = App.Settings.Current.TracksListZoom;
         TracksZoom = Math.Clamp(saved > 0 ? saved : 1.0, TracksZoomMin, TracksZoomMax);
-        ApplyTracksListItemStyle();
     }
 
     private void ApplyTracksListItemStyle()
     {
-        if (_tracksItemStyleBase is null)
-        {
-            return;
-        }
+        // Item sizing is handled by bindings in the Track DataTemplate.
+    }
 
-        var z = TracksZoom;
-        var style = new Style(typeof(ListBoxItem), _tracksItemStyleBase);
-        style.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(8 * z, 4 * z, 8 * z, 4 * z)));
-        style.Setters.Add(new Setter(Control.FontSizeProperty, 12 * z));
-        style.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(0, 1 * z, 0, 1 * z)));
-        TracksList.ItemContainerStyle = style;
+    // ----- Accordion helpers -----
+
+    private void CollapseAllPlaylistsExcept(Playlist? expanded)
+    {
+        _likedPlaylist.IsExpanded = expanded is not null && ReferenceEquals(expanded, _likedPlaylist);
+        _savesPlaylist.IsExpanded = expanded is not null && ReferenceEquals(expanded, _savesPlaylist);
+        foreach (var pl in _playlistsCache)
+        {
+            pl.IsExpanded = expanded is not null && ReferenceEquals(pl, expanded);
+        }
+    }
+
+    private static T? FindDescendant<T>(DependencyObject? node) where T : DependencyObject
+    {
+        if (node is null) return null;
+        var count = VisualTreeHelper.GetChildrenCount(node);
+        for (int i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(node, i);
+            if (child is T match) return match;
+            var deeper = FindDescendant<T>(child);
+            if (deeper is not null) return deeper;
+        }
+        return null;
+    }
+
+    private ListBox? FindTracksListForPlaylist(Playlist playlist)
+    {
+        var container = PlaylistsList.ItemContainerGenerator.ContainerFromItem(playlist) as DependencyObject;
+        if (container is null) return null;
+        // The nested tracks ListBox is the only ListBox inside the Playlist template.
+        return FindDescendant<ListBox>(container);
     }
 
     private void TracksList_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -1666,6 +1669,11 @@ public partial class SettingsPanel : UserControl
             return;
         }
 
+        if (sender is not ListBox list || list.DataContext is not Playlist pl || pl.Kind != PlaylistKind.Normal)
+        {
+            return;
+        }
+
         var pos = e.GetPosition(null);
         if (Math.Abs(pos.X - _trackDragStart.X) < SystemParameters.MinimumHorizontalDragDistance &&
             Math.Abs(pos.Y - _trackDragStart.Y) < SystemParameters.MinimumVerticalDragDistance)
@@ -1681,7 +1689,7 @@ public partial class SettingsPanel : UserControl
 
         try
         {
-            DragDrop.DoDragDrop(TracksList, track, DragDropEffects.Move);
+            DragDrop.DoDragDrop(list, track, DragDropEffects.Move);
         }
         catch (Exception ex)
         {
@@ -1699,16 +1707,21 @@ public partial class SettingsPanel : UserControl
     {
         try
         {
+            if (sender is not ListBox list) return;
             if (!e.Data.GetDataPresent(typeof(Track))) return;
             if (e.Data.GetData(typeof(Track)) is not Track dragged) return;
-            if (GetActivePlaylist() is not Playlist pl) return;
+            if (list.DataContext is not Playlist pl || pl.Kind != PlaylistKind.Normal) return;
 
             var tracks = pl.Tracks;
-            var oldIndex = tracks.FindIndex(t =>
-                string.Equals(t.FilePath, dragged.FilePath, StringComparison.OrdinalIgnoreCase));
+            var oldIndex = tracks.IndexOf(dragged);
+            if (oldIndex < 0)
+            {
+                oldIndex = tracks.ToList().FindIndex(t =>
+                    string.Equals(t.FilePath, dragged.FilePath, StringComparison.OrdinalIgnoreCase));
+            }
             if (oldIndex < 0) return;
 
-            var newIndex = GetTracksDropIndex(e.GetPosition(TracksList));
+            var newIndex = GetTracksDropIndex(e.GetPosition(list), list);
             newIndex = Math.Clamp(newIndex, 0, tracks.Count);
             if (newIndex > oldIndex) newIndex--;
             newIndex = Math.Clamp(newIndex, 0, Math.Max(0, tracks.Count - 1));
@@ -1723,29 +1736,29 @@ public partial class SettingsPanel : UserControl
         }
     }
 
-    private int GetTracksDropIndex(Point position)
+    private int GetTracksDropIndex(Point position, ListBox list)
     {
         try
         {
-            var hit = TracksList.InputHitTest(position) as DependencyObject;
+            var hit = list.InputHitTest(position) as DependencyObject;
             var item = FindAncestor<ListBoxItem>(hit);
             if (item is null)
             {
-                return TracksList.Items.Count;
+                return list.Items.Count;
             }
 
-            if (TracksList.ItemContainerGenerator.Status != System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+            if (list.ItemContainerGenerator.Status != System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
             {
-                return TracksList.Items.Count;
+                return list.Items.Count;
             }
 
-            var index = TracksList.ItemContainerGenerator.IndexFromContainer(item);
+            var index = list.ItemContainerGenerator.IndexFromContainer(item);
             if (index < 0)
             {
-                return TracksList.Items.Count;
+                return list.Items.Count;
             }
 
-            var itemTop = item.TranslatePoint(new Point(0, 0), TracksList).Y;
+            var itemTop = item.TranslatePoint(new Point(0, 0), list).Y;
             var relativeY = position.Y - itemTop;
             var height = ((FrameworkElement)item).ActualHeight;
             if (height <= 0)
@@ -1757,7 +1770,7 @@ public partial class SettingsPanel : UserControl
         }
         catch
         {
-            return TracksList.Items.Count;
+            return list.Items.Count;
         }
     }
 
@@ -1784,10 +1797,12 @@ public partial class SettingsPanel : UserControl
                 break;
         }
 
-        TracksList.ItemsSource = null;
-        TracksList.ItemsSource = tracks;
-        TracksList.SelectedItem = track;
-        TracksList.ScrollIntoView(track);
+        var list = FindTracksListForPlaylist(pl);
+        if (list is not null)
+        {
+            list.SelectedItem = track;
+            list.ScrollIntoView(track);
+        }
 
         if (IsPlaylistActive(pl))
         {
@@ -1811,12 +1826,28 @@ public partial class SettingsPanel : UserControl
 
     private void TracksList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
-        PlayTrack_Click(sender, new RoutedEventArgs());
+        if (sender is not ListBox list) return;
+        if (list.DataContext is not Playlist pl) return;
+        if (list.SelectedItem is not Track t) return;
+
+        if (pl.Kind == PlaylistKind.Normal)
+        {
+            App.Playlists.SetCurrentPlaylist(pl.Name);
+        }
+
+        var idx = pl.Tracks.IndexOf(t);
+        if (idx < 0) idx = 0;
+        App.Player.SetQueue(pl.Tracks, idx);
     }
 
     private void TracksList_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
         // Select whichever row was right-clicked so the context menu acts on it.
+        if (sender is ListBox list)
+        {
+            _activeTrackListForContextMenu = list;
+        }
+
         if (e.OriginalSource is DependencyObject src)
         {
             var item = FindAncestor<ListBoxItem>(src);
@@ -1827,7 +1858,7 @@ public partial class SettingsPanel : UserControl
             }
             else
             {
-                TracksList.SelectedItem = null;
+                if (sender is ListBox lb) lb.SelectedItem = null;
             }
         }
     }
@@ -1842,13 +1873,18 @@ public partial class SettingsPanel : UserControl
         return null;
     }
 
-    private Track? GetContextTrack()
-    {
-        return TracksList.SelectedItem as Track;
-    }
+    private ListBox? _activeTrackListForContextMenu;
+
+    private Track? GetContextTrack() =>
+        _activeTrackListForContextMenu?.SelectedItem as Track;
 
     private Playlist? GetActivePlaylist()
     {
+        // Prefer the playlist that owns the track list that opened the context menu.
+        if (_activeTrackListForContextMenu?.DataContext is Playlist plFromMenu)
+        {
+            return plFromMenu;
+        }
         return PlaylistsList.SelectedItem as Playlist;
     }
 
@@ -1962,41 +1998,77 @@ public partial class SettingsPanel : UserControl
 
     private void TrackContextMenu_Opened(object sender, RoutedEventArgs e)
     {
+        var cm = sender as ContextMenu;
+        if (cm is null) return;
+        _activeTrackListForContextMenu = cm.PlacementTarget as ListBox;
+
         var t = GetContextTrack();
         if (t is null) return;
 
         bool liked = App.LikedSongs.Contains(t.FilePath);
-        MenuItemLike.Header = liked ? "Remove from Liked Songs" : "Add to Liked Songs";
-        var fillKey = liked ? "Brush.TextDim" : null;
-        MenuItemLikeIcon.Fill = fillKey is null
-            ? new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44))
-            : (Brush)Application.Current.Resources[fillKey];
+        MenuItem? likeItem = null;
+        System.Windows.Shapes.Path? likeIcon = null;
+        Separator? beforeEdit = null;
+        MenuItem? editItem = null;
+        MenuItem? deleteItem = null;
+        System.Windows.Shapes.Path? deleteIcon = null;
+
+        foreach (var obj in cm.Items)
+        {
+            if (obj is MenuItem mi)
+            {
+                if (Equals(mi.Tag, "like")) { likeItem = mi; likeIcon = mi.Icon as System.Windows.Shapes.Path; }
+                else if (Equals(mi.Tag, "edit")) editItem = mi;
+                else if (Equals(mi.Tag, "delete")) { deleteItem = mi; deleteIcon = mi.Icon as System.Windows.Shapes.Path; }
+            }
+            else if (obj is Separator sep && Equals(sep.Tag, "before-edit"))
+            {
+                beforeEdit = sep;
+            }
+        }
+
+        if (likeItem is not null)
+        {
+            likeItem.Header = liked ? "Remove from Liked Songs" : "Add to Liked Songs";
+        }
+        if (likeIcon is not null)
+        {
+            likeIcon.Fill = liked
+                ? (Brush)Application.Current.Resources["Brush.TextDim"]
+                : new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+        }
 
         // Tailor the rename/delete row to whichever playlist owns this menu invocation.
         var active = GetActivePlaylist();
         bool isVirtual = active is not null && active.Kind != PlaylistKind.Normal;
         bool isLiked = active is not null && active.Kind == PlaylistKind.Liked;
 
-        SeparatorBeforeEdit.Visibility = isVirtual ? Visibility.Collapsed : Visibility.Visible;
-        MenuItemEdit.Visibility = isVirtual ? Visibility.Collapsed : Visibility.Visible;
+        if (beforeEdit is not null) beforeEdit.Visibility = isVirtual ? Visibility.Collapsed : Visibility.Visible;
+        if (editItem is not null) editItem.Visibility = isVirtual ? Visibility.Collapsed : Visibility.Visible;
 
         if (isLiked)
         {
-            MenuItemDelete.Header = "Remove from Liked Songs";
-            MenuItemDeleteIcon.Data = (Geometry)Application.Current.Resources["Icon.Heart"];
-            MenuItemDeleteIcon.Fill = (Brush)Application.Current.Resources["Brush.TextDim"];
-            MenuItemDelete.Visibility = Visibility.Visible;
+            if (deleteItem is not null) deleteItem.Header = "Remove from Liked Songs";
+            if (deleteIcon is not null)
+            {
+                deleteIcon.Data = (Geometry)Application.Current.Resources["Icon.Heart"];
+                deleteIcon.Fill = (Brush)Application.Current.Resources["Brush.TextDim"];
+            }
+            if (deleteItem is not null) deleteItem.Visibility = Visibility.Visible;
         }
         else if (isVirtual)
         {
-            MenuItemDelete.Visibility = Visibility.Collapsed;
+            if (deleteItem is not null) deleteItem.Visibility = Visibility.Collapsed;
         }
         else
         {
-            MenuItemDelete.Header = "Delete from playlist";
-            MenuItemDeleteIcon.Data = (Geometry)Application.Current.Resources["Icon.Trash"];
-            MenuItemDeleteIcon.Fill = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
-            MenuItemDelete.Visibility = Visibility.Visible;
+            if (deleteItem is not null) deleteItem.Header = "Delete from playlist";
+            if (deleteIcon is not null)
+            {
+                deleteIcon.Data = (Geometry)Application.Current.Resources["Icon.Trash"];
+                deleteIcon.Fill = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+            }
+            if (deleteItem is not null) deleteItem.Visibility = Visibility.Visible;
         }
     }
 
@@ -2054,29 +2126,8 @@ public partial class SettingsPanel : UserControl
 
     private void PlayTrack_Click(object sender, RoutedEventArgs e)
     {
-        var selectedTrack = TracksList.SelectedItem as Track;
-        var currentTrack = App.Player.CurrentTrack;
-        var hasDifferentSelection = selectedTrack is not null &&
-            (currentTrack is null ||
-             !string.Equals(currentTrack.FilePath, selectedTrack.FilePath, StringComparison.OrdinalIgnoreCase));
-
-        if (!hasDifferentSelection && currentTrack is not null)
-        {
-            App.Player.TogglePlayPause();
-            return;
-        }
-
-        if (PlaylistsList.SelectedItem is not Playlist pl) return;
-        var t = selectedTrack;
-        if (t is null)
-        {
-            if (pl.Tracks.Count == 0) return;
-            t = pl.Tracks[0];
-        }
-        App.Playlists.SetCurrentPlaylist(pl.Name);
-        var startIdx = pl.Tracks.IndexOf(t);
-        if (startIdx < 0) startIdx = 0;
-        App.Player.SetQueue(pl.Tracks, startIdx);
+        // Removed with the split Songs panel. Playback is driven by playlist row play,
+        // track double-click, or context menu.
     }
 
     // ----- Minimize / Exit -----
@@ -2344,9 +2395,6 @@ public partial class SettingsPanel : UserControl
                 UpdateFooterLikeIcon();
                 if (PlaylistsList.SelectedItem is Playlist sel && sel.Kind == PlaylistKind.Liked)
                 {
-                    TracksList.ItemsSource = null;
-                    TracksList.ItemsSource = _likedPlaylist.Tracks;
-                    TracksHeader.Text = $"{_likedPlaylist.Name} Playlist";
                     LoadArtworkForTracks(_likedPlaylist);
                 }
             }
@@ -2368,9 +2416,6 @@ public partial class SettingsPanel : UserControl
                 UpdateFooterSaveIcon();
                 if (PlaylistsList.SelectedItem is Playlist sel && sel.Kind == PlaylistKind.Saves)
                 {
-                    TracksList.ItemsSource = null;
-                    TracksList.ItemsSource = _savesPlaylist.Tracks;
-                    TracksHeader.Text = $"{_savesPlaylist.Name} Playlist";
                     LoadArtworkForTracks(_savesPlaylist);
                 }
             }

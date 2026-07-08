@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -19,6 +20,7 @@ public sealed class Playlist : INotifyPropertyChanged
     private bool _isPlayingNow;
     private bool _isActivePlaylist;
     private bool _isUserPinned;
+    private bool _isExpanded;
 
     public string Name { get; }
     public string FolderPath { get; }
@@ -50,7 +52,21 @@ public sealed class Playlist : INotifyPropertyChanged
     /// </summary>
     public bool IsPinned => Kind != PlaylistKind.Normal || _isUserPinned;
 
-    public List<Track> Tracks { get; } = new();
+    public ObservableCollection<Track> Tracks { get; } = new();
+
+    /// <summary>
+    /// UI-only state for the dashboard accordion.
+    /// </summary>
+    public bool IsExpanded
+    {
+        get => _isExpanded;
+        set
+        {
+            if (_isExpanded == value) return;
+            _isExpanded = value;
+            OnPropertyChanged();
+        }
+    }
 
     public bool IsPlayingNow
     {

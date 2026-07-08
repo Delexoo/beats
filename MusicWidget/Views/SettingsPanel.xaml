@@ -28,6 +28,71 @@
       </Style.Triggers>
     </Style>
 
+    <!-- Shared context menu for tracks (used by all nested track lists). -->
+    <ContextMenu x:Key="TrackContextMenu"
+                 Opened="TrackContextMenu_Opened">
+      <MenuItem Header="Play"
+                Click="TrackContextPlay_Click">
+        <MenuItem.Icon>
+          <Path Data="{StaticResource Icon.Play}"
+                Fill="{StaticResource Brush.Text}"
+                Stretch="Uniform"
+                Width="11" Height="11"/>
+        </MenuItem.Icon>
+      </MenuItem>
+      <Separator/>
+      <MenuItem Header="Add to Liked Songs"
+                Tag="like"
+                Click="TrackContextLike_Click">
+        <MenuItem.Icon>
+          <Path Data="{StaticResource Icon.Heart}"
+                Fill="#FFEF4444"
+                Stretch="Uniform"
+                Width="12" Height="12"/>
+        </MenuItem.Icon>
+      </MenuItem>
+      <Separator/>
+      <MenuItem Header="Show in File Explorer"
+                Click="TrackContextShowInExplorer_Click">
+        <MenuItem.Icon>
+          <Path Data="{StaticResource Icon.Folder}"
+                Fill="{StaticResource Brush.Text}"
+                Stretch="Uniform"
+                Width="12" Height="12"/>
+        </MenuItem.Icon>
+      </MenuItem>
+      <MenuItem Header="Copy file path"
+                Click="TrackContextCopyPath_Click">
+        <MenuItem.Icon>
+          <Path Data="{StaticResource Icon.Link}"
+                Fill="{StaticResource Brush.Text}"
+                Stretch="Uniform"
+                Width="12" Height="12"/>
+        </MenuItem.Icon>
+      </MenuItem>
+      <Separator Tag="before-edit"/>
+      <MenuItem Header="Edit..."
+                Tag="edit"
+                Click="TrackContextEdit_Click">
+        <MenuItem.Icon>
+          <Path Data="{StaticResource Icon.Edit}"
+                Fill="{StaticResource Brush.Text}"
+                Stretch="Uniform"
+                Width="12" Height="12"/>
+        </MenuItem.Icon>
+      </MenuItem>
+      <MenuItem Header="Delete from playlist"
+                Tag="delete"
+                Click="TrackContextDelete_Click">
+        <MenuItem.Icon>
+          <Path Data="{StaticResource Icon.Trash}"
+                Fill="#FFEF4444"
+                Stretch="Uniform"
+                Width="12" Height="12"/>
+        </MenuItem.Icon>
+      </MenuItem>
+    </ContextMenu>
+
     <DataTemplate DataType="{x:Type models:Track}">
       <Grid Background="Transparent"
             Margin="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomThickness}, ConverterParameter='0,1,0,1'}">
@@ -186,17 +251,35 @@
             </MenuItem>
           </ContextMenu>
         </Grid.ContextMenu>
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto"/>
-          <ColumnDefinition Width="Auto"/>
-          <ColumnDefinition Width="*"/>
-          <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
-        <Button Grid.Column="0"
-                Style="{StaticResource PlaylistRowIconButtonStyle}"
-                Click="PlaylistPlayButton_Click"
-                Tag="{Binding}"
-                Margin="0,0,4,0">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <ToggleButton Grid.Column="0"
+                        Style="{StaticResource PlaylistRowIconButtonStyle}"
+                        Width="22" Height="22"
+                        Margin="0,0,4,0"
+                        IsChecked="{Binding IsExpanded, Mode=TwoWay}"
+                        Click="PlaylistExpandToggle_Click"
+                        ToolTip="Show songs">
+            <Path Stretch="Uniform" Width="12" Height="12"
+                  Fill="{StaticResource Brush.TextDim}"
+                  Data="{StaticResource Icon.ChevronDown}"/>
+          </ToggleButton>
+
+          <Button Grid.Column="1"
+                  Style="{StaticResource PlaylistRowIconButtonStyle}"
+                  Click="PlaylistPlayButton_Click"
+                  Tag="{Binding}"
+                  Margin="0,0,4,0">
           <Button.ToolTip>
             <ToolTip>
               <TextBlock>
@@ -235,7 +318,7 @@
         </Button>
 
         <!-- Pinned badge: heart for Liked, download for Saves, pin for user-pinned normals. -->
-        <Path Grid.Column="1"
+        <Path Grid.Column="2"
               x:Name="PinnedBadge"
               Stretch="Uniform"
               Width="12" Height="12"
@@ -270,7 +353,7 @@
           </Path.Style>
         </Path>
 
-        <TextBlock Grid.Column="2"
+        <TextBlock Grid.Column="3"
                    Text="{Binding Name}"
                    VerticalAlignment="Center"
                    TextTrimming="CharacterEllipsis"
@@ -289,7 +372,7 @@
 
         <!-- Rename / Delete / Add — shown for all real (Normal) playlists, even if
              the user has pinned them. Hidden only for virtual Liked/Saves. -->
-        <StackPanel Grid.Column="3"
+        <StackPanel Grid.Column="4"
                     Orientation="Horizontal"
                     VerticalAlignment="Center">
           <StackPanel.Style>
@@ -333,6 +416,41 @@
                   Width="12" Height="12"/>
           </Button>
         </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="1"
+                Margin="26,6,0,0"
+                Background="{StaticResource Brush.SurfaceHigh}"
+                BorderBrush="{StaticResource Brush.Border}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="6"
+                Visibility="Collapsed">
+          <Border.Style>
+            <Style TargetType="Border">
+              <Setter Property="Visibility" Value="Collapsed"/>
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                  <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Border.Style>
+          <ListBox x:Name="PlaylistTracksList"
+                   Style="{StaticResource DarkListBox}"
+                   ItemsSource="{Binding Tracks}"
+                   AllowDrop="True"
+                   ToolTip="Drag songs to reorder. Ctrl + scroll wheel to resize song rows."
+                   PreviewMouseLeftButtonDown="TracksList_PreviewMouseLeftButtonDown"
+                   PreviewMouseLeftButtonUp="TracksList_PreviewMouseLeftButtonUp"
+                   PreviewMouseMove="TracksList_PreviewMouseMove"
+                   DragOver="TracksList_DragOver"
+                   Drop="TracksList_Drop"
+                   PreviewMouseWheel="TracksList_PreviewMouseWheel"
+                   MouseDoubleClick="TracksList_MouseDoubleClick"
+                   PreviewMouseRightButtonDown="TracksList_PreviewMouseRightButtonDown"
+                   ContextMenu="{StaticResource TrackContextMenu}"/>
+        </Border>
       </Grid>
     </DataTemplate>
 
@@ -533,7 +651,7 @@
           </Grid>
         </Border>
 
-        <!-- Playlists + Songs section -->
+        <!-- Playlists section (single-pane accordion) -->
         <Border Grid.Row="2"
                 Background="{StaticResource Brush.SurfaceAlt}"
                 BorderBrush="{StaticResource Brush.Border}"
@@ -542,195 +660,42 @@
                 Padding="9">
           <Grid>
             <Grid.RowDefinitions>
-              <RowDefinition Height="*"/>
               <RowDefinition Height="Auto"/>
+              <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0" x:Name="PlaylistsSongsGrid">
+            <Grid Grid.Row="0" Margin="0,0,0,6">
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="120"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*" MinWidth="120"/>
               </Grid.ColumnDefinitions>
-
-              <Grid Grid.Column="0" Margin="0,0,4,0">
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="Auto"/>
-                  <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <Grid Grid.Row="0" Margin="0,0,0,6">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                  </Grid.ColumnDefinitions>
-                  <TextBlock Grid.Column="0"
-                             Text="Playlists"
-                             Foreground="{StaticResource Brush.TextDim}"
-                             FontSize="10"
-                             FontWeight="SemiBold"
-                             VerticalAlignment="Center"/>
-                  <Button Grid.Column="1"
-                          Style="{StaticResource PrimaryButton}"
-                          Padding="8,3"
-                          FontSize="11"
-                          Click="NewPlaylist_Click"
-                          ToolTip="Create a new playlist">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                      <Path Data="{StaticResource Icon.Plus}"
-                            Fill="White"
-                            Stretch="Uniform"
-                            Width="9" Height="9"
-                            Margin="0,0,4,0"/>
-                      <TextBlock Text="New Playlist" FontWeight="SemiBold"/>
-                    </StackPanel>
-                  </Button>
-                </Grid>
-                <ListBox Grid.Row="1"
-                         x:Name="PlaylistsList"
-                         Style="{StaticResource DarkListBox}"
-                         SelectionChanged="PlaylistsList_SelectionChanged"/>
-              </Grid>
-
-              <GridSplitter Grid.Column="1"
-                            Style="{StaticResource SectionSplitter}"/>
-
-              <Grid Grid.Column="2" Margin="4,0,0,0">
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="Auto"/>
-                  <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <Grid Grid.Row="0" Margin="0,0,0,6">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                  </Grid.ColumnDefinitions>
-                  <TextBlock Grid.Column="0"
-                             x:Name="TracksHeader"
-                             Text="Songs"
-                             Foreground="{StaticResource Brush.TextDim}"
-                             FontSize="10"
-                             FontWeight="SemiBold"
-                             VerticalAlignment="Center"
-                             TextTrimming="CharacterEllipsis"/>
-                  <StackPanel Grid.Column="1"
-                              Orientation="Horizontal"
-                              VerticalAlignment="Center">
-                    <Button x:Name="PlayPauseTrackButton"
-                            Style="{StaticResource PrimaryButton}"
-                            Padding="8,3"
-                            FontSize="11"
-                            Click="PlayTrack_Click">
-                      <Button.ToolTip>
-                        <ToolTip>
-                          <TextBlock x:Name="PlayPauseTrackTooltip" Text="Play"/>
-                        </ToolTip>
-                      </Button.ToolTip>
-                      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Path x:Name="PlayPauseTrackIcon"
-                              Data="{StaticResource Icon.Play}"
-                              Fill="White"
-                              Stretch="Uniform"
-                              Width="9" Height="9"
-                              Margin="0,0,4,0"/>
-                        <TextBlock x:Name="PlayPauseTrackLabel"
-                                   Text="Play"
-                                   FontWeight="SemiBold"/>
-                      </StackPanel>
-                    </Button>
-                    <Button Style="{StaticResource PlaylistRowIconButtonStyle}"
-                            Margin="5,0,0,0"
-                            ToolTip="Add music or download into this playlist"
-                            Click="SongsAddButton_Click">
-                      <Path Data="{StaticResource Icon.Plus}"
-                            Fill="{StaticResource Brush.TextDim}"
-                            Stretch="Uniform"
-                            Width="12" Height="12"/>
-                    </Button>
-                  </StackPanel>
-                </Grid>
-                <ListBox Grid.Row="1"
-                         x:Name="TracksList"
-                         Style="{StaticResource DarkListBox}"
-                         AllowDrop="True"
-                         ToolTip="Drag songs to reorder. Ctrl + scroll wheel to resize song rows."
-                         PreviewMouseLeftButtonDown="TracksList_PreviewMouseLeftButtonDown"
-                         PreviewMouseLeftButtonUp="TracksList_PreviewMouseLeftButtonUp"
-                         PreviewMouseMove="TracksList_PreviewMouseMove"
-                         DragOver="TracksList_DragOver"
-                         Drop="TracksList_Drop"
-                         PreviewMouseWheel="TracksList_PreviewMouseWheel"
-                         MouseDoubleClick="TracksList_MouseDoubleClick"
-                         PreviewMouseRightButtonDown="TracksList_PreviewMouseRightButtonDown">
-                  <ListBox.ContextMenu>
-                    <ContextMenu x:Name="TrackContextMenu"
-                                 Opened="TrackContextMenu_Opened">
-                      <MenuItem Header="Play"
-                                Click="TrackContextPlay_Click">
-                        <MenuItem.Icon>
-                          <Path Data="{StaticResource Icon.Play}"
-                                Fill="{StaticResource Brush.Text}"
-                                Stretch="Uniform"
-                                Width="11" Height="11"/>
-                        </MenuItem.Icon>
-                      </MenuItem>
-                      <Separator/>
-                      <MenuItem x:Name="MenuItemLike"
-                                Header="Add to Liked Songs"
-                                Click="TrackContextLike_Click">
-                        <MenuItem.Icon>
-                          <Path x:Name="MenuItemLikeIcon"
-                                Data="{StaticResource Icon.Heart}"
-                                Fill="#FFEF4444"
-                                Stretch="Uniform"
-                                Width="12" Height="12"/>
-                        </MenuItem.Icon>
-                      </MenuItem>
-                      <Separator/>
-                      <MenuItem Header="Show in File Explorer"
-                                Click="TrackContextShowInExplorer_Click">
-                        <MenuItem.Icon>
-                          <Path Data="{StaticResource Icon.Folder}"
-                                Fill="{StaticResource Brush.Text}"
-                                Stretch="Uniform"
-                                Width="12" Height="12"/>
-                        </MenuItem.Icon>
-                      </MenuItem>
-                      <MenuItem Header="Copy file path"
-                                Click="TrackContextCopyPath_Click">
-                        <MenuItem.Icon>
-                          <Path Data="{StaticResource Icon.Link}"
-                                Fill="{StaticResource Brush.Text}"
-                                Stretch="Uniform"
-                                Width="12" Height="12"/>
-                        </MenuItem.Icon>
-                      </MenuItem>
-                      <Separator x:Name="SeparatorBeforeEdit"/>
-                      <MenuItem x:Name="MenuItemEdit"
-                                Header="Edit..."
-                                Click="TrackContextEdit_Click">
-                        <MenuItem.Icon>
-                          <Path Data="{StaticResource Icon.Edit}"
-                                Fill="{StaticResource Brush.Text}"
-                                Stretch="Uniform"
-                                Width="12" Height="12"/>
-                        </MenuItem.Icon>
-                      </MenuItem>
-                      <MenuItem x:Name="MenuItemDelete"
-                                Header="Delete from playlist"
-                                Click="TrackContextDelete_Click">
-                        <MenuItem.Icon>
-                          <Path x:Name="MenuItemDeleteIcon"
-                                Data="{StaticResource Icon.Trash}"
-                                Fill="#FFEF4444"
-                                Stretch="Uniform"
-                                Width="12" Height="12"/>
-                        </MenuItem.Icon>
-                      </MenuItem>
-                    </ContextMenu>
-                  </ListBox.ContextMenu>
-                </ListBox>
-              </Grid>
+              <TextBlock Grid.Column="0"
+                         Text="Playlists"
+                         Foreground="{StaticResource Brush.TextDim}"
+                         FontSize="10"
+                         FontWeight="SemiBold"
+                         VerticalAlignment="Center"/>
+              <Button Grid.Column="1"
+                      Style="{StaticResource PrimaryButton}"
+                      Padding="8,3"
+                      FontSize="11"
+                      Click="NewPlaylist_Click"
+                      ToolTip="Create a new playlist">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                  <Path Data="{StaticResource Icon.Plus}"
+                        Fill="White"
+                        Stretch="Uniform"
+                        Width="9" Height="9"
+                        Margin="0,0,4,0"/>
+                  <TextBlock Text="New Playlist" FontWeight="SemiBold"/>
+                </StackPanel>
+              </Button>
             </Grid>
+
+            <ListBox Grid.Row="1"
+                     x:Name="PlaylistsList"
+                     Style="{StaticResource DarkListBox}"
+                     SelectionChanged="PlaylistsList_SelectionChanged"/>
           </Grid>
         </Border>
 
