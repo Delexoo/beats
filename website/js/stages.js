@@ -8,7 +8,9 @@
   var locked = false;
   var lockMs = 650;
   var stageCount = Math.max(stages.length, dots.length);
-  var mobileLayout = window.matchMedia("(max-width: 900px)");
+  // Keep the full "stage" experience for desktop only.
+  // Below this breakpoint the page becomes a normal scroll layout (see main.css).
+  var mobileLayout = window.matchMedia("(max-width: 1040px)");
 
   function isMobile() {
     return mobileLayout.matches;

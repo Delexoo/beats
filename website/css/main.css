@@ -770,6 +770,11 @@ h1 {
 }
 
 @media (max-width: 720px) {
+  :root {
+    /* Slightly reduce scale on small screens for comfort. */
+    --scale: 1.1;
+  }
+
   .shell-panel {
     padding: 34px 18px 36px;
   }
