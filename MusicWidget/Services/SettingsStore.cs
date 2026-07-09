@@ -69,4 +69,25 @@ public sealed class SettingsStore
             }
         }
     }
+
+    private System.Timers.Timer? _saveDebounceTimer;
+
+    /// <summary>Coalesces rapid setting tweaks (e.g. volume slider) into one disk write.</summary>
+    public void ScheduleSave(int delayMs = 400)
+    {
+        lock (_lock)
+        {
+            _saveDebounceTimer ??= new System.Timers.Timer { AutoReset = false };
+            _saveDebounceTimer.Interval = delayMs;
+            _saveDebounceTimer.Elapsed -= OnSaveDebounceElapsed;
+            _saveDebounceTimer.Elapsed += OnSaveDebounceElapsed;
+            _saveDebounceTimer.Stop();
+            _saveDebounceTimer.Start();
+        }
+    }
+
+    private void OnSaveDebounceElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        Save();
+    }
 }

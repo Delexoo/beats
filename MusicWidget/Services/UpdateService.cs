@@ -28,6 +28,8 @@ public sealed class UpdateService
 
     public bool IsAutoUpdateRunning { get; private set; }
 
+    public bool StartupCheckCompleted { get; private set; }
+
     public static string GetCurrentVersion()
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version;
@@ -35,33 +37,26 @@ public sealed class UpdateService
     }
 
     /// <summary>
-    /// Checks GitHub Releases on startup and hands off to a detached updater when a newer build exists.
+    /// Checks GitHub Releases in the background after startup. Does not install automatically.
     /// </summary>
-    public async Task<bool> TryAutoUpdateOnStartupAsync(CancellationToken ct = default)
+    public async Task CheckForUpdatesOnStartupAsync(CancellationToken ct = default)
     {
         await _gate.WaitAsync(ct).ConfigureAwait(false);
         IsAutoUpdateRunning = true;
 
         try
         {
-            var result = await FetchLatestReleaseAsync(ct).ConfigureAwait(false);
-            LastCheckResult = result;
-
-            if (result?.IsUpdateAvailable != true || string.IsNullOrWhiteSpace(result.DownloadUrl))
-            {
-                return false;
-            }
-
-            return BeginDetachedUpdateAndShutdown(result);
+            LastCheckResult = await FetchLatestReleaseAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            CrashLog.Write(ex, "UpdateService.TryAutoUpdateOnStartupAsync");
-            return false;
+            CrashLog.Write(ex, "UpdateService.CheckForUpdatesOnStartupAsync");
+            LastCheckResult = null;
         }
         finally
         {
             IsAutoUpdateRunning = false;
+            StartupCheckCompleted = true;
             _gate.Release();
         }
     }
@@ -74,6 +69,12 @@ public sealed class UpdateService
             var result = await FetchLatestReleaseAsync(ct).ConfigureAwait(false);
             LastCheckResult = result;
             return result;
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "UpdateService.CheckForUpdateAsync");
+            LastCheckResult = null;
+            return null;
         }
         finally
         {
@@ -102,7 +103,11 @@ public sealed class UpdateService
         {
             var installerPath = await DownloadInstallerAsync(update.DownloadUrl, progress, ct)
                 .ConfigureAwait(false);
-            LaunchInstaller(installerPath, silent: false);
+            if (!LaunchInstaller(installerPath, silent: false))
+            {
+                return false;
+            }
+
             ShutdownApplicationForUpdate();
             return true;
         }
@@ -124,8 +129,9 @@ public sealed class UpdateService
 
         try
         {
-            var scriptPath = WriteDetachedUpdateScript(update.DownloadUrl);
-            Process.Start(new ProcessStartInfo
+            var restartExe = ResolveRestartExecutablePath();
+            var scriptPath = WriteDetachedUpdateScript(update.DownloadUrl, restartExe);
+            var started = Process.Start(new ProcessStartInfo
             {
                 FileName = "powershell.exe",
                 Arguments =
@@ -133,6 +139,11 @@ public sealed class UpdateService
                 UseShellExecute = false,
                 CreateNoWindow = true,
             });
+
+            if (started is null)
+            {
+                return false;
+            }
 
             ShutdownApplicationForUpdate();
             return true;
@@ -144,19 +155,21 @@ public sealed class UpdateService
         }
     }
 
-    private static string WriteDetachedUpdateScript(string downloadUrl)
+    private static string WriteDetachedUpdateScript(string downloadUrl, string? restartExePath)
     {
         var dir = Path.Combine(Path.GetTempPath(), "Beats-updates");
         Directory.CreateDirectory(dir);
         var scriptPath = Path.Combine(dir, "apply-update.ps1");
         var installerPath = Path.Combine(dir, InstallerAssetName);
         var logPath = Path.Combine(dir, "apply-update.log");
+        var restartExe = restartExePath ?? string.Empty;
 
         var script = $$"""
             $ErrorActionPreference = 'Stop'
             $url = '{{EscapeForPowerShellSingleQuoted(downloadUrl)}}'
             $out = '{{EscapeForPowerShellSingleQuoted(installerPath)}}'
             $log = '{{EscapeForPowerShellSingleQuoted(logPath)}}'
+            $restart = '{{EscapeForPowerShellSingleQuoted(restartExe)}}'
 
             function Write-Log([string]$Message) {
                 Add-Content -Path $log -Value ("[{0}] {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Message)
@@ -173,6 +186,10 @@ public sealed class UpdateService
                     throw "Installer exited with code $($proc.ExitCode)."
                 }
                 Write-Log 'Update finished.'
+                if ($restart -and (Test-Path -LiteralPath $restart)) {
+                    Write-Log "Relaunching $restart"
+                    Start-Process -FilePath $restart
+                }
             }
             catch {
                 Write-Log $_.Exception.Message
@@ -182,6 +199,19 @@ public sealed class UpdateService
 
         File.WriteAllText(scriptPath, script);
         return scriptPath;
+    }
+
+    private static string? ResolveRestartExecutablePath()
+    {
+        try
+        {
+            return Environment.ProcessPath
+                   ?? Process.GetCurrentProcess().MainModule?.FileName;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string EscapeForPowerShellSingleQuoted(string value) =>
@@ -249,40 +279,43 @@ public sealed class UpdateService
         return path;
     }
 
-    public static void LaunchInstaller(string installerPath, bool silent = false)
+    public static bool LaunchInstaller(string installerPath, bool silent = false)
     {
         var args = silent
             ? "/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS"
             : string.Empty;
 
-        Process.Start(new ProcessStartInfo
+        return Process.Start(new ProcessStartInfo
         {
             FileName = installerPath,
             Arguments = args,
             UseShellExecute = true,
-        });
+        }) is not null;
     }
 
     public static void ShutdownApplicationForUpdate()
     {
-        try
+        UiDispatcher.InvokeSafe(() =>
         {
-            foreach (var window in Application.Current.Windows.OfType<Window>().ToList())
+            try
             {
-                try
+                foreach (var window in Application.Current.Windows.OfType<Window>().ToList())
                 {
-                    window.Close();
-                }
-                catch
-                {
-                    /* best-effort */
+                    try
+                    {
+                        window.Close();
+                    }
+                    catch
+                    {
+                        /* best-effort */
+                    }
                 }
             }
-        }
-        finally
-        {
-            Application.Current.Shutdown();
-        }
+            finally
+            {
+                Application.Current.Shutdown();
+            }
+        });
     }
 
     public static bool IsNewerVersion(string candidate, string current)
@@ -302,10 +335,16 @@ public sealed class UpdateService
     {
         return NormalizeVersion(value)
             .Split('.')
-            .Select(part => int.TryParse(part, out var n) ? n : 0)
+            .Select(ParseVersionPart)
             .Concat(Enumerable.Repeat(0, 3))
             .Take(3)
             .ToArray();
+    }
+
+    private static int ParseVersionPart(string part)
+    {
+        var digits = new string(part.TakeWhile(char.IsDigit).ToArray());
+        return int.TryParse(digits, out var n) ? n : 0;
     }
 
     private static string NormalizeVersion(string value)

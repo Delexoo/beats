@@ -6,6 +6,7 @@
 
 # User / IDE
 .vs/
+.vscode/
 *.user
 *.suo
 *.cache

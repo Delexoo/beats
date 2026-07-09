@@ -1,0 +1,64 @@
+---
+name: Bug report
+description: Report something that isn't working as expected
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Beats. Please fill in as much detail as you can.
+
+  - type: input
+    id: version
+    attributes:
+      label: Beats version
+      description: Found in the dashboard footer or **Settings → About**
+      placeholder: "e.g. 2.2.18"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Windows version
+      options:
+        - Windows 11
+        - Windows 10
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What did you do before the issue occurred?
+      placeholder: |
+        1. Open dashboard
+        2. Click ...
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Crash logs are saved to `%APPDATA%\Beats\` when available
+    validations:
+      required: false

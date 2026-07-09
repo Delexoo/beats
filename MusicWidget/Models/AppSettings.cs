@@ -45,7 +45,4 @@ public sealed class AppSettings
 
     /// <summary>Song row scale in the dashboard tracks list (Ctrl+scroll). 1.0 = default.</summary>
     public double TracksListZoom { get; set; } = 1.0;
-
-    /// <summary>When true, loop/settings controls stay visible on the widget pill.</summary>
-    public bool KeepWidgetExpanded { get; set; } = false;
 }

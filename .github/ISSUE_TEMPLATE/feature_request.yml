@@ -1,0 +1,49 @@
+---
+name: Feature request
+description: Suggest an idea for Beats
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem you're trying to solve and how Beats could help.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What frustration or limitation are you hitting?
+      placeholder: "I'm always frustrated when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How would you like Beats to behave?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any workarounds or other apps you've tried?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Widget / playback
+        - Dashboard / playlists
+        - Downloads
+        - Settings / UX
+        - Website / docs
+        - Other
+    validations:
+      required: true

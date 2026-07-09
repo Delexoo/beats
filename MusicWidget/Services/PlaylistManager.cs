@@ -7,6 +7,8 @@ using MusicWidget.Models;
 
 namespace MusicWidget.Services;
 
+using MusicWidget;
+
 public sealed class PlaylistManager
 {
     private static readonly string[] AudioExtensions =
@@ -407,27 +409,49 @@ public sealed class PlaylistManager
     /// </summary>
     public void ReloadTracks(Playlist pl) => LoadTracks(pl);
 
+    public List<string> EnumerateTrackFilesOnDisk(Playlist pl)
+    {
+        if (!Directory.Exists(pl.FolderPath))
+        {
+            return new List<string>();
+        }
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var files = Directory.EnumerateFiles(pl.FolderPath, "*", SearchOption.AllDirectories)
+            .Where(f => AudioExtensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase))
+            .Where(f => !Path.GetFileName(f).Contains(".part", StringComparison.OrdinalIgnoreCase))
+            .Where(seen.Add)
+            .ToList();
+
+        return OrderFiles(pl.Name, files).ToList();
+    }
+
+    public void ApplyTrackFiles(Playlist pl, IReadOnlyList<string> files)
+    {
+        var existing = new Dictionary<string, Track>(StringComparer.OrdinalIgnoreCase);
+        foreach (var track in pl.Tracks)
+        {
+            if (!existing.ContainsKey(track.FilePath))
+            {
+                existing[track.FilePath] = track;
+            }
+        }
+
+        pl.Tracks.Clear();
+        foreach (var f in files)
+        {
+            pl.Tracks.Add(existing.TryGetValue(f, out var track) ? track : new Track(f));
+        }
+    }
+
     /// <summary>
     /// Notifies listeners that a playlist folder changed on disk (e.g. during a batch download).
     /// </summary>
     public void RequestTracksRefresh(string playlistName) =>
         NotifyTracksChangedDebounced(playlistName);
 
-    private void LoadTracks(Playlist pl)
-    {
-        var existing = pl.Tracks.ToDictionary(t => t.FilePath, StringComparer.OrdinalIgnoreCase);
-        pl.Tracks.Clear();
-        if (!Directory.Exists(pl.FolderPath)) return;
-
-        var files = Directory.EnumerateFiles(pl.FolderPath)
-            .Where(f => AudioExtensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase))
-            .ToList();
-
-        foreach (var f in OrderFiles(pl.Name, files))
-        {
-            pl.Tracks.Add(existing.TryGetValue(f, out var track) ? track : new Track(f));
-        }
-    }
+    private void LoadTracks(Playlist pl) =>
+        ApplyTrackFiles(pl, EnumerateTrackFilesOnDisk(pl));
 
     private IEnumerable<string> OrderFiles(string playlistName, List<string> files)
     {
@@ -490,6 +514,11 @@ public sealed class PlaylistManager
 
     private void NotifyTracksChangedDebounced(string playlistName)
     {
+        if (App.BackgroundDownloads.IsRunning)
+        {
+            return;
+        }
+
         lock (_watchDebounceLock)
         {
             if (!_watchDebounce.TryGetValue(playlistName, out var timer))

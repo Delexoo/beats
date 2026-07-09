@@ -96,7 +96,7 @@ public partial class App : Application
                 args.Handled = true;
             };
 
-            _ = StartApplicationAsync();
+            StartApplicationAsync();
         }
         catch (Exception ex)
         {
@@ -119,20 +119,17 @@ public partial class App : Application
         }
     }
 
-    private async Task StartApplicationAsync()
+    private void StartApplicationAsync()
     {
         try
         {
-            if (await Updates.TryAutoUpdateOnStartupAsync().ConfigureAwait(true))
-            {
-                return;
-            }
-
             var widget = new WidgetWindow();
             var toggle = new HideToggleWindow(widget);
 
             widget.Show();
             toggle.Show();
+
+            _ = Updates.CheckForUpdatesOnStartupAsync();
         }
         catch (Exception ex)
         {

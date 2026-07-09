@@ -46,9 +46,18 @@
                 BorderThickness="1"
                 ClipToBounds="True">
           <Grid>
-            <Image x:Name="CoverPreview"
-                   Stretch="UniformToFill"
-                   Visibility="Collapsed"/>
+            <Rectangle x:Name="CoverPreview"
+                       RadiusX="8"
+                       RadiusY="8"
+                       Visibility="Collapsed"
+                       RenderOptions.BitmapScalingMode="HighQuality">
+              <Rectangle.Fill>
+                <ImageBrush x:Name="CoverPreviewBrush"
+                            Stretch="UniformToFill"
+                            AlignmentX="Center"
+                            AlignmentY="Center"/>
+              </Rectangle.Fill>
+            </Rectangle>
             <TextBlock x:Name="CoverPlaceholder"
                        Text="?"
                        HorizontalAlignment="Center"

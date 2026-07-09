@@ -27,6 +27,11 @@
       <Setter Property="ClipToBounds" Value="True"/>
       <Setter Property="SnapsToDevicePixels" Value="True"/>
       <Setter Property="UseLayoutRounding" Value="True"/>
+      <Setter Property="Clip">
+        <Setter.Value>
+          <RectangleGeometry RadiusX="8" RadiusY="8" Rect="0,0,32,32"/>
+        </Setter.Value>
+      </Setter>
     </Style>
   </Window.Resources>
 
@@ -69,28 +74,36 @@
 
       <WrapPanel Margin="0,0,0,8">
         <Border Style="{StaticResource PlatformBadge}" ToolTip="YouTube">
-          <Image Source="/Assets/youtube.png"
-                 Stretch="Uniform"
-                 Margin="1"
-                 RenderOptions.BitmapScalingMode="HighQuality"/>
+          <Border.Background>
+            <ImageBrush ImageSource="/Assets/youtube.png"
+                        Stretch="UniformToFill"
+                        AlignmentX="Center"
+                        AlignmentY="Center"/>
+          </Border.Background>
         </Border>
         <Border Style="{StaticResource PlatformBadge}" ToolTip="Spotify">
-          <Image Source="/Assets/Spotify.png"
-                 Stretch="Uniform"
-                 Margin="1"
-                 RenderOptions.BitmapScalingMode="HighQuality"/>
+          <Border.Background>
+            <ImageBrush ImageSource="/Assets/Spotify.png"
+                        Stretch="UniformToFill"
+                        AlignmentX="Center"
+                        AlignmentY="Center"/>
+          </Border.Background>
         </Border>
         <Border Style="{StaticResource PlatformBadge}" ToolTip="Instagram">
-          <Image Source="/Assets/instagram.jpg"
-                 Stretch="Uniform"
-                 Margin="1"
-                 RenderOptions.BitmapScalingMode="HighQuality"/>
+          <Border.Background>
+            <ImageBrush ImageSource="/Assets/instagram.jpg"
+                        Stretch="UniformToFill"
+                        AlignmentX="Center"
+                        AlignmentY="Center"/>
+          </Border.Background>
         </Border>
         <Border Style="{StaticResource PlatformBadge}" ToolTip="TikTok">
-          <Image Source="/Assets/tiktok.png"
-                 Stretch="Uniform"
-                 Margin="1"
-                 RenderOptions.BitmapScalingMode="HighQuality"/>
+          <Border.Background>
+            <ImageBrush ImageSource="/Assets/tiktok.png"
+                        Stretch="UniformToFill"
+                        AlignmentX="Center"
+                        AlignmentY="Center"/>
+          </Border.Background>
         </Border>
         <Border Style="{StaticResource PlatformBadge}"
                 Background="{StaticResource Brush.SurfaceHigh}"

@@ -117,13 +117,13 @@ public partial class EditTrackWindow : Window
     {
         if (source is null)
         {
-            CoverPreview.Source = null;
+            CoverPreviewBrush.ImageSource = null;
             CoverPreview.Visibility = Visibility.Collapsed;
             CoverPlaceholder.Visibility = Visibility.Visible;
             return;
         }
 
-        CoverPreview.Source = source;
+        CoverPreviewBrush.ImageSource = source;
         CoverPreview.Visibility = Visibility.Visible;
         CoverPlaceholder.Visibility = Visibility.Collapsed;
     }

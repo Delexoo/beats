@@ -138,7 +138,25 @@ public sealed class DownloadService
         ["--extractor-args", "youtube:player_client=web_safari,ios"];
 
     /// <summary>Windows browsers tried for session-aware downloads (yt-dlp --cookies-from-browser).</summary>
-    private static readonly string[] BrowserCookieSources = ["edge", "chrome"];
+    private static readonly string[] BrowserCookieSources =
+    [
+        "edge",
+        "chrome",
+        "chromium",
+        "opera",
+        "opera_gx",
+        "brave",
+        "firefox",
+        "librewolf",
+        "waterfox",
+        "vivaldi",
+        "yandex",
+        "whale",
+        "arc",
+    ];
+
+    private static string BrowserCookieSourcesLabel =>
+        "Edge, Chrome, Chromium, Opera, Opera GX, Brave, Firefox, LibreWolf, Waterfox, Vivaldi, Yandex, Whale, or Arc";
 
     private record struct YtDlpAttempt(string Label, string[] ExtraArgs, string? CookiesFromBrowser = null);
 
@@ -283,12 +301,12 @@ public sealed class DownloadService
         {
             return HasYoutubeCookies()
                 ? "YouTube blocked this download and Beats could not refresh cookies from your browser. Re-export cookies.txt in Dashboard → Download cookies, wait a few minutes, and try again."
-                : "Beats could not read login cookies from Edge or Chrome (Windows blocked decryption). Export a cookies.txt file in Dashboard → Download cookies, then try again.";
+                : $"Beats could not read login cookies from {BrowserCookieSourcesLabel} (Windows blocked decryption). Export a cookies.txt file in Dashboard → Download cookies, then try again.";
         }
 
         return HasYoutubeCookies()
-            ? "YouTube blocked or rate-limited this download. Confirm the link is public or unlisted, stay signed into YouTube in Edge or Chrome, wait a few minutes, and try again."
-            : "YouTube blocked this download. Sign into YouTube in Edge or Chrome on this PC and try again — Beats reads that login automatically. You can also add a cookies.txt file under Download cookies in the dashboard.";
+            ? $"YouTube blocked or rate-limited this download. Confirm the link is public or unlisted, stay signed into YouTube in {BrowserCookieSourcesLabel}, wait a few minutes, and try again."
+            : $"YouTube blocked this download. Sign into YouTube in {BrowserCookieSourcesLabel} on this PC and try again — Beats reads that login automatically. You can also add a cookies.txt file under Download cookies in the dashboard.";
     }
 
     private async Task<DownloadResult> DownloadInstagramAsync(
@@ -348,7 +366,7 @@ public sealed class DownloadService
 
             return new DownloadResult(
                 false,
-                "Instagram asked you to sign in or blocked this link. Stay logged into Instagram in Edge or Chrome, or export a cookies.txt file in Dashboard → Download cookies.",
+                $"Instagram asked you to sign in or blocked this link. Stay logged into Instagram in {BrowserCookieSourcesLabel}, or export a cookies.txt file in Dashboard → Download cookies.",
                 string.Join(Environment.NewLine + Environment.NewLine, attemptLog));
         }
 
@@ -1036,6 +1054,7 @@ public sealed class DownloadService
         psi.ArgumentList.Add(sleepRequestsSeconds.ToString(
             System.Globalization.CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("--embed-metadata");
+        psi.ArgumentList.Add("--embed-thumbnail");
         psi.ArgumentList.Add("--retries");
         psi.ArgumentList.Add("3");
         psi.ArgumentList.Add("--fragment-retries");

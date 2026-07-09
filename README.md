@@ -35,6 +35,7 @@ Play local playlists, download tracks from the web, and control everything from 
 ## Table of contents
 
 - [Overview](#overview)
+- [What's new](#whats-new)
 - [Website](#website)
 - [Preview](#preview)
 - [Quick start](#quick-start)
@@ -65,6 +66,19 @@ Play local playlists, download tracks from the web, and control everything from 
 | **Stay out of the way** | Hide off-screen with `Alt` + `\` or the top-screen chevron; bring it back instantly |
 
 Built with **WPF** and **.NET 8**, powered by **LibVLC** for playback and **yt-dlp** / **spotDL** / **ffmpeg** for downloads (bootstrapped automatically on first use).
+
+---
+
+## What's new
+
+**Latest: v2.2.18** — [Full changelog](CHANGELOG.md) | [Release notes](https://github.com/Delexoo/beats/releases/latest)
+
+- **Playlist accordion** — expand playlists inline; click anywhere on the row header to open or close
+- **Track artwork** — album covers in playlist song lists with smart caching
+- **Click-outside to close** — the dashboard auto-minimizes when you click the player or another app
+- **Headset controls** — play, pause, and skip from media keys (AirPods, keyboard, etc.)
+- **In-app updates** — check and install new versions from the dashboard toolbar
+- **Performance** — faster refreshes, smoother scrolling, and more responsive UI
 
 ---
 
@@ -160,7 +174,8 @@ On first download, Beats silently fetches `yt-dlp`, `ffmpeg`, and (for Spotify) 
 - **Pin playlists** - right-click to pin favorites above the Liked/Saves divider
 - **Custom order** - drag to reorder playlists and tracks; order persists across sessions
 - **Live updates** - file system watchers refresh track lists when files change on disk
-- **Album artwork** - embedded art and cached covers via TagLib
+- **Album artwork** - embedded art, sidecar images, disk cache, and online lookup in playlist rows
+- **Playlist accordion** - expand and collapse playlists inline in the dashboard sidebar
 
 </details>
 
@@ -186,9 +201,10 @@ On first download, Beats silently fetches `yt-dlp`, `ffmpeg`, and (for Spotify) 
 <br />
 
 - **Resizable dashboard** - drag edges to resize; `Ctrl` + `Shift` + `\` resets layout to defaults
+- **Auto-minimize** - click outside the dashboard (player pill or desktop) to close it instantly
 - **Track list zoom** - `Ctrl` + scroll to scale song rows
+- **In-app updates** - check for new versions and install from the dashboard toolbar
 - **Configurable music root** - change where playlists are stored
-- **Extended widget mode** - keep loop/settings visible without hovering
 - **In-app help** - Quick start, YouTube cookies guide, and shortcuts reference
 - **Single instance** - only one Beats process runs at a time
 
@@ -213,6 +229,7 @@ On first download, Beats silently fetches `yt-dlp`, `ffmpeg`, and (for Spotify) 
 | Gesture | Action |
 |---|---|
 | **Drag album art** | Move the widget anywhere on screen |
+| **Click outside dashboard** | Close the dashboard; keep the player visible |
 | **Top chevron tab** | Same as `Alt` + `\` - toggle widget visibility |
 | **Hover pill** | Reveal loop and settings controls (unless pinned open) |
 | **Click settings gear** | Open the dashboard |
@@ -394,12 +411,13 @@ flowchart LR
 beats/
 ├── MusicWidget/              # WPF application (AssemblyName: Beats)
 │   ├── Views/                # Widget, dashboard, dialogs
-│   ├── Services/             # Audio, downloads, playlists, hotkeys
+│   ├── Services/             # Audio, downloads, playlists, hotkeys, updates
 │   ├── Models/               # Settings, tracks, playlists
 │   └── Resources/            # Styles and assets
 ├── Installer/                # Inno Setup script + build scripts
 ├── website/                  # GitHub Pages landing page
 ├── .github/workflows/        # Release & Pages CI
+├── CHANGELOG.md              # Version history
 ├── version.json              # Version + installer asset name
 └── MusicWidget.sln
 ```
@@ -520,6 +538,8 @@ Beats writes crash logs to `%APPDATA%\Beats\` for unexpected errors. Include the
 MIT - see [LICENSE](LICENSE).
 
 Copyright © 2026 [Delexo](https://delexo.store) | [@Delexoo on GitHub](https://github.com/Delexoo)
+
+[Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 ---
 

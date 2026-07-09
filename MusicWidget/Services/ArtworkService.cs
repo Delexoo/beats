@@ -22,6 +22,9 @@ public sealed class ArtworkService
     private readonly string _cacheDir;
     private readonly ConcurrentDictionary<string, Task<ImageSource?>> _inflight = new();
     private readonly ConcurrentDictionary<string, ImageSource?> _memCache = new();
+    private readonly object _memCacheLock = new();
+    private readonly Queue<string> _memCacheOrder = new();
+    private const int MaxMemCacheEntries = 400;
 
     public ArtworkService(string cacheDir)
     {
@@ -40,6 +43,35 @@ public sealed class ArtworkService
         return _inflight.GetOrAdd(key, _ => LoadAsync(track, ct));
     }
 
+    /// <summary>
+    /// Applies a cached bitmap to the track immediately when available (memory or disk cache).
+    /// </summary>
+    public bool TryHydrateTrackArtwork(Track track)
+    {
+        var key = NormalizeKey(track.FilePath);
+        if (_memCache.TryGetValue(key, out var cached) && cached is not null)
+        {
+            track.ArtworkSource = cached;
+            return true;
+        }
+
+        var cachePath = Path.Combine(_cacheDir, key + ".png");
+        if (!File.Exists(cachePath))
+        {
+            return false;
+        }
+
+        var fromDisk = LoadBitmapOnUi(cachePath);
+        if (fromDisk is null)
+        {
+            return false;
+        }
+
+        RememberInMemCache(key, fromDisk);
+        track.ArtworkSource = fromDisk;
+        return true;
+    }
+
     private async Task<ImageSource?> LoadAsync(Track track, CancellationToken ct)
     {
         await _loadConcurrency.WaitAsync(ct).ConfigureAwait(false);
@@ -49,10 +81,10 @@ public sealed class ArtworkService
             var cachePath = Path.Combine(_cacheDir, key + ".png");
             if (File.Exists(cachePath))
             {
-                var fromDisk = LoadBitmap(cachePath);
+                var fromDisk = await LoadBitmapOnUiAsync(cachePath).ConfigureAwait(false);
                 if (fromDisk is not null)
                 {
-                    _memCache[key] = fromDisk;
+                    RememberInMemCache(key, fromDisk);
                     return fromDisk;
                 }
 
@@ -72,14 +104,16 @@ public sealed class ArtworkService
 
             try
             {
-                using var tagFile = TagLib.File.Create(track.FilePath);
-                title = tagFile.Tag.Title;
-                artist = tagFile.Tag.FirstPerformer ?? tagFile.Tag.FirstAlbumArtist;
-                embedded = ReadBestEmbeddedCover(tagFile.Tag.Pictures);
+                (title, artist, embedded) = ReadTagsWithRetry(track.FilePath);
             }
             catch
             {
                 // Reading tags is best-effort; some files don't have any.
+            }
+
+            if (embedded is null || embedded.Length == 0)
+            {
+                embedded = TryReadSidecarCover(track.FilePath);
             }
 
             if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(artist))
@@ -112,7 +146,7 @@ public sealed class ArtworkService
                 return null;
             }
 
-            var bmp = LoadBitmapFromBytes(bytes);
+            var bmp = await CreateFrozenBitmapOnUiAsync(bytes).ConfigureAwait(false);
             if (bmp is null)
             {
                 return null;
@@ -127,7 +161,7 @@ public sealed class ArtworkService
                 // Disk cache is best-effort; keep the in-memory bitmap.
             }
 
-            _memCache[key] = bmp;
+            RememberInMemCache(key, bmp);
             return bmp;
         }
         catch
@@ -255,6 +289,69 @@ public sealed class ArtworkService
 
     private static string SanitizeFilename(string name) => TrackNameFormatter.Beautify(name);
 
+    private static (string? Title, string? Artist, byte[]? Cover) ReadTagsWithRetry(string filePath)
+    {
+        const int attempts = 3;
+        for (var attempt = 0; attempt < attempts; attempt++)
+        {
+            try
+            {
+                using var tagFile = TagLib.File.Create(filePath);
+                var title = tagFile.Tag.Title;
+                var artist = tagFile.Tag.FirstPerformer ?? tagFile.Tag.FirstAlbumArtist;
+                var cover = ReadBestEmbeddedCover(tagFile.Tag.Pictures);
+                return (title, artist, cover);
+            }
+            catch (IOException) when (attempt < attempts - 1)
+            {
+                Thread.Sleep(80);
+            }
+        }
+
+        return (null, null, null);
+    }
+
+    private static byte[]? TryReadSidecarCover(string audioPath)
+    {
+        var dir = Path.GetDirectoryName(audioPath);
+        var baseName = Path.GetFileNameWithoutExtension(audioPath);
+        if (dir is null || string.IsNullOrWhiteSpace(baseName))
+        {
+            return null;
+        }
+
+        string[] candidates =
+        {
+            Path.Combine(dir, baseName + ".jpg"),
+            Path.Combine(dir, baseName + ".jpeg"),
+            Path.Combine(dir, baseName + ".png"),
+            Path.Combine(dir, baseName + ".webp"),
+            Path.Combine(dir, "cover.jpg"),
+            Path.Combine(dir, "cover.png"),
+            Path.Combine(dir, "folder.jpg"),
+            Path.Combine(dir, "folder.png"),
+        };
+
+        foreach (var path in candidates)
+        {
+            if (!File.Exists(path))
+            {
+                continue;
+            }
+
+            try
+            {
+                return File.ReadAllBytes(path);
+            }
+            catch
+            {
+                // Try the next candidate.
+            }
+        }
+
+        return null;
+    }
+
     private static byte[]? ReadBestEmbeddedCover(TagLib.IPicture[]? pictures)
     {
         if (pictures is null || pictures.Length == 0)
@@ -274,6 +371,71 @@ public sealed class ArtworkService
         }
 
         return best?.Data?.Data;
+    }
+
+    private static Task<ImageSource?> CreateFrozenBitmapOnUiAsync(byte[] bytes)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.HasShutdownStarted || dispatcher.HasShutdownFinished)
+        {
+            return Task.FromResult<ImageSource?>(null);
+        }
+
+        if (dispatcher.CheckAccess())
+        {
+            return Task.FromResult(LoadBitmapFromBytes(bytes));
+        }
+
+        var tcs = new TaskCompletionSource<ImageSource?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        dispatcher.BeginInvoke(() =>
+        {
+            try
+            {
+                tcs.TrySetResult(LoadBitmapFromBytes(bytes));
+            }
+            catch (Exception ex)
+            {
+                tcs.TrySetException(ex);
+            }
+        }, System.Windows.Threading.DispatcherPriority.Normal);
+
+        return tcs.Task;
+    }
+
+    private static Task<ImageSource?> LoadBitmapOnUiAsync(string path)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.HasShutdownStarted || dispatcher.HasShutdownFinished)
+        {
+            return Task.FromResult<ImageSource?>(null);
+        }
+
+        if (dispatcher.CheckAccess())
+        {
+            return Task.FromResult(LoadBitmap(path));
+        }
+
+        var tcs = new TaskCompletionSource<ImageSource?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        dispatcher.BeginInvoke(() =>
+        {
+            try
+            {
+                tcs.TrySetResult(LoadBitmap(path));
+            }
+            catch (Exception ex)
+            {
+                tcs.TrySetException(ex);
+            }
+        }, System.Windows.Threading.DispatcherPriority.Normal);
+
+        return tcs.Task;
+    }
+
+    private static ImageSource? LoadBitmapOnUi(string path)
+    {
+        ImageSource? result = null;
+        UiDispatcher.InvokeSafe(() => result = LoadBitmap(path));
+        return result;
     }
 
     private static ImageSource? LoadBitmapFromBytes(byte[] bytes)
@@ -319,6 +481,25 @@ public sealed class ArtworkService
         catch
         {
             return null;
+        }
+    }
+
+    private void RememberInMemCache(string key, ImageSource? image)
+    {
+        if (image is null)
+        {
+            return;
+        }
+
+        lock (_memCacheLock)
+        {
+            _memCache[key] = image;
+            _memCacheOrder.Enqueue(key);
+            while (_memCacheOrder.Count > MaxMemCacheEntries)
+            {
+                var oldest = _memCacheOrder.Dequeue();
+                _memCache.TryRemove(oldest, out _);
+            }
         }
     }
 

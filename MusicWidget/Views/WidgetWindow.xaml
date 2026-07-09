@@ -18,6 +18,10 @@
         SnapsToDevicePixels="True">
 
   <Grid x:Name="RootGrid">
+    <Grid.LayoutTransform>
+      <!-- Slight global zoom so the overall app UI feels larger. -->
+      <ScaleTransform ScaleX="1.08" ScaleY="1.08"/>
+    </Grid.LayoutTransform>
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
@@ -248,8 +252,8 @@
                DragCompleted="MoveThumb_DragCompleted"/>
         <views:SettingsPanel x:Name="SettingsPanelControl"
                              HorizontalAlignment="Stretch"
-                             MinWidth="380"
-                             MinHeight="400"/>
+                             MinWidth="420"
+                             MinHeight="440"/>
         <Thumb x:Name="ResizeGrip"
                Style="{StaticResource ResizeGripStyle}"
                HorizontalAlignment="Right"

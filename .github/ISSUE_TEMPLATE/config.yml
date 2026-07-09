@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Help & user manual
+    url: https://delexoo.github.io/beats/help.html
+    about: Setup, shortcuts, downloads, and troubleshooting
+  - name: Discussions
+    url: https://github.com/Delexoo/beats/discussions
+    about: Ask questions and share ideas

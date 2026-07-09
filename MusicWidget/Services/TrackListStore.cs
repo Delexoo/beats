@@ -19,6 +19,7 @@ public sealed class TrackListStore
     private readonly string _path;
     private readonly List<string> _ordered = new();
     private readonly HashSet<string> _set = new(StringComparer.OrdinalIgnoreCase);
+    private System.Timers.Timer? _saveDebounceTimer;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -65,7 +66,7 @@ public sealed class TrackListStore
         if (!_set.Add(filePath)) return false;
         // Most recently added appears first.
         _ordered.Insert(0, filePath);
-        Save();
+        ScheduleSave();
         Changed?.Invoke(this, EventArgs.Empty);
         return true;
     }
@@ -75,7 +76,7 @@ public sealed class TrackListStore
         if (string.IsNullOrWhiteSpace(filePath)) return false;
         if (!_set.Remove(filePath)) return false;
         _ordered.RemoveAll(p => string.Equals(p, filePath, StringComparison.OrdinalIgnoreCase));
-        Save();
+        ScheduleSave();
         Changed?.Invoke(this, EventArgs.Empty);
         return true;
     }
@@ -104,7 +105,7 @@ public sealed class TrackListStore
         _set.Add(newFilePath);
         _ordered[idx] = newFilePath;
 
-        Save();
+        ScheduleSave();
         Changed?.Invoke(this, EventArgs.Empty);
         return true;
     }
@@ -133,7 +134,7 @@ public sealed class TrackListStore
 
         if (any)
         {
-            Save();
+            ScheduleSave();
             Changed?.Invoke(this, EventArgs.Empty);
         }
         return any;
@@ -152,7 +153,7 @@ public sealed class TrackListStore
 
         _set.Clear();
         foreach (var p in _ordered) _set.Add(p);
-        Save();
+        ScheduleSave();
         Changed?.Invoke(this, EventArgs.Empty);
         return true;
     }
@@ -166,7 +167,7 @@ public sealed class TrackListStore
         var item = _ordered[fromIndex];
         _ordered.RemoveAt(fromIndex);
         _ordered.Insert(toIndex, item);
-        Save();
+        ScheduleSave();
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
@@ -180,6 +181,20 @@ public sealed class TrackListStore
         }
         Add(filePath);
         return true;
+    }
+
+    private void ScheduleSave()
+    {
+        _saveDebounceTimer ??= new System.Timers.Timer(400) { AutoReset = false };
+        _saveDebounceTimer.Elapsed -= OnSaveDebounceElapsed;
+        _saveDebounceTimer.Elapsed += OnSaveDebounceElapsed;
+        _saveDebounceTimer.Stop();
+        _saveDebounceTimer.Start();
+    }
+
+    private void OnSaveDebounceElapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        Save();
     }
 
     private void Save()
