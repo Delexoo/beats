@@ -189,7 +189,7 @@
         <Run Text="YouTube blocked? " Foreground="{StaticResource Brush.TextDim}"/>
         <Hyperlink Click="YoutubeCookiesSetup_Click"
                    Foreground="{StaticResource Brush.Blue}">
-          Set up cookies in Beats
+          Set up cookies in Windows Beats
         </Hyperlink>
       </TextBlock>
     </StackPanel>

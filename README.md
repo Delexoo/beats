@@ -1,9 +1,11 @@
 <div align="center">
 
-# Beats
+# Windows Beats
 
 **A floating desktop music player for Windows.**  
 Play local playlists, download tracks from the web, and control everything from a minimal always-on-top widget.
+
+<sub>Windows Beats is an independent product by Delexo. It is not affiliated with Microsoft Corporation.</sub>
 
 [![Latest release](https://img.shields.io/github/v/release/Delexoo/beats?label=release&sort=semver&color=2563eb)](https://github.com/Delexoo/beats/releases/latest)
 [![Windows](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078d4?logo=windows&logoColor=white)](https://github.com/Delexoo/beats/releases/latest)
@@ -56,12 +58,12 @@ Play local playlists, download tracks from the web, and control everything from 
 
 ## Overview
 
-**Beats** is a frameless, always-on-top desktop widget for Windows. It keeps your music one glance away while you work, game, or browse - without cluttering the taskbar.
+**Windows Beats** is a frameless, always-on-top desktop widget for Windows. It keeps your music one glance away while you work, game, or browse - without cluttering the taskbar.
 
 | | |
 |---|---|
 | **Local playback** | Folder-based playlists under `My Music\Beats` - portable, editable, and yours |
-| **Web downloads** | Paste a URL; Beats saves MP3s into the playlist you choose |
+| **Web downloads** | Paste a URL; Windows Beats saves MP3s into the playlist you choose |
 | **Minimal UI** | A draggable pill with album art, transport controls, and an expandable dashboard |
 | **Stay out of the way** | Hide off-screen with `Alt` + `\` or the top-screen chevron; bring it back instantly |
 

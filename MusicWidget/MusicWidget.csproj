@@ -23,14 +23,14 @@
 
     <!-- Version + author metadata is shown in Explorer's file properties and
          picked up by Inno Setup via the {#GetVersionString(...)} preprocessor. -->
-    <Version>2.2.18</Version>
-    <AssemblyVersion>2.2.18.0</AssemblyVersion>
-    <FileVersion>2.2.18.0</FileVersion>
-    <Product>Beats</Product>
+    <Version>2.2.19</Version>
+    <AssemblyVersion>2.2.19.0</AssemblyVersion>
+    <FileVersion>2.2.19.0</FileVersion>
+    <Product>Windows Beats</Product>
     <Company>Delexo</Company>
     <Authors>Delexo</Authors>
-    <AssemblyTitle>Beats</AssemblyTitle>
-    <Description>Beats desktop music player for Windows, published by Delexo (delexo.store)</Description>
+    <AssemblyTitle>Windows Beats</AssemblyTitle>
+    <Description>Windows Beats desktop music player, published by Delexo (delexo.store). Not affiliated with Microsoft.</Description>
     <Copyright>Copyright © Delexo 2026</Copyright>
     <RepositoryUrl>https://github.com/Delexoo/beats</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

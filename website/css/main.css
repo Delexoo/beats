@@ -163,8 +163,9 @@ h1 {
   margin: 0 0 18px;
   color: var(--text);
   font-family: var(--font-brand);
-  font-size: clamp(5rem, 12vw, 9.25rem);
+  font-size: clamp(3.75rem, 8vw, 6.5rem);
   font-weight: 700;
+  line-height: 0.95;
   letter-spacing: -0.095em;
   line-height: 0.82;
 }
@@ -686,6 +687,15 @@ h1 {
   font-size: 0.75rem;
 }
 
+.footer-disclaimer {
+  max-width: var(--max-w);
+  margin: 10px auto 0;
+  color: var(--text-faint);
+  font-size: 0.68rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
 .footer-brand {
   color: var(--text);
   font-weight: 700;
@@ -780,7 +790,7 @@ h1 {
   }
 
   h1 {
-    font-size: clamp(4.5rem, 24vw, 6.5rem);
+    font-size: clamp(3.2rem, 16vw, 5.2rem);
   }
 
   .info-list,

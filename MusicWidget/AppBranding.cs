@@ -1,9 +1,9 @@
 namespace MusicWidget;
 
-/// <summary>Product display name and on-disk folder names for Beats.</summary>
+/// <summary>Product display name and on-disk folder names for Windows Beats.</summary>
 public static class AppBranding
 {
-    public const string DisplayName = "Beats";
+    public const string DisplayName = "Windows Beats";
     public const string AppDataFolderName = "Beats";
     public const string LegacyAppDataFolderName = "MusicWidget";
     public const string DefaultPlaylistsFolderName = "Beats";
@@ -12,7 +12,7 @@ public static class AppBranding
         get
         {
             var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-            return version is null ? "Beats/0.0.0" : $"Beats/{version.Major}.{version.Minor}.{version.Build}";
+            return version is null ? "WindowsBeats/0.0.0" : $"WindowsBeats/{version.Major}.{version.Minor}.{version.Build}";
         }
     }
     public const string HelpPageUrl = "https://delexoo.github.io/beats/help.html";

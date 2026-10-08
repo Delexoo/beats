@@ -362,6 +362,8 @@ public partial class SettingsPanel : UserControl
             NowPlayingTitle.Text = "Nothing playing";
             NowPlayingArtist.Text = string.Empty;
             NowPlayingInitials.Text = string.Empty;
+            NowPlayingInitials.Visibility = Visibility.Collapsed;
+            NowPlayingPlaceholderIcon.Visibility = Visibility.Visible;
             NowPlayingArtBrush.ImageSource = null;
             NowPlayingArt.Visibility = Visibility.Collapsed;
             return;
@@ -376,11 +378,15 @@ public partial class SettingsPanel : UserControl
         {
             NowPlayingArtBrush.ImageSource = t.ArtworkSource;
             NowPlayingArt.Visibility = Visibility.Visible;
+            NowPlayingPlaceholderIcon.Visibility = Visibility.Collapsed;
+            NowPlayingInitials.Visibility = Visibility.Collapsed;
         }
         else
         {
             NowPlayingArtBrush.ImageSource = null;
             NowPlayingArt.Visibility = Visibility.Collapsed;
+            NowPlayingPlaceholderIcon.Visibility = Visibility.Visible;
+            NowPlayingInitials.Visibility = Visibility.Collapsed;
         }
     }
 
@@ -1051,7 +1057,7 @@ public partial class SettingsPanel : UserControl
 
         _ = Task.Run(async () =>
         {
-            const int maxTracks = 80;
+            const int maxTracks = 200;
             var loaded = 0;
             foreach (var track in tracks)
             {
@@ -2120,41 +2126,57 @@ public partial class SettingsPanel : UserControl
             return;
         }
 
-        if (sender is not ListBox list || list.DataContext is not Playlist pl)
+        // Scroll the list — never change the selected song on wheel.
+        if (sender is not ListBox list)
         {
             return;
         }
 
-        if (pl.Tracks.Count == 0)
+        var nested = FindDescendantScrollViewer(list);
+        if (nested is not null)
+        {
+            var scrollingUp = e.Delta > 0;
+            var canScrollNested = scrollingUp
+                ? nested.VerticalOffset > 0.5
+                : nested.VerticalOffset < nested.ScrollableHeight - 0.5;
+
+            if (canScrollNested)
+            {
+                // Let the nested track list scroll normally.
+                return;
+            }
+        }
+
+        // At the nested edge (or no overflow): scroll the outer playlists panel.
+        if (PlaylistsScrollViewer is null)
         {
             return;
         }
 
         e.Handled = true;
+        PlaylistsScrollViewer.ScrollToVerticalOffset(
+            PlaylistsScrollViewer.VerticalOffset - e.Delta);
+    }
 
-        var currentIndex = list.SelectedIndex;
-        if (currentIndex < 0)
+    private static ScrollViewer? FindDescendantScrollViewer(DependencyObject root)
+    {
+        if (root is ScrollViewer sv)
         {
-            currentIndex = 0;
-        }
-
-        var stepIndex = e.Delta > 0 ? -1 : 1;
-        var newIndex = Math.Clamp(currentIndex + stepIndex, 0, pl.Tracks.Count - 1);
-        if (newIndex == currentIndex)
-        {
-            return;
+            return sv;
         }
 
-        var track = pl.Tracks[newIndex];
-        list.SelectedItem = track;
-        try
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
         {
-            list.ScrollIntoView(track);
+            var child = VisualTreeHelper.GetChild(root, i);
+            var found = FindDescendantScrollViewer(child);
+            if (found is not null)
+            {
+                return found;
+            }
         }
-        catch
-        {
-            // Best-effort scroll only.
-        }
+
+        return null;
     }
 
     private void TracksList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
@@ -2518,8 +2540,7 @@ public partial class SettingsPanel : UserControl
 
     private async Task CheckForUpdatesAsync(bool showUpToDateMessage)
     {
-        if (_updateCheckInFlight || !_isPanelActive
-            || App.Updates.IsAutoUpdateRunning)
+        if (_updateCheckInFlight || !_isPanelActive)
         {
             return;
         }
@@ -2529,7 +2550,39 @@ public partial class SettingsPanel : UserControl
 
         try
         {
-            var result = await App.Updates.CheckForUpdateAsync().ConfigureAwait(true);
+            // Wait out the startup background check instead of ignoring the click.
+            for (var i = 0; i < 150 && App.Updates.IsAutoUpdateRunning && _isPanelActive; i++)
+            {
+                await Task.Delay(100).ConfigureAwait(true);
+            }
+
+            if (!_isPanelActive)
+            {
+                return;
+            }
+
+            UpdateCheckResult? result;
+            if (App.Updates.IsAutoUpdateRunning)
+            {
+                result = App.Updates.LastCheckResult;
+            }
+            else if (showUpToDateMessage
+                     && App.Updates.LastCheckResult is not null
+                     && App.Updates.StartupCheckCompleted
+                     && !App.Updates.LastCheckResult.IsUpdateAvailable)
+            {
+                // Fresh user-initiated check.
+                result = await App.Updates.CheckForUpdateAsync().ConfigureAwait(true);
+            }
+            else if (App.Updates.LastCheckResult is not null && !showUpToDateMessage)
+            {
+                result = App.Updates.LastCheckResult;
+            }
+            else
+            {
+                result = await App.Updates.CheckForUpdateAsync().ConfigureAwait(true);
+            }
+
             if (!_isPanelActive)
             {
                 return;
@@ -2537,25 +2590,7 @@ public partial class SettingsPanel : UserControl
 
             _pendingUpdate = result;
             ApplyUpdateButtonState(result);
-
-            if (showUpToDateMessage)
-            {
-                if (result is null)
-                {
-                    ModernMessageBox.ShowWarning(
-                        "Could not check for updates. Check your internet connection and try again.");
-                }
-                else if (result.IsUpdateAvailable)
-                {
-                    ModernMessageBox.ShowInfo(
-                        $"Version {result.LatestVersion} is available. Click Update to download and install.");
-                }
-                else
-                {
-                    ModernMessageBox.ShowInfo(
-                        $"You are on the latest version (v{App.Updates.CurrentVersion}).");
-                }
-            }
+            ShowUpdateCheckMessage(result, showUpToDateMessage);
         }
         catch (Exception ex)
         {
@@ -2571,6 +2606,30 @@ public partial class SettingsPanel : UserControl
         finally
         {
             _updateCheckInFlight = false;
+        }
+    }
+
+    private void ShowUpdateCheckMessage(UpdateCheckResult? result, bool showUpToDateMessage)
+    {
+        if (!showUpToDateMessage)
+        {
+            return;
+        }
+
+        if (result is null)
+        {
+            ModernMessageBox.ShowWarning(
+                "Could not check for updates. Check your internet connection and try again.");
+        }
+        else if (result.IsUpdateAvailable)
+        {
+            ModernMessageBox.ShowInfo(
+                $"Version {result.LatestVersion} is available. Click Update again to download and install.");
+        }
+        else
+        {
+            ModernMessageBox.ShowInfo(
+                $"You are on the latest version (v{App.Updates.CurrentVersion}).");
         }
     }
 
@@ -2643,16 +2702,33 @@ public partial class SettingsPanel : UserControl
 
     private async void UpdateButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_pendingUpdate?.IsUpdateAvailable == true)
+        try
         {
-            InstallPendingUpdateAsync();
-            return;
-        }
+            if (_pendingUpdate?.IsUpdateAvailable == true
+                && !string.IsNullOrWhiteSpace(_pendingUpdate.DownloadUrl))
+            {
+                InstallPendingUpdate();
+                return;
+            }
 
-        await CheckForUpdatesAsync(showUpToDateMessage: true).ConfigureAwait(true);
+            await CheckForUpdatesAsync(showUpToDateMessage: true).ConfigureAwait(true);
+
+            if (_pendingUpdate?.IsUpdateAvailable == true
+                && !string.IsNullOrWhiteSpace(_pendingUpdate.DownloadUrl))
+            {
+                // Offer install immediately after a successful check finds a newer build.
+                InstallPendingUpdate();
+            }
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "SettingsPanel.UpdateButton_Click");
+            ModernMessageBox.ShowWarning("Update check failed: " + ex.Message);
+            ApplyUpdateButtonState(null);
+        }
     }
 
-    private void InstallPendingUpdateAsync()
+    private void InstallPendingUpdate()
     {
         var update = _pendingUpdate;
         if (update is null || !update.IsUpdateAvailable)
@@ -2679,7 +2755,7 @@ public partial class SettingsPanel : UserControl
         }
 
         var confirmed = ModernMessageBox.ConfirmYesNo(
-            $"Install Beats {update.LatestVersion}?\n\nBeats will close now, install the update, and reopen automatically.",
+            $"Install Windows Beats {update.LatestVersion}?\n\nWindows Beats will close now, install the update, and reopen automatically.",
             "Install update",
             ModernMessageBox.Severity.Question);
         if (!confirmed)
@@ -2687,9 +2763,25 @@ public partial class SettingsPanel : UserControl
             return;
         }
 
-        if (!App.Updates.BeginDetachedUpdateAndShutdown(update))
+        UpdateButton.IsEnabled = false;
+        UpdateButton.ToolTip = "Starting update...";
+
+        try
         {
-            ModernMessageBox.ShowWarning("Could not start the update.");
+            if (!App.Updates.BeginDetachedUpdateAndShutdown(update))
+            {
+                UpdateButton.IsEnabled = true;
+                ApplyUpdateButtonState(update);
+                ModernMessageBox.ShowWarning(
+                    "Could not start the update. Try again, or download the installer from GitHub Releases.");
+            }
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write(ex, "SettingsPanel.InstallPendingUpdate");
+            UpdateButton.IsEnabled = true;
+            ApplyUpdateButtonState(update);
+            ModernMessageBox.ShowWarning("Could not start the update: " + ex.Message);
         }
     }
 

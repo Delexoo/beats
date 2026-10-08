@@ -1,9 +1,9 @@
 ; ============================================================================
-; Beats — Inno Setup installer script
+; Windows Beats — Inno Setup installer script
 ; ============================================================================
 ;
 ; Builds a single .exe installer that drops the published, self-contained build
-; into C:\Program Files\Beats, adds Start Menu + Desktop shortcuts, and
+; into C:\Program Files\Windows Beats, adds Start Menu + Desktop shortcuts, and
 ; uses the app's icon throughout the UI.
 ;
 ; Build (from repo root):
@@ -16,7 +16,7 @@
   #define MyAppVersion "2.2.0"
 #endif
 
-#define MyAppName "Beats"
+#define MyAppName "Windows Beats"
 #define MyAppPublisher "Delexo"
 #define MyAppStoreURL "https://delexo.store"
 #define MyAppHelpURL "https://delexoo.github.io/beats/help.html"
@@ -71,9 +71,9 @@ VersionInfoTextVersion={#MyAppPublisher} | {#MyAppStoreURL}
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
-english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nBeats is a free floating desktop music player for Windows, published by Delexo. You must accept the Terms of Service and Privacy Policy on the next page before setup can continue.%n%nPublisher: Delexo%nWebsite: https://delexo.store
+english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nWindows Beats is a free floating desktop music player for Windows, published by Delexo. It is not affiliated with Microsoft Corporation. You must accept the Terms of Service and Privacy Policy on the next page before setup can continue.%n%nPublisher: Delexo%nWebsite: https://delexo.store
 english.LicenseLabel=Terms of Service && Privacy Policy
-english.LicenseLabel3=I agree to the Terms of Service and Privacy Policy. I understand that Delexo (https://delexo.store) created Beats only, is not affiliated with YouTube, Spotify, or other platforms, and that I am solely responsible for any music or content I use with this application.
+english.LicenseLabel3=I agree to the Terms of Service and Privacy Policy. I understand that Delexo (https://delexo.store) created Windows Beats only, is not affiliated with Microsoft Corporation, YouTube, Spotify, or other platforms, and that I am solely responsible for any music or content I use with this application.
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked

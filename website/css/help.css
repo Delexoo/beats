@@ -695,6 +695,14 @@ details[open] summary {
 .footer a:hover { color: var(--text); text-decoration: none; }
 .footer a:visited { color: var(--text-muted); }
 
+.footer-disclaimer {
+  margin: 12px auto 0;
+  max-width: 52rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--text-faint);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }

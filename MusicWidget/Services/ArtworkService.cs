@@ -22,6 +22,7 @@ public sealed class ArtworkService
     private readonly string _cacheDir;
     private readonly ConcurrentDictionary<string, Task<ImageSource?>> _inflight = new();
     private readonly ConcurrentDictionary<string, ImageSource?> _memCache = new();
+    private readonly ConcurrentDictionary<string, byte> _knownMisses = new();
     private readonly object _memCacheLock = new();
     private readonly Queue<string> _memCacheOrder = new();
     private const int MaxMemCacheEntries = 400;
@@ -38,6 +39,11 @@ public sealed class ArtworkService
         if (_memCache.TryGetValue(key, out var cached) && cached is not null)
         {
             return Task.FromResult<ImageSource?>(cached);
+        }
+
+        if (_knownMisses.ContainsKey(key))
+        {
+            return Task.FromResult<ImageSource?>(null);
         }
 
         return _inflight.GetOrAdd(key, _ => LoadAsync(track, ct));
@@ -143,14 +149,18 @@ public sealed class ArtworkService
 
             if (bytes is null || bytes.Length == 0)
             {
+                _knownMisses[key] = 1;
                 return null;
             }
 
             var bmp = await CreateFrozenBitmapOnUiAsync(bytes).ConfigureAwait(false);
             if (bmp is null)
             {
+                _knownMisses[key] = 1;
                 return null;
             }
+
+            _knownMisses.TryRemove(key, out _);
 
             try
             {
@@ -272,6 +282,7 @@ public sealed class ArtworkService
         var key = NormalizeKey(filePath);
         _memCache.TryRemove(key, out _);
         _inflight.TryRemove(key, out _);
+        _knownMisses.TryRemove(key, out _);
 
         var cachePath = Path.Combine(_cacheDir, key + ".png");
         try

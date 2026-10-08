@@ -1,6 +1,6 @@
-# Contributing to Beats
+# Contributing to Windows Beats
 
-Thank you for your interest in improving **Beats**. This project is maintained by [Delexoo](https://github.com/Delexoo).
+Thank you for your interest in improving **Windows Beats**. This project is maintained by [Delexoo](https://github.com/Delexoo).
 
 ## Ways to help
 

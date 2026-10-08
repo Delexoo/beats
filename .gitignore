@@ -4,6 +4,10 @@
 **/_verify*/
 **/_verify_*/
 
+# Secrets (never commit)
+.env
+.env.*
+
 # User / IDE
 .vs/
 .vscode/

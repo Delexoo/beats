@@ -116,9 +116,9 @@
           <Style TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
-            <Setter Property="Padding" Value="9,6"/>
+            <Setter Property="Padding" Value="10,8"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="Margin" Value="0,2"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="VerticalContentAlignment" Value="Top"/>
             <EventSetter Event="PreviewMouseLeftButtonDown" Handler="PlaylistListItem_PreviewMouseLeftButtonDown"/>
@@ -129,17 +129,17 @@
                           Background="{TemplateBinding Background}"
                           BorderBrush="Transparent"
                           BorderThickness="0"
-                          CornerRadius="8"
+                          CornerRadius="10"
                           Padding="{TemplateBinding Padding}">
                     <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                   </Border>
                   <ControlTemplate.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                      <Setter TargetName="bg" Property="Background" Value="#FF181D25"/>
+                      <Setter TargetName="bg" Property="Background" Value="#0FFFFFFF"/>
                     </Trigger>
                     <Trigger Property="IsSelected" Value="True">
-                      <Setter TargetName="bg" Property="Background" Value="#FF1A2028"/>
+                      <Setter TargetName="bg" Property="Background" Value="#141F2937"/>
                       <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
                     </Trigger>
                   </ControlTemplate.Triggers>
@@ -166,7 +166,7 @@
       <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
       <Setter Property="BorderThickness" Value="0"/>
       <Setter Property="Padding" Value="0"/>
-      <Setter Property="MaxHeight" Value="400"/>
+      <Setter Property="MaxHeight" Value="360"/>
       <Setter Property="VirtualizingPanel.IsVirtualizing" Value="False"/>
       <Setter Property="ScrollViewer.CanContentScroll" Value="False"/>
       <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
@@ -195,7 +195,7 @@
           <Style TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
-            <Setter Property="Padding" Value="9,5"/>
+            <Setter Property="Padding" Value="8,7"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Margin" Value="0,1"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -204,16 +204,16 @@
                 <ControlTemplate TargetType="ListBoxItem">
                   <Border x:Name="bg"
                           Background="{TemplateBinding Background}"
-                          CornerRadius="6"
+                          CornerRadius="8"
                           Padding="{TemplateBinding Padding}">
                     <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
                   </Border>
                   <ControlTemplate.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                      <Setter TargetName="bg" Property="Background" Value="#FF181D25"/>
+                      <Setter TargetName="bg" Property="Background" Value="#0AFFFFFF"/>
                     </Trigger>
                     <Trigger Property="IsSelected" Value="True">
-                      <Setter TargetName="bg" Property="Background" Value="#FF1E2430"/>
+                      <Setter TargetName="bg" Property="Background" Value="#122563EB"/>
                       <Setter Property="Foreground" Value="{StaticResource Brush.Text}"/>
                     </Trigger>
                   </ControlTemplate.Triggers>
@@ -331,29 +331,32 @@
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <Border Grid.Column="0"
-                Width="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=33}"
-                Height="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=33}"
-                CornerRadius="6"
-                Background="{StaticResource Brush.SurfaceHigh}"
+                Width="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=40}"
+                Height="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=40}"
+                CornerRadius="8"
+                Background="#FF1A1F27"
                 ClipToBounds="True"
-                Margin="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomThickness}, ConverterParameter='0,0,7,0'}">
+                Margin="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomThickness}, ConverterParameter='0,0,10,0'}">
           <Grid>
-            <TextBlock Text="{Binding Initials}"
-                       Foreground="{StaticResource Brush.TextDim}"
-                       FontWeight="SemiBold"
-                       FontSize="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=12}"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center">
-              <TextBlock.Style>
-                <Style TargetType="TextBlock">
+            <!-- Placeholder when no cover is available -->
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+              <StackPanel.Style>
+                <Style TargetType="StackPanel">
                   <Style.Triggers>
                     <DataTrigger Binding="{Binding HasArtwork}" Value="True">
                       <Setter Property="Visibility" Value="Collapsed"/>
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>
-              </TextBlock.Style>
-            </TextBlock>
+              </StackPanel.Style>
+              <Path Data="{StaticResource Icon.Music}"
+                    Fill="#FF64748B"
+                    Stretch="Uniform"
+                    Width="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=16}"
+                    Height="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=16}"
+                    HorizontalAlignment="Center"/>
+            </StackPanel>
             <Image Source="{Binding ArtworkSource, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                    Stretch="UniformToFill"
                    RenderOptions.BitmapScalingMode="HighQuality"
@@ -370,20 +373,39 @@
             </Image>
           </Grid>
         </Border>
-        <TextBlock Grid.Column="1"
-                   Text="{Binding FriendlyDisplayName}"
-                   Foreground="{StaticResource Brush.Text}"
-                   FontSize="13.5"
-                   VerticalAlignment="Center"
-                   TextTrimming="CharacterEllipsis"
-                   Margin="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomThickness}, ConverterParameter='0,0,4,0'}"/>
+        <StackPanel Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Margin="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomThickness}, ConverterParameter='0,0,6,0'}">
+          <TextBlock Text="{Binding PrimaryTitle}"
+                     Foreground="{StaticResource Brush.Text}"
+                     FontSize="13.5"
+                     FontWeight="Medium"
+                     TextTrimming="CharacterEllipsis"/>
+          <TextBlock Text="{Binding Artist}"
+                     Foreground="{StaticResource Brush.TextMuted}"
+                     FontSize="11.5"
+                     Margin="0,2,0,0"
+                     TextTrimming="CharacterEllipsis">
+            <TextBlock.Style>
+              <Style TargetType="TextBlock">
+                <Setter Property="Visibility" Value="Collapsed"/>
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding HasArtist}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+        </StackPanel>
         <Path Grid.Column="2"
               Data="{StaticResource Icon.Heart}"
               Fill="#FFEF4444"
               Stretch="Uniform"
               VerticalAlignment="Center"
-              Width="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=13}"
-              Height="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=13}"
+              Opacity="0.9"
+              Width="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=12}"
+              Height="{Binding TracksZoom, ElementName=SettingsPanelRoot, Converter={StaticResource ZoomMultiply}, ConverterParameter=12}"
               Visibility="Collapsed">
           <Path.Style>
             <Style TargetType="Path">
@@ -627,12 +649,19 @@
           <StackPanel.Style>
             <Style TargetType="StackPanel">
               <Setter Property="Visibility" Value="Visible"/>
+              <Setter Property="Opacity" Value="0"/>
               <Style.Triggers>
                 <DataTrigger Binding="{Binding Kind}" Value="Liked">
                   <Setter Property="Visibility" Value="Collapsed"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding Kind}" Value="Saves">
                   <Setter Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True">
+                  <Setter Property="Opacity" Value="1"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}" Value="True">
+                  <Setter Property="Opacity" Value="1"/>
                 </DataTrigger>
               </Style.Triggers>
             </Style>
@@ -668,10 +697,10 @@
         </Grid>
 
         <Border Grid.Row="1"
-                Margin="30,4,4,2"
+                Margin="28,6,2,2"
                 Background="Transparent"
                 BorderThickness="0"
-                Padding="0">
+                Padding="0,0,0,4">
           <Border.Style>
             <Style TargetType="Border">
               <Setter Property="Visibility" Value="Collapsed"/>
@@ -787,12 +816,12 @@
             <ColumnDefinition Width="Auto"/>
           </Grid.ColumnDefinitions>
           <StackPanel Grid.Column="0" VerticalAlignment="Center">
-            <TextBlock Text="Dashboard"
+            <TextBlock Text="Library"
                        Style="{StaticResource DashboardTitle}"/>
-            <TextBlock Text="Your library and playback controls"
+            <TextBlock Text="Playlists and now playing"
                        Foreground="{StaticResource Brush.TextMuted}"
                        FontSize="12"
-                       Margin="0,2,0,0"/>
+                       Margin="0,3,0,0"/>
           </StackPanel>
           <StackPanel Grid.Column="1"
                       Orientation="Horizontal"
@@ -840,7 +869,7 @@
             </Button>
             <Button Style="{StaticResource DashboardToolbarButton}"
                     Margin="6,0,0,0"
-                    ToolTip="Close Beats"
+                    ToolTip="Close Windows Beats"
                     Click="ExitApp_Click">
               <Path Data="{StaticResource Icon.Close}"
                     Fill="{StaticResource Brush.TextDim}"
@@ -909,8 +938,8 @@
             <RowDefinition Height="*"/>
           </Grid.RowDefinitions>
 
-          <Grid Grid.Row="0" Margin="0,0,0,8">
-            <TextBlock Text="PLAYLISTS"
+          <Grid Grid.Row="0" Margin="0,0,0,10">
+            <TextBlock Text="Playlists"
                        Style="{StaticResource DashboardSectionLabel}"/>
           </Grid>
 
@@ -971,25 +1000,31 @@
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
               <Border Grid.Column="0"
-                      Width="48" Height="48"
-                      CornerRadius="6"
-                      Background="{StaticResource Brush.SurfaceHigh}"
+                      Width="52" Height="52"
+                      CornerRadius="10"
+                      Background="#FF1A1F27"
                       ClipToBounds="True">
                 <Grid>
+                  <Path x:Name="NowPlayingPlaceholderIcon"
+                        Data="{StaticResource Icon.Music}"
+                        Fill="#FF64748B"
+                        Stretch="Uniform"
+                        Width="20" Height="20"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"/>
                   <TextBlock x:Name="NowPlayingInitials"
                              Text=""
                              Foreground="{StaticResource Brush.TextDim}"
                              FontFamily="{StaticResource Font.Display}"
                              FontWeight="SemiBold"
-                             FontSize="17"
+                             FontSize="16"
                              HorizontalAlignment="Center"
-                             VerticalAlignment="Center"/>
-                  <!-- Rectangle + ImageBrush: see Track DataTemplate above for the
-                       rationale. Guarantees a center-cropped cover no matter the
-                       source aspect ratio. -->
+                             VerticalAlignment="Center"
+                             Visibility="Collapsed"/>
+                  <!-- Rectangle + ImageBrush: center-cropped cover for any aspect ratio. -->
                   <Rectangle x:Name="NowPlayingArt"
-                             RadiusX="6"
-                             RadiusY="6"
+                             RadiusX="10"
+                             RadiusY="10"
                              Visibility="Collapsed"
                              RenderOptions.BitmapScalingMode="HighQuality">
                     <Rectangle.Fill>
@@ -1848,7 +1883,7 @@
                          FontWeight="SemiBold"
                          FontSize="17"
                          TextWrapping="Wrap"/>
-              <TextBlock Text="Export a Netscape-format cookies.txt while logged into YouTube or Instagram (browser extension recommended; see yt-dlp wiki below). Beats passes it to yt-dlp and spotDL on every download."
+              <TextBlock Text="Export a Netscape-format cookies.txt while logged into YouTube or Instagram (browser extension recommended; see yt-dlp wiki below). Windows Beats passes it to yt-dlp and spotDL on every download."
                          Foreground="{StaticResource Brush.TextDim}"
                          FontSize="13"
                          Margin="0,8,0,16"

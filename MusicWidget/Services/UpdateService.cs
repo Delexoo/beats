@@ -179,13 +179,20 @@ public sealed class UpdateService
                 New-Item -ItemType Directory -Force -Path (Split-Path $out) | Out-Null
                 Write-Log 'Downloading update...'
                 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-                Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing -Headers @{ 'User-Agent' = 'Beats-Updater' }
+                Invoke-WebRequest -Uri $url -OutFile $out -UseBasicParsing -Headers @{ 'User-Agent' = 'WindowsBeats-Updater' }
+                if (-not (Test-Path -LiteralPath $out) -or ((Get-Item -LiteralPath $out).Length -lt 1024)) {
+                    throw 'Downloaded installer is missing or too small.'
+                }
                 Write-Log 'Launching installer...'
-                $proc = Start-Process -FilePath $out -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS' -PassThru -Wait
+                $proc = Start-Process -FilePath $out -ArgumentList '/VERYSILENT /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS /NORESTART' -PassThru -Wait
+                if ($null -eq $proc) {
+                    throw 'Failed to start installer process.'
+                }
                 if ($proc.ExitCode -ne 0) {
                     throw "Installer exited with code $($proc.ExitCode)."
                 }
                 Write-Log 'Update finished.'
+                Start-Sleep -Seconds 2
                 if ($restart -and (Test-Path -LiteralPath $restart)) {
                     Write-Log "Relaunching $restart"
                     Start-Process -FilePath $restart
@@ -356,10 +363,11 @@ public sealed class UpdateService
     {
         var client = new HttpClient
         {
-            Timeout = TimeSpan.FromSeconds(30),
+            Timeout = TimeSpan.FromSeconds(20),
         };
         client.DefaultRequestHeaders.UserAgent.ParseAdd(AppBranding.UserAgent);
         client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+        client.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
         return client;
     }
 
@@ -367,7 +375,7 @@ public sealed class UpdateService
     {
         var client = new HttpClient
         {
-            Timeout = TimeSpan.FromMinutes(20),
+            Timeout = TimeSpan.FromMinutes(15),
         };
         client.DefaultRequestHeaders.UserAgent.ParseAdd(AppBranding.UserAgent);
         return client;

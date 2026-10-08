@@ -300,13 +300,13 @@ public sealed class DownloadService
             || blob.Contains("failed to decrypt", StringComparison.OrdinalIgnoreCase))
         {
             return HasYoutubeCookies()
-                ? "YouTube blocked this download and Beats could not refresh cookies from your browser. Re-export cookies.txt in Dashboard → Download cookies, wait a few minutes, and try again."
-                : $"Beats could not read login cookies from {BrowserCookieSourcesLabel} (Windows blocked decryption). Export a cookies.txt file in Dashboard → Download cookies, then try again.";
+                ? "YouTube blocked this download and Windows Beats could not refresh cookies from your browser. Re-export cookies.txt in Dashboard → Download cookies, wait a few minutes, and try again."
+                : $"Windows Beats could not read login cookies from {BrowserCookieSourcesLabel} (Windows blocked decryption). Export a cookies.txt file in Dashboard → Download cookies, then try again.";
         }
 
         return HasYoutubeCookies()
             ? $"YouTube blocked or rate-limited this download. Confirm the link is public or unlisted, stay signed into YouTube in {BrowserCookieSourcesLabel}, wait a few minutes, and try again."
-            : $"YouTube blocked this download. Sign into YouTube in {BrowserCookieSourcesLabel} on this PC and try again — Beats reads that login automatically. You can also add a cookies.txt file under Download cookies in the dashboard.";
+            : $"YouTube blocked this download. Sign into YouTube in {BrowserCookieSourcesLabel} on this PC and try again — Windows Beats reads that login automatically. You can also add a cookies.txt file under Download cookies in the dashboard.";
     }
 
     private async Task<DownloadResult> DownloadInstagramAsync(
@@ -1143,6 +1143,7 @@ public sealed class DownloadService
         CancellationToken ct)
     {
         var outTemplate = System.IO.Path.Combine(destFolder, "{artist} - {title}.{output-ext}");
+        var filesBefore = SnapshotAudioFiles(destFolder);
 
         var psi = new ProcessStartInfo
         {
@@ -1206,10 +1207,16 @@ public sealed class DownloadService
         using (ct.Register(() => { try { if (!proc.HasExited) proc.Kill(true); } catch { } }))
         {
             var exitCode = await tcs.Task;
-            if (exitCode == 0)
+            var paths = BeautifyDownloadedPaths(aggregate.CompletedPaths);
+            if (paths.Count == 0)
+            {
+                paths = DiscoverNewAudioFiles(destFolder, filesBefore);
+            }
+
+            // spotDL sometimes exits 0 after AudioProviderError with no files written.
+            if (exitCode == 0 && paths.Count > 0)
             {
                 progress?.Report(new DownloadProgressUpdate(100, "Done."));
-                var paths = BeautifyDownloadedPaths(aggregate.CompletedPaths);
                 return new DownloadResult(true, null, null, paths);
             }
 
@@ -1217,10 +1224,68 @@ public sealed class DownloadService
                             l.Contains("error", StringComparison.OrdinalIgnoreCase)
                             && !string.IsNullOrWhiteSpace(l))
                         ?? logLines.LastOrDefault(l => !string.IsNullOrWhiteSpace(l))
-                        ?? $"spotDL exited with code {exitCode}.";
+                        ?? (exitCode == 0
+                            ? "spotDL finished but no audio files were saved. Try again or paste a YouTube link."
+                            : $"spotDL exited with code {exitCode}.");
 
             if (error.Length > 280) error = error[..280] + "...";
             return new DownloadResult(false, error, string.Join(Environment.NewLine, logLines));
+        }
+    }
+
+    private static HashSet<string> SnapshotAudioFiles(string destFolder)
+    {
+        try
+        {
+            if (!Directory.Exists(destFolder))
+            {
+                return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            return new HashSet<string>(
+                EnumerateAudioFiles(destFolder),
+                StringComparer.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    private static IReadOnlyList<string> DiscoverNewAudioFiles(
+        string destFolder,
+        HashSet<string> filesBefore)
+    {
+        try
+        {
+            return EnumerateAudioFiles(destFolder)
+                .Where(path => !filesBefore.Contains(path))
+                .OrderByDescending(File.GetLastWriteTimeUtc)
+                .Take(50)
+                .ToList();
+        }
+        catch
+        {
+            return Array.Empty<string>();
+        }
+    }
+
+    private static IEnumerable<string> EnumerateAudioFiles(string destFolder)
+    {
+        if (!Directory.Exists(destFolder))
+        {
+            yield break;
+        }
+
+        string[] exts = [".mp3", ".m4a", ".opus", ".flac", ".wav", ".ogg"];
+        foreach (var path in Directory.EnumerateFiles(destFolder))
+        {
+            var ext = System.IO.Path.GetExtension(path);
+            if (exts.Contains(ext, StringComparer.OrdinalIgnoreCase)
+                && !path.EndsWith(".part", StringComparison.OrdinalIgnoreCase))
+            {
+                yield return path;
+            }
         }
     }
 

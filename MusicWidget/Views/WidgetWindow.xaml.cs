@@ -1374,7 +1374,7 @@ public partial class WidgetWindow : Window
             {
                 AlbumArtBrush.ImageSource = null;
                 AlbumArtImageHost.Visibility = Visibility.Collapsed;
-                AlbumArtInitials.Text = t.Initials;
+                AlbumArtInitials.Text = "♪";
                 AlbumArtInitials.Visibility = Visibility.Visible;
             }
         }

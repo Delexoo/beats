@@ -20,6 +20,12 @@ public sealed class Track : INotifyPropertyChanged
     /// <summary>Human-friendly track label derived from the file name when tags are missing.</summary>
     public string FriendlyDisplayName => TrackNameFormatter.Beautify(DisplayName);
 
+    /// <summary>Preferred list title: embedded tag when present, otherwise the beautified file name.</summary>
+    public string PrimaryTitle =>
+        !string.IsNullOrWhiteSpace(_title) ? _title! : FriendlyDisplayName;
+
+    public bool HasArtist => !string.IsNullOrWhiteSpace(_artist);
+
     public ImageSource? ArtworkSource
     {
         get => _artworkSource;
@@ -45,6 +51,7 @@ public sealed class Track : INotifyPropertyChanged
             {
                 _title = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(PrimaryTitle));
                 OnPropertyChanged(nameof(Initials));
             }
         }
@@ -59,6 +66,7 @@ public sealed class Track : INotifyPropertyChanged
             {
                 _artist = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(HasArtist));
                 OnPropertyChanged(nameof(Initials));
             }
         }
