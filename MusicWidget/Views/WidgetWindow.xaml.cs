@@ -24,8 +24,10 @@ public partial class WidgetWindow : Window
     /// Stays in sync between first-launch positioning and the Reset Layout action.
     /// </summary>
     private const double DefaultTopOffset = 16;
-    /// <summary>Collapsed pill width: padding 20 + art/info 262 + transport 102.</summary>
+    /// <summary>Collapsed pill layout width before the 1.08 UI ScaleTransform.</summary>
     private const double DefaultPillWidthEstimate = 282;
+    /// <summary>Must match RootGrid ScaleTransform in WidgetWindow.xaml.</summary>
+    private const double UiScale = 1.08;
     /// <summary>20px buttons + 5px right margin — matches website .pill-hover-controls.</summary>
     private const double HoverControlsExpandedWidth = 25;
     private const double HoverWidthAnimMs = 280;
@@ -56,7 +58,8 @@ public partial class WidgetWindow : Window
         Opacity = 0;
 
         var workArea = SystemParameters.WorkArea;
-        Left = workArea.Left + (workArea.Width - DefaultPillWidthEstimate) / 2;
+        var estimatedPillWidth = DefaultPillWidthEstimate * UiScale;
+        Left = workArea.Left + (workArea.Width - estimatedPillWidth) / 2.0;
         Top = workArea.Top + DefaultTopOffset;
 
         SizeChanged += WidgetWindow_SizeChanged;
@@ -127,6 +130,9 @@ public partial class WidgetWindow : Window
         {
             CenterPillOnScreen();
             RevealWindow();
+            // One more pass after DPI / layout settle — fixes scaled displays
+            // where the first PointToScreen pass can still be slightly early.
+            Dispatcher.BeginInvoke(new Action(CenterPillOnScreen), DispatcherPriority.ContextIdle);
         }), DispatcherPriority.ApplicationIdle);
     }
 
@@ -193,7 +199,8 @@ public partial class WidgetWindow : Window
 
     /// <summary>
     /// Nudges the window so the pill sits at the horizontal center of the work area.
-    /// Uses screen-space delta math so it stays correct after SizeToContent resizes.
+    /// Uses DIP screen-space delta math so it stays correct after SizeToContent
+    /// resizes and on Per-Monitor DPI scaled displays.
     /// </summary>
     private void CenterPillOnScreen()
     {
@@ -210,9 +217,15 @@ public partial class WidgetWindow : Window
                 return;
             }
 
-            var workArea = SystemParameters.WorkArea;
+            var workArea = GetPrimaryWorkAreaDip();
             var targetCenterX = workArea.Left + workArea.Width / 2.0;
-            Left += targetCenterX - GetPillScreenCenterX();
+            var currentCenterX = GetPillScreenCenterX();
+            if (double.IsNaN(currentCenterX) || double.IsInfinity(currentCenterX))
+            {
+                return;
+            }
+
+            Left += targetCenterX - currentCenterX;
             Top = workArea.Top + DefaultTopOffset;
         }
         catch (Exception ex)
@@ -223,17 +236,48 @@ public partial class WidgetWindow : Window
 
     private void ApplyDefaultPosition() => CenterPillOnScreen();
 
+    private static Rect GetPrimaryWorkAreaDip() => SystemParameters.WorkArea;
+
+    /// <summary>
+    /// Horizontal center of the pill in DIP screen coordinates (same units as
+    /// <see cref="Window.Left"/> and <see cref="SystemParameters.WorkArea"/>).
+    /// </summary>
     private double GetPillScreenCenterX()
     {
         try
         {
-            var topLeft = PillBorder.PointToScreen(new Point(0, 0));
-            return topLeft.X + PillBorder.ActualWidth / 2;
+            if (PillBorder.ActualWidth <= 0)
+            {
+                return Left + (DefaultPillWidthEstimate * UiScale) / 2.0;
+            }
+
+            // PointToScreen returns device pixels. Convert both edges to DIPs so
+            // the center matches Window.Left / WorkArea on 125%/150%/200% displays.
+            var leftDip = PointToScreenDip(PillBorder, new Point(0, 0));
+            var rightDip = PointToScreenDip(PillBorder, new Point(PillBorder.ActualWidth, 0));
+            return (leftDip.X + rightDip.X) / 2.0;
         }
         catch
         {
-            return Left + ActualWidth / 2;
+            return Left + (PillBorder.ActualWidth > 0
+                ? (PillBorder.ActualWidth * UiScale) / 2.0
+                : (DefaultPillWidthEstimate * UiScale) / 2.0);
         }
+    }
+
+    private static Point PointToScreenDip(Visual visual, Point localPoint)
+    {
+        var devicePoint = visual.PointToScreen(localPoint);
+        var source = PresentationSource.FromVisual(visual);
+        if (source?.CompositionTarget is not null)
+        {
+            return source.CompositionTarget.TransformFromDevice.Transform(devicePoint);
+        }
+
+        var dpi = VisualTreeHelper.GetDpi(visual);
+        var scaleX = dpi.DpiScaleX <= 0 ? 1.0 : dpi.DpiScaleX;
+        var scaleY = dpi.DpiScaleY <= 0 ? 1.0 : dpi.DpiScaleY;
+        return new Point(devicePoint.X / scaleX, devicePoint.Y / scaleY);
     }
 
     /// <summary>

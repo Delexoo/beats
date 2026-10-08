@@ -2,6 +2,11 @@
 
 All notable changes to **Windows Beats** are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.20] - 2026-10-08
+
+### Fixed
+- Widget centering on different screen sizes and DPI scaling (125%/150%/200%)
+
 ## [2.2.19] - 2026-10-08
 
 ### Added

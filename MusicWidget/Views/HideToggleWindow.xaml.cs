@@ -30,8 +30,10 @@ public partial class HideToggleWindow : Window
         // move it again. It's a fixed shortcut, not something that follows the
         // widget around, so it stays put when the widget is dragged, hidden,
         // shown, resized, or reset.
-        Top = 0;
+        Top = SystemParameters.WorkArea.Top;
         AnchorToScreenTopCenter();
+        Dispatcher.BeginInvoke(new Action(AnchorToScreenTopCenter), System.Windows.Threading.DispatcherPriority.Loaded);
+        Dispatcher.BeginInvoke(new Action(AnchorToScreenTopCenter), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
         SetChevronAngle(_showingWidget ? 0 : 180);
     }
 
@@ -41,10 +43,12 @@ public partial class HideToggleWindow : Window
     /// </summary>
     private void AnchorToScreenTopCenter()
     {
+        UpdateLayout();
         var workArea = SystemParameters.WorkArea;
-        var tabWidth = Width > 0 ? Width : ActualWidth;
+        var tabWidth = ActualWidth > 0 ? ActualWidth : (Width > 0 ? Width : 40);
         if (double.IsNaN(tabWidth) || tabWidth <= 0) tabWidth = 40;
         Left = workArea.Left + (workArea.Width - tabWidth) / 2.0;
+        Top = workArea.Top;
     }
 
     private void Bg_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
